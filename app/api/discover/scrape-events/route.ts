@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
         }
 
         webContent = await jinaResponse.text();
+        console.log(`Fetched ${webContent.length} characters from ${source.name}`);
 
         // Try to find and extract the events section
         const eventsMarkers = ['Community Events', 'Calendar', 'Upcoming Events', 'Events Calendar'];
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
           const index = webContent.indexOf(marker);
           if (index !== -1 && (eventsStartIndex === -1 || index < eventsStartIndex)) {
             eventsStartIndex = index;
+            console.log(`Found marker "${marker}" at index ${index}`);
           }
         }
 
@@ -117,9 +119,11 @@ export async function POST(request: NextRequest) {
           // Keep some context before the events section (500 chars)
           const contextStart = Math.max(0, eventsStartIndex - 500);
           webContent = webContent.slice(contextStart, contextStart + 12000);
+          console.log(`Using events section from ${contextStart} to ${contextStart + 12000}`);
         } else {
           // No events section found, use first 12000 chars
           webContent = webContent.slice(0, 12000);
+          console.log(`No events section found, using first 12000 chars`);
         }
       } catch (error) {
         console.error(`Error fetching ${source.url}:`, error);
