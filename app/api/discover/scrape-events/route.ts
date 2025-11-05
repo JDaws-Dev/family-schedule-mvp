@@ -101,8 +101,26 @@ export async function POST(request: NextRequest) {
 
         webContent = await jinaResponse.text();
 
-        // Limit content to ~8000 chars to fit in OpenAI context
-        webContent = webContent.slice(0, 8000);
+        // Try to find and extract the events section
+        const eventsMarkers = ['Community Events', 'Calendar', 'Upcoming Events', 'Events Calendar'];
+        let eventsStartIndex = -1;
+
+        for (const marker of eventsMarkers) {
+          const index = webContent.indexOf(marker);
+          if (index !== -1 && (eventsStartIndex === -1 || index < eventsStartIndex)) {
+            eventsStartIndex = index;
+          }
+        }
+
+        // If we found an events section, start from there; otherwise use the full content
+        if (eventsStartIndex !== -1 && eventsStartIndex > 1000) {
+          // Keep some context before the events section (500 chars)
+          const contextStart = Math.max(0, eventsStartIndex - 500);
+          webContent = webContent.slice(contextStart, contextStart + 12000);
+        } else {
+          // No events section found, use first 12000 chars
+          webContent = webContent.slice(0, 12000);
+        }
       } catch (error) {
         console.error(`Error fetching ${source.url}:`, error);
         continue;
