@@ -31,7 +31,7 @@ yarn-error.log*
 
 # Convex
 .convex/
-convex/_generated/
+# convex/_generated/ - Commented out so generated files are committed for Vercel builds
 
 # TypeScript
 *.tsbuildinfo

@@ -5,11 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "npm run build:next",
-    "build:next": "next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "convex dev --once --configure=skip"
+    "lint": "next lint"
   },
   "keywords": [],
   "author": "",
