@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "npx convex deploy --cmd 'npm run build:next'",
+    "build": "npm run build:next",
     "build:next": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "convex dev --once --configure=skip"
   },
   "keywords": [],
   "author": "",
