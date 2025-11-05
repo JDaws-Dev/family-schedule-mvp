@@ -6,18 +6,21 @@ const EVENT_SOURCES = [
     name: "Suwanee Events Calendar",
     url: "https://www.suwanee.com/events",
     location: "Suwanee, GA",
+    zipCodes: ["30024", "30519"], // Suwanee zip codes
     categories: ["community", "entertainment", "family"],
   },
   {
     name: "Gwinnett County Parks & Rec",
     url: "https://www.gwinnettcounty.com/web/gwinnett/Departments/CommunityServices/ParksandRecreation",
     location: "Gwinnett County, GA",
+    zipCodes: ["30024", "30519", "30043", "30044", "30045", "30046", "30047", "30048", "30049", "30052", "30078", "30083", "30084", "30086", "30087", "30093", "30094", "30095", "30096", "30097", "30098"], // Gwinnett County zip codes
     categories: ["sports", "recreation", "education"],
   },
   {
     name: "Suwanee Library Events",
     url: "https://www.gwinnettpl.org/branches/suwanee",
     location: "Suwanee, GA",
+    zipCodes: ["30024", "30519"], // Suwanee zip codes
     categories: ["education", "arts", "family"],
   },
   // Add more sources as needed - museums, community centers, etc.
@@ -56,10 +59,16 @@ export async function POST(request: NextRequest) {
 
     // Filter sources by location if provided
     if (location && !sourceUrl) {
-      sourcesToScrape = EVENT_SOURCES.filter(source =>
-        source.location.toLowerCase().includes(location.toLowerCase()) ||
-        location.toLowerCase().includes(source.location.toLowerCase())
-      );
+      sourcesToScrape = EVENT_SOURCES.filter(source => {
+        // Check if location matches city name
+        const cityMatch = source.location.toLowerCase().includes(location.toLowerCase()) ||
+          location.toLowerCase().includes(source.location.toLowerCase());
+
+        // Check if location matches zip code
+        const zipMatch = source.zipCodes && source.zipCodes.includes(location.trim());
+
+        return cityMatch || zipMatch;
+      });
 
       // If no sources match the location, use a fallback message
       if (sourcesToScrape.length === 0) {
