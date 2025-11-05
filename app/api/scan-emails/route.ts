@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
     const messagesResponse = await gmail.users.messages.list({
       userId: "me",
       q: query,
-      maxResults: 50, // Reduced from 100 to avoid rate limiting
+      maxResults: 25, // Reduced to 25 to prevent rate limiting during scans
     });
 
     const messages = messagesResponse.data.messages || [];
@@ -316,9 +316,9 @@ export async function POST(request: NextRequest) {
       // Extract events using OpenAI with family member filtering (can return multiple events per email)
       const events = await extractEventsFromEmail(fullMessage.data, familyMembers);
 
-      // Rate limiting: Wait 250ms between requests to avoid hitting OpenAI rate limits
-      // Increased from 150ms to be more conservative
-      await new Promise(resolve => setTimeout(resolve, 250));
+      // Rate limiting: Wait 500ms between requests to avoid hitting OpenAI rate limits
+      // Conservative delay to prevent rate limit errors during production use
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Process each extracted event
       for (const event of events) {
