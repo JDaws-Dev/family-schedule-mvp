@@ -117,7 +117,7 @@ export const addActivityToCalendar = mutation({
       location: activity.location,
       category: activity.category,
       childName: args.childName,
-      confirmed: true, // User is manually adding, so auto-confirm
+      isConfirmed: true, // User is manually adding, so auto-confirm
     });
 
     // Mark activity as added
