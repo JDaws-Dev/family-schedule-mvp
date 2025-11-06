@@ -97,6 +97,7 @@ export default function Settings() {
     const relationship = formData.get("relationship") as string;
     const nicknames = formData.get("nicknames") as string;
     const interests = formData.get("interests") as string;
+    const color = formData.get("color") as string;
 
     try {
       if (editingMember) {
@@ -107,6 +108,7 @@ export default function Settings() {
           relationship: relationship || undefined,
           nicknames,
           interests,
+          color: color || undefined,
         });
       } else {
         await addFamilyMember({
@@ -116,6 +118,7 @@ export default function Settings() {
           relationship: relationship || undefined,
           nicknames,
           interests,
+          color: color || undefined,
         });
       }
       setShowAddMemberModal(false);
@@ -1082,7 +1085,7 @@ export default function Settings() {
                     type="text"
                     name="name"
                     placeholder="e.g., Emma Johnson"
-                    defaultValue={editingMember ? trackedMembers.find(c => c._id === editingMember)?.name : ""}
+                    defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.name : ""}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     required
                   />
@@ -1096,7 +1099,7 @@ export default function Settings() {
                     <input
                       type="date"
                       name="birthdate"
-                      defaultValue={editingMember ? trackedMembers.find(c => c._id === editingMember)?.birthdate : ""}
+                      defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.birthdate : ""}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
@@ -1108,9 +1111,26 @@ export default function Settings() {
                       type="text"
                       name="relationship"
                       placeholder="e.g., Son, Daughter, Parent, etc."
-                      defaultValue={editingMember ? trackedMembers.find(c => c._id === editingMember)?.relationship : ""}
+                      defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.relationship : ""}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Calendar Color
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      name="color"
+                      defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.color || "#6366f1" : "#6366f1"}
+                      className="h-12 w-20 rounded-lg border border-gray-300 cursor-pointer"
+                    />
+                    <p className="text-sm text-gray-600">
+                      Events for this family member will appear in this color on your calendar
+                    </p>
                   </div>
                 </div>
 
@@ -1122,7 +1142,7 @@ export default function Settings() {
                     type="text"
                     name="nicknames"
                     placeholder="e.g., Em, Emmy (separate with commas)"
-                    defaultValue={editingMember ? trackedMembers.find(c => c._id === editingMember)?.nicknames.join(", ") : ""}
+                    defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.nicknames.join(", ") : ""}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -1138,7 +1158,7 @@ export default function Settings() {
                     type="text"
                     name="interests"
                     placeholder="e.g., Soccer, Piano, Dance (separate with commas)"
-                    defaultValue={editingMember ? trackedMembers.find(c => c._id === editingMember)?.interests.join(", ") : ""}
+                    defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.interests.join(", ") : ""}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
