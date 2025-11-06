@@ -18,6 +18,7 @@ import type * as gmailAccounts from "../gmailAccounts.js";
 import type * as googleCalendar from "../googleCalendar.js";
 import type * as notifications from "../notifications.js";
 import type * as suggestedActivities from "../suggestedActivities.js";
+import type * as syncStatus from "../syncStatus.js";
 import type * as users from "../users.js";
 
 import type {
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   googleCalendar: typeof googleCalendar;
   notifications: typeof notifications;
   suggestedActivities: typeof suggestedActivities;
+  syncStatus: typeof syncStatus;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
