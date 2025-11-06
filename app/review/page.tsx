@@ -754,7 +754,7 @@ export default function ReviewPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
                   <div className="space-y-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
                     {familyMembers && familyMembers.length > 0 ? (
-                      familyMembers.map((member) => {
+                      [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
                         const selectedMembers = newEventForm.childName ? newEventForm.childName.split(", ") : [];
                         const isChecked = selectedMembers.includes(member.name);
 

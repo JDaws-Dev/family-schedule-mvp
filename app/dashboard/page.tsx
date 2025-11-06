@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "../components/Toast";
 import { SyncStatus } from "../components/SyncStatus";
@@ -16,8 +16,15 @@ export default function Dashboard() {
   const [showScanModal, setShowScanModal] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanResults, setScanResults] = useState<{eventsFound: number; messagesScanned: number} | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isEditingEvent, setIsEditingEvent] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>(null);
   const { user: clerkUser } = useUser();
   const { signOut} = useClerk();
+
+  // Mutations
+  const updateEvent = useMutation(api.events.updateEvent);
+  const deleteEvent = useMutation(api.events.deleteEvent);
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -40,6 +47,12 @@ export default function Dashboard() {
   // Get unconfirmed events
   const unconfirmedEvents = useQuery(
     api.events.getUnconfirmedEvents,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Get family members for the edit modal
+  const familyMembers = useQuery(
+    api.familyMembers.getFamilyMembers,
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
@@ -502,7 +515,8 @@ export default function Dashboard() {
                   upcomingEvents.map((event) => (
                     <div
                       key={event._id}
-                      className="p-4 sm:p-6 hover:bg-gray-50 transition-colors"
+                      className="p-4 sm:p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedEvent(event)}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="flex-1">
@@ -838,6 +852,89 @@ export default function Dashboard() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <span className="text-gray-600 font-medium w-24">Date:</span>
+                <span className="text-gray-900">{selectedEvent.eventDate}</span>
+              </div>
+
+              {selectedEvent.eventTime && (
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-600 font-medium w-24">Time:</span>
+                  <span className="text-gray-900">
+                    {selectedEvent.eventTime}
+                    {selectedEvent.endTime && ` - ${selectedEvent.endTime}`}
+                  </span>
+                </div>
+              )}
+
+              {selectedEvent.location && (
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-600 font-medium w-24">Location:</span>
+                  <span className="text-gray-900">{selectedEvent.location}</span>
+                </div>
+              )}
+
+              {selectedEvent.childName && (
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-600 font-medium w-24">Member:</span>
+                  <span className="text-gray-900">{selectedEvent.childName}</span>
+                </div>
+              )}
+
+              {selectedEvent.description && (
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-600 font-medium w-24">Details:</span>
+                  <span className="text-gray-900">{selectedEvent.description}</span>
+                </div>
+              )}
+
+              {selectedEvent.category && (
+                <div className="flex items-start gap-2">
+                  <span className="text-gray-600 font-medium w-24">Category:</span>
+                  <span className="text-gray-900">{selectedEvent.category}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <Link
+                href="/events"
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
+              >
+                View on Events Page
+              </Link>
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
