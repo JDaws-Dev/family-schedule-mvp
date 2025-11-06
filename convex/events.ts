@@ -66,6 +66,16 @@ export const createUnconfirmedEvent = mutation({
     sourceEmailSubject: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Skip events that are in the past (older than yesterday)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+    if (args.eventDate < yesterdayStr) {
+      console.log(`Skipping past event: ${args.title} on ${args.eventDate}`);
+      return null; // Don't create events for past dates
+    }
+
     // Check for duplicate events (same title, date, and family member)
     // This prevents duplicate extraction from multiple similar emails
     const existingEvents = await ctx.db
