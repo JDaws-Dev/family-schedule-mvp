@@ -2,6 +2,11 @@ import { v } from "convex/values";
 import { mutation, query, action, internalAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
+// Helper to convert null to undefined for Convex schema compatibility
+function nullToUndefined<T>(value: T | null | undefined): T | undefined {
+  return value === null ? undefined : value;
+}
+
 /**
  * Save AI-discovered activities to the database
  * This is called after scraping and AI matching
@@ -59,36 +64,36 @@ export const saveDiscoveredActivities = mutation({
         });
         savedActivities.push(existing._id);
       } else {
-        // Create new suggested activity
+        // Create new suggested activity (convert null to undefined for schema)
         const activityId = await ctx.db.insert("suggestedActivities", {
           familyId: args.familyId,
           title: activity.title,
-          description: activity.description,
+          description: nullToUndefined(activity.description),
           category: activity.category,
-          ageRange: activity.ageRange,
-          location: activity.location,
-          address: activity.address,
-          website: activity.website,
-          phoneNumber: activity.phoneNumber,
-          priceRange: activity.priceRange,
-          sourceUrl: activity.sourceUrl,
-          aiSummary: activity.aiSummary,
+          ageRange: nullToUndefined(activity.ageRange),
+          location: nullToUndefined(activity.location),
+          address: nullToUndefined(activity.address),
+          website: nullToUndefined(activity.website),
+          phoneNumber: nullToUndefined(activity.phoneNumber),
+          priceRange: nullToUndefined(activity.priceRange),
+          sourceUrl: nullToUndefined(activity.sourceUrl),
+          aiSummary: nullToUndefined(activity.aiSummary),
           status: "suggested",
           suggestedAt: Date.now(),
           // Save event date/time information
-          date: activity.date,
-          time: activity.time,
-          endTime: activity.endTime,
-          recurring: activity.recurring,
-          registrationRequired: activity.registrationRequired,
-          registrationDeadline: activity.registrationDeadline,
-          sourceName: activity.sourceName,
-          sourceLocation: activity.sourceLocation,
+          date: nullToUndefined(activity.date),
+          time: nullToUndefined(activity.time),
+          endTime: nullToUndefined(activity.endTime),
+          recurring: nullToUndefined(activity.recurring),
+          registrationRequired: nullToUndefined(activity.registrationRequired),
+          registrationDeadline: nullToUndefined(activity.registrationDeadline),
+          sourceName: nullToUndefined(activity.sourceName),
+          sourceLocation: nullToUndefined(activity.sourceLocation),
           // Save new fields from scraping/recommendations
-          scrapedAt: activity.scrapedAt,
-          sourceCategories: activity.sourceCategories,
-          targetMembers: activity.targetMembers,
-          matchScore: activity.matchScore,
+          scrapedAt: nullToUndefined(activity.scrapedAt),
+          sourceCategories: nullToUndefined(activity.sourceCategories),
+          targetMembers: nullToUndefined(activity.targetMembers),
+          matchScore: nullToUndefined(activity.matchScore),
           distance: undefined, // TODO: Calculate distance from family location
           rating: undefined, // Could integrate Google Places API for ratings
           imageUrl: undefined, // Could fetch from website or use placeholder
