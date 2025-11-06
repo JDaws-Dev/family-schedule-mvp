@@ -85,6 +85,12 @@ function CalendarContent() {
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
+  // Get family data for last sync timestamp
+  const family = useQuery(
+    api.families.getFamilyById,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
   // Standard preset categories
   const standardCategories = [
     "Sports",
@@ -152,6 +158,24 @@ function CalendarContent() {
       return true;
     });
   }, [confirmedEvents, searchQuery, filterMember, filterCategory]);
+
+  // Format last sync timestamp
+  const formatLastSync = (timestamp: number | undefined): string => {
+    if (!timestamp) return "Never synced";
+
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    if (days < 7) return `${days} day${days !== 1 ? 's' : ''} ago`;
+
+    return new Date(timestamp).toLocaleDateString();
+  };
 
   // Sync events to Google Calendar
   const handleSyncAllToGoogleCalendar = useCallback(async () => {
@@ -399,22 +423,29 @@ function CalendarContent() {
               </p>
             </div>
             {calendarEvents.length > 0 && (
-              <button
-                onClick={handleSyncAllToGoogleCalendar}
-                disabled={syncing}
-                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-soft"
-              >
-                {syncing ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Syncing...
-                  </>
-                ) : (
-                  <>
-                    📅 Sync to Google Calendar
-                  </>
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  onClick={handleSyncAllToGoogleCalendar}
+                  disabled={syncing}
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-soft"
+                >
+                  {syncing ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      📅 Sync to Google Calendar
+                    </>
+                  )}
+                </button>
+                {family?.lastCalendarSyncAt && (
+                  <p className="text-sm text-gray-500">
+                    Last synced: {formatLastSync(family.lastCalendarSyncAt)}
+                  </p>
                 )}
-              </button>
+              </div>
             )}
           </div>
 
