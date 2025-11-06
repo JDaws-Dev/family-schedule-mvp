@@ -12,7 +12,15 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const returnUrl = searchParams.get("returnUrl") || "/settings";
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback`;
+  // Construct the redirect URI using the request's origin as fallback
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+  const redirectUri = `${appUrl}/api/auth/google/callback`;
+
+  console.log("[google-auth] Initiating OAuth flow:", {
+    appUrl,
+    redirectUri,
+    hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+  });
 
   const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   googleAuthUrl.searchParams.set("client_id", process.env.GOOGLE_CLIENT_ID!);
@@ -23,6 +31,8 @@ export async function GET(request: NextRequest) {
   googleAuthUrl.searchParams.set("prompt", "consent");
   // Encode returnUrl in the state parameter along with userId
   googleAuthUrl.searchParams.set("state", JSON.stringify({ userId, returnUrl }));
+
+  console.log("[google-auth] Redirecting to:", googleAuthUrl.toString());
 
   return NextResponse.redirect(googleAuthUrl.toString());
 }
