@@ -69,10 +69,13 @@ export const getOrCreateUser = mutation({
     await ctx.db.insert("userPreferences", {
       userId,
       emailRemindersEnabled: true,
-      smsRemindersEnabled: false,
-      reminderHoursBefore: 24,
+      emailReminderHoursBefore: 24,
       weeklyDigestEnabled: true,
       weeklyDigestDay: "sunday",
+      smsRemindersEnabled: false,
+      smsReminderHoursBefore: 1,
+      dailySmsDigestEnabled: false,
+      dailySmsDigestTime: "07:00",
       autoScanEmails: true,
       scanIntervalHours: 6,
     });
