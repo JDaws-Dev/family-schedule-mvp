@@ -31,6 +31,8 @@ export const saveDiscoveredActivities = mutation({
         matchScore: v.optional(v.number()),
         aiSummary: v.optional(v.string()),
         targetMembers: v.optional(v.array(v.string())),
+        scrapedAt: v.optional(v.string()),
+        sourceCategories: v.optional(v.array(v.string())),
       })
     ),
   },
