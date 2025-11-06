@@ -149,6 +149,7 @@ export default defineSchema({
     relationship: v.optional(v.string()), // "Son", "Daughter", etc.
     nicknames: v.array(v.string()), // Alternate names used in emails
     interests: v.array(v.string()), // Activities they're interested in
+    color: v.optional(v.string()), // Hex color code for calendar display (e.g., "#FF5733")
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_family", ["familyId"]),

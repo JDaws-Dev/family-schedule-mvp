@@ -23,6 +23,7 @@ export const addFamilyMember = mutation({
     relationship: v.optional(v.string()),
     nicknames: v.string(), // Comma-separated
     interests: v.string(), // Comma-separated
+    color: v.optional(v.string()), // Hex color code
   },
   handler: async (ctx, args) => {
     const nicknamesArray = args.nicknames
@@ -39,6 +40,7 @@ export const addFamilyMember = mutation({
       relationship: args.relationship,
       nicknames: nicknamesArray,
       interests: interestsArray,
+      color: args.color,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -56,6 +58,7 @@ export const updateFamilyMember = mutation({
     relationship: v.optional(v.string()),
     nicknames: v.string(), // Comma-separated
     interests: v.string(), // Comma-separated
+    color: v.optional(v.string()), // Hex color code
   },
   handler: async (ctx, args) => {
     const nicknamesArray = args.nicknames
@@ -71,6 +74,7 @@ export const updateFamilyMember = mutation({
       relationship: args.relationship,
       nicknames: nicknamesArray,
       interests: interestsArray,
+      color: args.color,
       updatedAt: Date.now(),
     });
   },
