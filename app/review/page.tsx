@@ -51,6 +51,12 @@ export default function ReviewPage() {
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
+  // Get confirmed events for conflict detection
+  const confirmedEvents = useQuery(
+    api.events.getConfirmedEvents,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
   // Get family members for the dropdown
   const familyMembers = useQuery(
     api.familyMembers.getFamilyMembers,
@@ -63,7 +69,47 @@ export default function ReviewPage() {
   const updateEvent = useMutation(api.events.updateEvent);
   const createEvent = useMutation(api.events.createEvent);
 
+  // Check for time conflicts with existing events
+  const checkForConflicts = (newEvent: any) => {
+    if (!confirmedEvents || !newEvent.eventTime) return null;
+
+    const conflicts = confirmedEvents.filter((existingEvent: any) => {
+      // Skip if different dates
+      if (existingEvent.eventDate !== newEvent.eventDate) return false;
+
+      // Skip if no time info
+      if (!existingEvent.eventTime) return false;
+
+      // Parse times
+      const newStart = newEvent.eventTime;
+      const newEnd = newEvent.endTime || newEvent.eventTime;
+      const existingStart = existingEvent.eventTime;
+      const existingEnd = existingEvent.endTime || existingEvent.eventTime;
+
+      // Check if times overlap
+      return (newStart < existingEnd && newEnd > existingStart);
+    });
+
+    return conflicts.length > 0 ? conflicts[0] : null;
+  };
+
   const handleApprove = async (eventId: Id<"events">) => {
+    // Find the event being approved
+    const eventToApprove = unconfirmedEvents?.find((e: any) => e._id === eventId);
+
+    // Check for conflicts
+    const conflict = eventToApprove ? checkForConflicts(eventToApprove) : null;
+
+    if (conflict) {
+      const confirmOverride = window.confirm(
+        `⚠️ Time Conflict Detected!\n\nThis event overlaps with "${conflict.title}" on ${conflict.eventDate} at ${conflict.eventTime}.\n\nDo you want to add it anyway?`
+      );
+
+      if (!confirmOverride) {
+        return; // User cancelled
+      }
+    }
+
     await confirmEvent({ eventId });
 
     // Show confirmation feedback
