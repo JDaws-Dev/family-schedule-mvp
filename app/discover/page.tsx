@@ -436,10 +436,35 @@ export default function DiscoverPage() {
 
         {/* Activity Cards */}
         {suggestedActivities.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            {suggestedActivities
-              .filter(activity => filter === "all" || activity.category?.toLowerCase() === filter)
-              .map((activity) => (
+          (() => {
+            const filteredActivities = suggestedActivities.filter(
+              activity => filter === "all" || activity.category?.toLowerCase() === filter
+            );
+
+            // Show empty state if filter returns no results
+            if (filteredActivities.length === 0) {
+              return (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                  <div className="text-6xl mb-4 opacity-40">🔍</div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">
+                    No {filter} activities found
+                  </h2>
+                  <p className="text-gray-600 mb-6">
+                    Try selecting a different category or search for more activities in your area.
+                  </p>
+                  <button
+                    onClick={() => setFilter("all")}
+                    className="px-6 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+                  >
+                    View All Activities
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid md:grid-cols-2 gap-6">
+                {filteredActivities.map((activity) => (
                 <div key={activity._id} className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all border border-gray-200">
                   <div className="p-6 space-y-4">
                     <div className="flex items-start justify-between mb-3">
@@ -623,7 +648,9 @@ export default function DiscoverPage() {
                   </div>
                 </div>
               ))}
-          </div>
+              </div>
+            );
+          })()
         ) : (
           /* Empty State - Show Examples */
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

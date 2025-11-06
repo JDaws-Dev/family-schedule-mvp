@@ -6,12 +6,14 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import MobileNav from "@/app/components/MobileNav";
+import { useToast } from "@/app/components/Toast";
 
 export default function Settings() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>('profile');
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
+  const { showToast } = useToast();
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -109,10 +111,10 @@ export default function Settings() {
 
     try {
       await removeGmailAccount({ accountId });
-      alert("Account disconnected successfully!");
+      showToast("Gmail account disconnected successfully", "success");
     } catch (error) {
       console.error("Error disconnecting account:", error);
-      alert("Failed to disconnect account. Please try again.");
+      showToast("Unable to disconnect account. Please try again.", "error");
     }
   };
 
@@ -127,6 +129,12 @@ export default function Settings() {
     const nicknames = formData.get("nicknames") as string;
     const interests = formData.get("interests") as string;
     const color = formData.get("color") as string;
+
+    // Validate required field
+    if (!name || name.trim() === "") {
+      showToast("Please enter a name for the family member", "error");
+      return;
+    }
 
     try {
       if (editingMember) {
@@ -152,9 +160,10 @@ export default function Settings() {
       }
       setShowAddMemberModal(false);
       setEditingMember(null);
+      showToast(`${editingMember ? 'Updated' : 'Added'} family member successfully`, "success");
     } catch (error) {
       console.error("Error saving family member:", error);
-      alert("Failed to save family member. Please try again.");
+      showToast("Unable to save family member. Please check all fields and try again.", "error");
     }
   };
 

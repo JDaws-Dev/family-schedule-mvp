@@ -221,13 +221,18 @@ export default function ReviewPage() {
 
     if (!convexUser?._id) {
       console.error("No convexUser._id found");
-      alert("User not found. Please refresh the page and try again.");
+      showToast("Session expired. Please refresh the page and try again.", "error");
       return;
     }
 
     // Validate required fields
-    if (!newEventForm.title.trim() || !newEventForm.eventDate) {
-      alert("Please fill in the event title and date");
+    if (!newEventForm.title.trim()) {
+      showToast("Please enter an event title", "error");
+      return;
+    }
+
+    if (!newEventForm.eventDate) {
+      showToast("Please select a date for this event", "error");
       return;
     }
 

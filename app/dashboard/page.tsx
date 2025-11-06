@@ -318,12 +318,17 @@ function DashboardContent() {
   const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!convexUser?._id) {
-      alert("User not found. Please refresh the page and try again.");
+      showToast("Session expired. Please refresh the page and try again.", "error");
       return;
     }
 
-    if (!newEventForm.title.trim() || !newEventForm.eventDate) {
-      alert("Please fill in the event title and date");
+    if (!newEventForm.title.trim()) {
+      showToast("Please enter an event title", "error");
+      return;
+    }
+
+    if (!newEventForm.eventDate) {
+      showToast("Please select a date for this event", "error");
       return;
     }
 
@@ -356,7 +361,7 @@ function DashboardContent() {
       showToast(`✓ Event "${newEventForm.title}" added successfully!`, "success", undefined, 7000);
     } catch (error) {
       console.error("Error creating event:", error);
-      alert("Failed to create event. Please try again.");
+      showToast("Unable to create event. Please try again.", "error");
     }
   };
 
