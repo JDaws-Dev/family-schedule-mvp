@@ -8,7 +8,7 @@ export default function Home() {
       <header className="bg-white/80 border-b border-slate-200 sticky top-0 z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-xl font-bold text-slate-900 hover:text-indigo-600 transition">
+            <Link href="/" className="text-xl font-bold text-slate-900 hover:text-primary-600 transition">
               Our Daily Family
             </Link>
 
@@ -29,7 +29,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/sign-up"
-                className="px-5 py-2.5 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm"
+                className="px-5 py-2.5 text-sm font-semibold bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition shadow-sm"
               >
                 Start free trial
               </Link>
@@ -42,7 +42,7 @@ export default function Home() {
         {/* Hero Section - Clean and Professional */}
         <div className="py-12 lg:py-20">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-full text-sm font-medium text-indigo-700 mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 border border-primary-200 rounded-full text-sm font-medium text-primary-700 mb-6">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
               </svg>
@@ -50,7 +50,7 @@ export default function Home() {
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-8 leading-[1.1] tracking-tight">
               Your family's schedule,<br/>
-              <span className="text-indigo-600">finally organized</span>
+              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">finally organized</span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
               Stop missing activities buried in emails. Our Daily Family automatically finds every practice,
@@ -59,7 +59,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/sign-up"
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all shadow-medium hover:shadow-strong transform hover:-translate-y-0.5"
               >
                 Start your 7-day trial
                 <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,40 +142,40 @@ export default function Home() {
 
         {/* How It Works */}
         <div id="how-it-works" className="mb-32 scroll-mt-20">
-          <div className="bg-indigo-600 rounded-3xl p-12 md:p-16 text-white">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 p-12 md:p-16 text-white">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
                 Set up in minutes
               </h2>
-              <p className="text-xl text-indigo-100">
+              <p className="text-xl text-white/90">
                 Three simple steps to organized family life
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
               <div className="relative">
-                <div className="flex items-center justify-center w-12 h-12 bg-white text-indigo-600 rounded-xl font-bold text-lg mb-6 shadow-lg">
+                <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm text-white rounded-xl font-bold text-lg mb-6 shadow-lg">
                   1
                 </div>
                 <h3 className="text-2xl font-bold mb-3">Connect email</h3>
-                <p className="text-indigo-100 leading-relaxed">
+                <p className="text-white/90 leading-relaxed">
                   Securely link your Gmail account in one click. We only read activity-related emails—nothing else.
                 </p>
               </div>
               <div className="relative">
-                <div className="flex items-center justify-center w-12 h-12 bg-white text-purple-600 rounded-xl font-bold text-lg mb-6 shadow-lg">
+                <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm text-white rounded-xl font-bold text-lg mb-6 shadow-lg">
                   2
                 </div>
                 <h3 className="text-2xl font-bold mb-3">AI organizes</h3>
-                <p className="text-indigo-100 leading-relaxed">
+                <p className="text-white/90 leading-relaxed">
                   Our AI automatically finds every practice, game, lesson, and event—extracting dates, times, and locations.
                 </p>
               </div>
               <div className="relative">
-                <div className="flex items-center justify-center w-12 h-12 bg-white text-pink-600 rounded-xl font-bold text-lg mb-6 shadow-lg">
+                <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm text-white rounded-xl font-bold text-lg mb-6 shadow-lg">
                   3
                 </div>
                 <h3 className="text-2xl font-bold mb-3">Stay synced</h3>
-                <p className="text-indigo-100 leading-relaxed">
+                <p className="text-white/90 leading-relaxed">
                   Access your calendar anywhere. Get reminders. Share with your spouse. Never miss another activity.
                 </p>
               </div>
@@ -195,9 +195,9 @@ export default function Home() {
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-medium transition-shadow">
+                <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
                 </div>
@@ -258,14 +258,14 @@ export default function Home() {
               </p>
             </div>
             <div className="max-w-lg mx-auto">
-              <div className="bg-white rounded-3xl shadow-xl border-2 border-indigo-200 overflow-hidden transform hover:scale-105 transition-transform">
-                <div className="bg-indigo-600 px-8 py-6 text-white">
+              <div className="bg-white rounded-3xl shadow-strong border-2 border-primary-200 overflow-hidden transform hover:scale-105 transition-transform">
+                <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-6 text-white">
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-bold">$9.99</span>
                     <span className="text-xl opacity-90">/month</span>
                   </div>
-                  <p className="mt-2 text-indigo-100">Everything included. Cancel anytime.</p>
-                  <p className="mt-3 text-sm text-indigo-200">
+                  <p className="mt-2 text-white/90">Everything included. Cancel anytime.</p>
+                  <p className="mt-3 text-sm text-white/80">
                     Or save 20% with annual: <span className="font-semibold">$95/year</span>
                   </p>
                 </div>
@@ -318,7 +318,7 @@ export default function Home() {
 
                 <Link
                   href="/sign-up"
-                  className="block text-center bg-indigo-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-indigo-700 transition-all shadow-lg"
+                  className="block text-center bg-gradient-to-r from-primary-600 to-primary-700 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:from-primary-700 hover:to-primary-800 transition-all shadow-medium hover:shadow-strong"
                 >
                   Start your 7-day trial
                 </Link>
@@ -348,7 +348,7 @@ export default function Home() {
             </p>
             <Link
               href="/sign-up"
-              className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-xl"
+              className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Start your 7-day trial
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
