@@ -44,6 +44,27 @@ export const getFamilyMembers = query({
   },
 });
 
+// Update family details (name, email, etc.)
+export const updateFamilyDetails = mutation({
+  args: {
+    familyId: v.id("families"),
+    name: v.optional(v.string()),
+    primaryEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { familyId, ...updates } = args;
+
+    // Filter out undefined values
+    const filteredUpdates: any = {};
+    if (updates.name !== undefined) filteredUpdates.name = updates.name;
+    if (updates.primaryEmail !== undefined) filteredUpdates.primaryEmail = updates.primaryEmail;
+
+    await ctx.db.patch(familyId, filteredUpdates);
+
+    return { success: true };
+  },
+});
+
 // Update family subscription details (for Stripe integration)
 export const updateFamilySubscription = mutation({
   args: {

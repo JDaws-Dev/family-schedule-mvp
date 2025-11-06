@@ -26,6 +26,7 @@ export default function Onboarding() {
 
   // Mutations
   const updateFamilyName = useMutation(api.families.createFamily);
+  const updateFamilyDetails = useMutation(api.families.updateFamilyDetails);
   const saveFamilyMember = useMutation(api.familyMembers.addFamilyMember);
 
   const totalSteps = 3;
@@ -56,6 +57,15 @@ export default function Onboarding() {
     setCompletionMessage("Saving your family information...");
 
     try {
+      // Save family name and primary email
+      if (familyName.trim() || primaryEmail.trim()) {
+        await updateFamilyDetails({
+          familyId: currentUser.familyId,
+          name: familyName.trim() || undefined,
+          primaryEmail: primaryEmail.trim() || undefined,
+        });
+      }
+
       // Save family members
       const validMembers = familyMembers.filter(m => m.name.trim() !== "");
 
@@ -71,7 +81,7 @@ export default function Onboarding() {
         });
       }
 
-      setCompletionMessage("✓ Family members saved! Redirecting to Gmail connection...");
+      setCompletionMessage("✓ Family information saved! Redirecting to Gmail connection...");
 
       // Wait a moment to show success message
       setTimeout(() => {

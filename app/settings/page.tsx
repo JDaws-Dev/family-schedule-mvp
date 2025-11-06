@@ -66,6 +66,15 @@ export default function Settings() {
 
   // Phone number state
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+
+  // Validate phone number (E.164 format)
+  const validatePhoneNumber = (phone: string): boolean => {
+    if (!phone) return true; // Optional field
+    // E.164 format: +[country code][number] (6-15 digits total)
+    const e164Regex = /^\+[1-9]\d{1,14}$/;
+    return e164Regex.test(phone);
+  };
 
   // Update phone number when user data loads
   useEffect(() => {
@@ -215,6 +224,13 @@ export default function Settings() {
 
   const handleSavePreferences = async () => {
     if (!convexUser?._id) return;
+
+    // Validate phone number before saving
+    if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
+      setPhoneError("Please enter a valid phone number with country code (e.g., +12345678900)");
+      alert("Please fix the phone number format before saving.");
+      return;
+    }
 
     try {
       // Save phone number if changed
@@ -473,13 +489,31 @@ export default function Settings() {
                   <input
                     type="tel"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="+1234567890"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value);
+                      // Clear error when user starts typing
+                      if (phoneError) setPhoneError("");
+                    }}
+                    onBlur={() => {
+                      // Validate on blur
+                      if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
+                        setPhoneError("Please enter a valid phone number with country code (e.g., +12345678900)");
+                      }
+                    }}
+                    placeholder="+12345678900"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                      phoneError
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-primary-500'
+                    }`}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Required for SMS notifications. Include country code (e.g., +1 for US)
-                  </p>
+                  {phoneError ? (
+                    <p className="text-xs text-red-600 mt-1">{phoneError}</p>
+                  ) : (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Required for SMS notifications. Include country code (e.g., +1 for US)
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
