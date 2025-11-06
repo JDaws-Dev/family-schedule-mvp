@@ -899,7 +899,7 @@ function CalendarContent() {
                       // Delete from Google Calendar first if it was synced
                       if (selectedEvent.googleCalendarEventId) {
                         try {
-                          await fetch("/api/delete-from-calendar", {
+                          await fetch("/api/delete-calendar-event", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ eventId: selectedEvent._id }),
@@ -1143,6 +1143,7 @@ function CalendarContent() {
               <button
                 onClick={async () => {
                   try {
+                    // Update in Convex database
                     await updateEvent({
                       eventId: selectedEvent._id,
                       title: editFormData.title,
@@ -1154,6 +1155,22 @@ function CalendarContent() {
                       category: editFormData.category || undefined,
                       description: editFormData.description || undefined,
                     });
+
+                    // Update in Google Calendar if it was synced
+                    if (selectedEvent.googleCalendarEventId) {
+                      try {
+                        await fetch("/api/update-calendar-event", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ eventId: selectedEvent._id }),
+                        });
+                      } catch (error) {
+                        console.error("Error updating Google Calendar:", error);
+                        // Show warning but don't fail the entire operation
+                        showToast("Event updated in app, but Google Calendar sync failed", "info");
+                      }
+                    }
+
                     showToast("Event updated successfully", "success");
                     setEditingEvent(false);
                     setEditFormData(null);

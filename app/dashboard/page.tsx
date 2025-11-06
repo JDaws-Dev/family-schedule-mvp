@@ -1461,6 +1461,7 @@ function DashboardContent() {
                   <button
                     onClick={async () => {
                       try {
+                        // Update in Convex database
                         await updateEvent({
                           eventId: selectedEvent._id,
                           title: editFormData.title,
@@ -1472,6 +1473,22 @@ function DashboardContent() {
                           category: editFormData.category || undefined,
                           description: editFormData.description || undefined,
                         });
+
+                        // Update in Google Calendar if it was synced
+                        if (selectedEvent.googleCalendarEventId) {
+                          try {
+                            await fetch("/api/update-calendar-event", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ eventId: selectedEvent._id }),
+                            });
+                          } catch (error) {
+                            console.error("Error updating Google Calendar:", error);
+                            // Show warning but don't fail the entire operation
+                            showToast("Event updated in app, but Google Calendar sync failed", "info");
+                          }
+                        }
+
                         showToast(`✓ Event "${editFormData.title}" updated successfully!`, "success", undefined, 7000);
                         setSelectedEvent(null);
                         setIsEditingEvent(false);
@@ -1645,6 +1662,21 @@ function DashboardContent() {
                     onClick={async () => {
                       if (confirm(`Delete "${selectedEvent.title}"?`)) {
                         try {
+                          // Delete from Google Calendar first if it was synced
+                          if (selectedEvent.googleCalendarEventId) {
+                            try {
+                              await fetch("/api/delete-calendar-event", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ eventId: selectedEvent._id }),
+                              });
+                            } catch (error) {
+                              console.error("Error deleting from Google Calendar:", error);
+                              // Continue with deletion even if Google Calendar deletion fails
+                            }
+                          }
+
+                          // Delete from Convex database
                           await deleteEvent({ eventId: selectedEvent._id });
                           setSelectedEvent(null);
                           showToast(`✓ Event "${selectedEvent.title}" deleted`, "success", undefined, 7000);
