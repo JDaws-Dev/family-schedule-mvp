@@ -86,13 +86,14 @@ IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're
     });
 
     if (!openaiResponse.ok) {
-      console.error("[discover-sources] OpenAI API error");
+      const errorText = await openaiResponse.text();
+      console.error("[discover-sources] OpenAI API error:", openaiResponse.status, errorText);
       return [];
     }
 
     const openaiData = await openaiResponse.json();
     const aiResponse = JSON.parse(openaiData.choices[0].message.content);
-    const sources = aiResponse.sources || aiResponse.eventSources || [];
+    const sources = aiResponse.sources || aiResponse.eventSources || aiResponse.event_sources || [];
 
     console.log(`[discover-sources] Found ${sources.length} potential sources for ${location}`);
     return sources;

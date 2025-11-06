@@ -541,13 +541,21 @@ export default function Settings() {
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="flex items-start gap-3 flex-1">
-                          <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg flex-shrink-0">
+                          <div
+                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                            style={{ backgroundColor: member.color || "#6366f1" }}
+                          >
                             {member.name.charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-bold text-gray-900 text-lg">{member.name}</h3>
                               {age && <span className="text-sm text-gray-600">• {age} years old</span>}
+                              <div
+                                className="w-6 h-6 rounded border-2 border-gray-300"
+                                style={{ backgroundColor: member.color || "#6366f1" }}
+                                title="Calendar color"
+                              />
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               {member.relationship && <div><span className="font-medium">Relationship:</span> {member.relationship}</div>}
@@ -1064,16 +1072,46 @@ export default function Settings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Calendar Color
                   </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      name="color"
-                      defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.color || "#6366f1" : "#6366f1"}
-                      className="h-12 w-20 rounded-lg border border-gray-300 cursor-pointer"
-                    />
-                    <p className="text-sm text-gray-600">
-                      Events for this family member will appear in this color on your calendar
-                    </p>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Events for this family member will appear in this color on your calendar
+                  </p>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                    {[
+                      { name: "Indigo", value: "#6366f1" },
+                      { name: "Blue", value: "#3b82f6" },
+                      { name: "Purple", value: "#a855f7" },
+                      { name: "Pink", value: "#ec4899" },
+                      { name: "Red", value: "#ef4444" },
+                      { name: "Orange", value: "#f97316" },
+                      { name: "Yellow", value: "#eab308" },
+                      { name: "Green", value: "#22c55e" },
+                      { name: "Teal", value: "#14b8a6" },
+                      { name: "Cyan", value: "#06b6d4" },
+                      { name: "Slate", value: "#64748b" },
+                      { name: "Gray", value: "#6b7280" },
+                    ].map((color) => (
+                      <label
+                        key={color.value}
+                        className="relative flex flex-col items-center cursor-pointer group"
+                      >
+                        <input
+                          type="radio"
+                          name="color"
+                          value={color.value}
+                          defaultChecked={
+                            editingMember
+                              ? trackedMembers?.find(c => c._id === editingMember)?.color === color.value
+                              : color.value === "#6366f1"
+                          }
+                          className="sr-only peer"
+                        />
+                        <div
+                          className="w-12 h-12 rounded-lg border-2 border-gray-300 peer-checked:border-gray-900 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-gray-900 group-hover:scale-110 transition-transform"
+                          style={{ backgroundColor: color.value }}
+                        />
+                        <span className="text-xs text-gray-600 mt-1">{color.name}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
 
