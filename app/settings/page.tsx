@@ -68,10 +68,6 @@ export default function Settings() {
   const deleteFamilyMember = useMutation(api.familyMembers.deleteFamilyMember);
   const addToWhitelist = useMutation(api.emailProcessing.addToWhitelist);
   const addToBlacklist = useMutation(api.emailProcessing.addToBlacklist);
-  const updateFamilyLocation = useMutation(api.families.updateFamilyLocation);
-
-  // Location state
-  const [location, setLocation] = useState("");
 
   const handleDisconnectAccount = async (accountId: string, gmailEmail: string) => {
     if (!confirm(`Disconnect ${gmailEmail}? You can reconnect it anytime from this page.`)) {
@@ -177,12 +173,6 @@ export default function Settings() {
     }
   }, [userPreferences]);
 
-  // Load family location when family data loads
-  useEffect(() => {
-    if (family?.location) {
-      setLocation(family.location);
-    }
-  }, [family]);
 
   const handleSendInvite = () => {
     if (inviteEmail) {
@@ -323,20 +313,6 @@ export default function Settings() {
     }
   };
 
-  const handleSaveLocation = async () => {
-    if (!convexUser?.familyId) return;
-
-    try {
-      await updateFamilyLocation({
-        familyId: convexUser.familyId,
-        location: location,
-      });
-      alert("Location saved successfully!");
-    } catch (error) {
-      console.error("Error saving location:", error);
-      alert("Failed to save location. Please try again.");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -440,39 +416,6 @@ export default function Settings() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Location for Discovery */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Location</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Help us discover local activities and events in your area
-            </p>
-          </div>
-          <div className="p-6">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                City or Zip Code
-              </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g., Suwanee, GA or 30024"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                This helps our AI find activities and events near you
-              </p>
-            </div>
-            <button
-              onClick={handleSaveLocation}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
-            >
-              Save Location
-            </button>
           </div>
         </div>
 

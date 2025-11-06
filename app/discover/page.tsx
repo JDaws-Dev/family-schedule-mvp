@@ -13,6 +13,8 @@ export default function DiscoverPage() {
   const [filter, setFilter] = useState("all");
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoveryMessage, setDiscoveryMessage] = useState("");
+  const [location, setLocation] = useState("");
+  const [distance, setDistance] = useState(15); // Default 15 miles
 
   // Get current user from Convex
   const convexUser = useQuery(
@@ -36,12 +38,20 @@ export default function DiscoverPage() {
   const handleDiscoverActivities = async () => {
     if (!convexUser?.familyId) return;
 
+    if (!location.trim()) {
+      setDiscoveryMessage("❌ Please enter your city or zip code");
+      setTimeout(() => setDiscoveryMessage(""), 3000);
+      return;
+    }
+
     setIsDiscovering(true);
     setDiscoveryMessage("🔍 Searching local websites for activities... This may take a minute.");
 
     try {
       const result = await discoverActivities({
         familyId: convexUser.familyId,
+        userLocation: location,
+        distance: distance,
         apiBaseUrl: window.location.origin, // Pass current site URL to Convex action
       });
 
@@ -148,30 +158,69 @@ export default function DiscoverPage() {
 
         {/* Discovery Banner */}
         <div className="bg-indigo-600 rounded-xl p-6 mb-8 text-white">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-2">
-                🎯 Personalized for Your Family
-              </h2>
-              <p className="mb-4 opacity-90">
-                We search local websites, community calendars, and event listings to find
-                activities perfect for your family. All recommendations are matched to
-                your kids' ages and interests.
-              </p>
+          <div className="flex flex-col gap-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-2">
+                  🎯 Personalized for Your Family
+                </h2>
+                <p className="mb-4 opacity-90">
+                  We search local websites, community calendars, and event listings to find
+                  activities perfect for your family. All recommendations are matched to
+                  your kids' ages and interests.
+                </p>
+              </div>
+              <div className="text-6xl ml-4 hidden sm:block">🎯</div>
+            </div>
+
+            {/* Location and Distance Controls */}
+            <div className="bg-white/10 rounded-lg p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Your Location
+                  </label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="e.g., Suwanee, GA or 30519"
+                    className="w-full px-4 py-2 rounded-lg text-gray-900 focus:ring-2 focus:ring-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Search Radius
+                  </label>
+                  <select
+                    value={distance}
+                    onChange={(e) => setDistance(Number(e.target.value))}
+                    className="w-full px-4 py-2 rounded-lg text-gray-900 focus:ring-2 focus:ring-white"
+                  >
+                    <option value={5}>5 miles</option>
+                    <option value={10}>10 miles</option>
+                    <option value={15}>15 miles</option>
+                    <option value={20}>20 miles</option>
+                    <option value={25}>25 miles</option>
+                    <option value={30}>30 miles</option>
+                  </select>
+                </div>
+              </div>
+
               <button
                 onClick={handleDiscoverActivities}
                 disabled={isDiscovering}
-                className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDiscovering ? "🔄 Searching..." : "🔍 Find New Activities"}
               </button>
+
               {discoveryMessage && (
                 <div className="mt-4 p-3 bg-white/20 rounded-lg">
                   <p className="text-sm">{discoveryMessage}</p>
                 </div>
               )}
             </div>
-            <div className="text-6xl ml-4">🎯</div>
           </div>
         </div>
 

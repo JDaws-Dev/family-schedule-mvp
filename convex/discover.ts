@@ -97,6 +97,7 @@ export const discoverActivitiesForFamily = action({
   args: {
     familyId: v.id("families"),
     userLocation: v.optional(v.string()),
+    distance: v.optional(v.number()), // Search radius in miles
     apiBaseUrl: v.optional(v.string()), // Pass from client (window.location.origin)
   },
   handler: async (ctx, args) => {
@@ -172,7 +173,7 @@ export const discoverActivitiesForFamilyInternal = internalAction({
 });
 
 // Shared handler logic
-async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: any; userLocation?: string; apiBaseUrl?: string }) {
+async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: any; userLocation?: string; distance?: number; apiBaseUrl?: string }) {
   // Determine API base URL (use passed value or construct from env for cron)
   const baseUrl = args.apiBaseUrl || process.env.SITE_URL || "http://localhost:3000";
 
@@ -181,25 +182,28 @@ async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: an
     familyId: args.familyId,
   });
 
-  // Get location from family data or fallback to user-provided location
-  const location = family?.location || args.userLocation;
+  // Get location from user-provided location or fallback to family data
+  const location = args.userLocation || family?.location;
 
   if (!location) {
-    throw new Error("Please set your location in Settings to discover local activities");
+    throw new Error("Please enter your location to discover local activities");
   }
+
+  // Get distance (default to 15 miles if not provided)
+  const distance = args.distance || 15;
 
   // Step 2: Get family members for personalization
   const familyMembers = await ctx.runQuery(api.familyMembers.getFamilyMembers, {
     familyId: args.familyId,
   });
 
-  // Step 3: Call the scraping API with location
+  // Step 3: Call the scraping API with location and distance
   let scrapeResponse;
   try {
     scrapeResponse = await fetch(`${baseUrl}/api/discover/scrape-events`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ location }),
+      body: JSON.stringify({ location, distance }),
     });
 
     if (!scrapeResponse.ok) {

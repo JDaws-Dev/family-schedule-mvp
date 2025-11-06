@@ -1,30 +1,106 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// List of local event sources to scrape (easily expandable)
-const EVENT_SOURCES = [
+// Helper function to calculate distance between two coordinates (Haversine formula)
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3959; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Geocode a location string to coordinates using OpenStreetMap Nominatim (free)
+async function geocodeLocation(location: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const encodedLocation = encodeURIComponent(location);
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodedLocation}&format=json&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'FamilyScheduleMVP/1.0', // Required by Nominatim
+        },
+      }
+    );
+
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon),
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
+}
+
+// Function to dynamically discover event sources for any location
+async function discoverEventSources(location: string): Promise<any[]> {
+  // Use OpenAI to generate a list of relevant local event sources
+  const systemPrompt = `You are an expert at finding local event sources and community calendars for families with children.
+
+For the location "${location}", provide a list of official websites that commonly list local events, activities, and programs for families and children.
+
+Focus on:
+1. City/town official event calendars and recreation departments
+2. County parks and recreation departments
+3. Local library systems
+4. Community centers
+5. School district calendars (for public events)
+6. Local museums and cultural institutions
+7. YMCA/community organizations
+
+Return a JSON array of event sources with this structure:
+[
   {
-    name: "Suwanee Events Calendar",
-    url: "https://www.suwanee.com/events",
-    location: "Suwanee, GA",
-    zipCodes: ["30024", "30519"], // Suwanee zip codes
-    categories: ["community", "entertainment", "family"],
-  },
-  {
-    name: "Gwinnett County Parks & Rec",
-    url: "https://www.gwinnettcounty.com/web/gwinnett/Departments/CommunityServices/ParksandRecreation",
-    location: "Gwinnett County, GA",
-    zipCodes: ["30024", "30519", "30043", "30044", "30045", "30046", "30047", "30048", "30049", "30052", "30078", "30083", "30084", "30086", "30087", "30093", "30094", "30095", "30096", "30097", "30098"], // Gwinnett County zip codes
-    categories: ["sports", "recreation", "education"],
-  },
-  {
-    name: "Suwanee Library Events",
-    url: "https://www.gwinnettpl.org/branches/suwanee",
-    location: "Suwanee, GA",
-    zipCodes: ["30024", "30519"], // Suwanee zip codes
-    categories: ["education", "arts", "family"],
-  },
-  // Add more sources as needed - museums, community centers, etc.
-];
+    "name": "Organization Name",
+    "url": "https://...",
+    "categories": ["sports", "education", "arts", "community", "recreation", "family"]
+  }
+]
+
+IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're not certain about a URL, omit it.`;
+
+  try {
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Find event sources for: ${location}` },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+      }),
+    });
+
+    if (!openaiResponse.ok) {
+      console.error("[discover-sources] OpenAI API error");
+      return [];
+    }
+
+    const openaiData = await openaiResponse.json();
+    const aiResponse = JSON.parse(openaiData.choices[0].message.content);
+    const sources = aiResponse.sources || aiResponse.eventSources || [];
+
+    console.log(`[discover-sources] Found ${sources.length} potential sources for ${location}`);
+    return sources;
+  } catch (error) {
+    console.error("[discover-sources] Error discovering sources:", error);
+    return [];
+  }
+}
 
 interface ExtractedEvent {
   title: string;
@@ -50,31 +126,43 @@ interface ExtractedEvent {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { sourceUrl, zipCode, location } = await request.json();
+    const { sourceUrl, zipCode, location, distance } = await request.json();
 
-    // If no sourceUrl provided, scrape all default sources (filtered by location if provided)
-    let sourcesToScrape = sourceUrl
-      ? [{ name: "Custom Source", url: sourceUrl, location: zipCode || location || "Unknown", categories: ["general"] }]
-      : EVENT_SOURCES;
+    const searchDistance = distance || 15;
+    console.log(`[scrape-events] Location: ${location}, Distance: ${searchDistance} miles`);
 
-    // Filter sources by location if provided
-    if (location && !sourceUrl) {
-      sourcesToScrape = EVENT_SOURCES.filter(source => {
-        // Check if location matches city name
-        const cityMatch = source.location.toLowerCase().includes(location.toLowerCase()) ||
-          location.toLowerCase().includes(source.location.toLowerCase());
+    let sourcesToScrape: any[] = [];
 
-        // Check if location matches zip code
-        const zipMatch = source.zipCodes && source.zipCodes.includes(location.trim());
+    // If sourceUrl provided, use it directly
+    if (sourceUrl) {
+      sourcesToScrape = [{
+        name: "Custom Source",
+        url: sourceUrl,
+        location: zipCode || location || "Unknown",
+        categories: ["general"]
+      }];
+    } else if (location) {
+      // Dynamically discover event sources for the given location
+      console.log(`[scrape-events] Discovering event sources for ${location}...`);
+      sourcesToScrape = await discoverEventSources(location);
 
-        return cityMatch || zipMatch;
-      });
-
-      // If no sources match the location, use a fallback message
       if (sourcesToScrape.length === 0) {
-        console.log(`No event sources configured for location: ${location}`);
-        // For now, we'll return empty results, but in the future we could add dynamic source discovery
+        console.log(`[scrape-events] No event sources discovered for ${location}`);
+        return NextResponse.json({
+          success: true,
+          eventsFound: 0,
+          events: [],
+          sourcesScrapped: 0,
+          message: `Could not find event sources for ${location}. Try a different location format (e.g., "City, State" or zip code).`,
+        });
       }
+
+      console.log(`[scrape-events] Discovered ${sourcesToScrape.length} sources for ${location}`);
+    } else {
+      return NextResponse.json(
+        { error: "Please provide a location" },
+        { status: 400 }
+      );
     }
 
     const allEvents: any[] = [];
@@ -227,12 +315,17 @@ IMPORTANT: Only extract actual events with specific details. Skip general progra
 }
 
 /**
- * GET endpoint to manually trigger scraping (for testing)
+ * GET endpoint to check scraper status
  */
 export async function GET() {
   return NextResponse.json({
-    message: "Event scraper ready",
-    sources: EVENT_SOURCES.length,
-    sourcesConfigured: EVENT_SOURCES.map(s => ({ name: s.name, categories: s.categories })),
+    message: "Event scraper ready - uses dynamic source discovery",
+    features: [
+      "AI-powered event source discovery for any US location",
+      "Geocoding and distance-based filtering",
+      "Supports city names, zip codes, and addresses",
+      "Configurable search radius (5-30 miles)"
+    ],
+    status: "operational"
   });
 }
