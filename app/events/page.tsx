@@ -748,19 +748,45 @@ function EventsContent() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Family Member</label>
-                  <select
-                    value={editFormData?.childName || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, childName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="">None</option>
-                    {familyMembers?.map((member) => (
-                      <option key={member._id} value={member.name}>
-                        {member.name}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
+                  <div className="space-y-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                    {familyMembers && familyMembers.length > 0 ? (
+                      familyMembers.map((member) => {
+                        const selectedMembers = editFormData?.childName ? editFormData.childName.split(", ") : [];
+                        const isChecked = selectedMembers.includes(member.name);
+
+                        return (
+                          <label key={member._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                let updatedMembers = [...selectedMembers];
+                                if (e.target.checked) {
+                                  updatedMembers.push(member.name);
+                                } else {
+                                  updatedMembers = updatedMembers.filter(m => m !== member.name);
+                                }
+                                setEditFormData({
+                                  ...editFormData,
+                                  childName: updatedMembers.join(", ")
+                                });
+                              }}
+                              className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                            />
+                            <span
+                              className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium text-white"
+                              style={{ backgroundColor: member.color || "#6366f1" }}
+                            >
+                              {member.name}
+                            </span>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">No family members added yet</p>
+                    )}
+                  </div>
                 </div>
 
                 <div>
