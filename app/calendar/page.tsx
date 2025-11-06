@@ -602,127 +602,192 @@ function CalendarContent() {
         )}
       </div>
 
-      {/* Event Detail Modal */}
+      {/* Enhanced Event Detail Modal */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="bg-white rounded-lg max-w-lg w-full p-6"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <span className="text-gray-600 font-medium w-24">Date:</span>
-                <span className="text-gray-900">{selectedEvent.eventDate}</span>
+            {/* Header with Gradient */}
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start mb-3">
+                <h2 className="text-2xl font-bold text-white pr-8">{selectedEvent.title}</h2>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
 
-              {selectedEvent.eventTime && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Time:</span>
-                  <span className="text-gray-900">
-                    {selectedEvent.eventTime}
-                    {selectedEvent.endTime && ` - ${selectedEvent.endTime}`}
+              {/* Quick Info Cards */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                  <div className="text-white/80 text-xs font-medium mb-1">Date</div>
+                  <div className="text-white font-semibold flex items-center gap-2">
+                    📅 {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </div>
+                </div>
+
+                {selectedEvent.eventTime && (
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                    <div className="text-white/80 text-xs font-medium mb-1">Time</div>
+                    <div className="text-white font-semibold flex items-center gap-2">
+                      🕐 {selectedEvent.eventTime}
+                      {selectedEvent.endTime && ` - ${selectedEvent.endTime}`}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Description Section */}
+              {selectedEvent.description && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">
+                    Description
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">
+                    {selectedEvent.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {selectedEvent.location && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Location
+                    </div>
+                    <div className="text-gray-900 font-medium flex items-start gap-2">
+                      <span>📍</span>
+                      <span>{selectedEvent.location}</span>
+                    </div>
+                  </div>
+                )}
+
+                {selectedEvent.category && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Category
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      {selectedEvent.category}
+                    </div>
+                  </div>
+                )}
+
+                {selectedEvent.childName && (
+                  <div className="bg-gray-50 rounded-lg p-4 sm:col-span-2">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Family Members
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEvent.childName.split(',').map((name: string, idx: number) => {
+                        const trimmedName = name.trim();
+                        const member = familyMembers?.find(m => m.name === trimmedName);
+                        const color = member?.color || "#6366f1";
+                        return (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                            style={{ backgroundColor: color }}
+                          >
+                            {trimmedName}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Required Badge */}
+              {selectedEvent.requiresAction && (
+                <div className="mb-6 bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-red-900 mb-1">
+                        Action Required: RSVP
+                      </h4>
+                      {selectedEvent.actionDeadline && (
+                        <p className="text-sm text-red-700">
+                          Deadline: {new Date(selectedEvent.actionDeadline).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Source Information */}
+              {selectedEvent.sourceEmailSubject && (
+                <div className="mb-6 bg-blue-50 rounded-lg p-4">
+                  <div className="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">
+                    Source Information
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-sm text-blue-900">
+                      <span className="font-medium">Email:</span> {selectedEvent.sourceEmailSubject}
+                    </div>
+                    {selectedEvent.sourceGmailAccountId && gmailAccounts && (
+                      <div className="text-sm text-blue-800">
+                        <span className="font-medium">Account:</span> {gmailAccounts.find(a => a._id === selectedEvent.sourceGmailAccountId)?.gmailEmail || 'Unknown'}
+                      </div>
+                    )}
+                    <a
+                      href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`subject:"${selectedEvent.sourceEmailSubject}"`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      View in Gmail
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Sync Status */}
+              {selectedEvent.googleCalendarEventId && (
+                <div className="mb-6 bg-green-50 rounded-lg p-4 flex items-center gap-3">
+                  <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium text-green-900">
+                    Synced to Google Calendar
                   </span>
                 </div>
               )}
-
-              {selectedEvent.location && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Location:</span>
-                  <span className="text-gray-900">{selectedEvent.location}</span>
-                </div>
-              )}
-
-              {selectedEvent.childName && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Child:</span>
-                  {(() => {
-                    const firstName = selectedEvent.childName.split(",")[0].trim();
-                    const member = familyMembers?.find(m => m.name === firstName);
-                    const color = member?.color || "#6366f1";
-                    return (
-                      <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
-                        style={{ backgroundColor: color }}
-                      >
-                        {selectedEvent.childName}
-                      </span>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {selectedEvent.description && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Details:</span>
-                  <span className="text-gray-900">{selectedEvent.description}</span>
-                </div>
-              )}
-
-              {selectedEvent.category && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Category:</span>
-                  <span className="text-gray-900">{selectedEvent.category}</span>
-                </div>
-              )}
-
-              {selectedEvent.requiresAction && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Action:</span>
-                  <div className="flex-1">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                      RSVP Required
-                    </span>
-                    {selectedEvent.actionDeadline && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Deadline: {selectedEvent.actionDeadline}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {selectedEvent.sourceEmailSubject && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Source:</span>
-                  <div className="flex-1">
-                    <div className="text-gray-600 text-sm mb-1">
-                      From email: <span className="font-medium">{selectedEvent.sourceEmailSubject}</span>
-                    </div>
-                    {selectedEvent.sourceGmailAccountId && gmailAccounts && (
-                      <div className="text-gray-500 text-xs mb-2">
-                        Gmail account: {gmailAccounts.find(a => a._id === selectedEvent.sourceGmailAccountId)?.gmailEmail || 'Unknown'}
-                      </div>
-                    )}
-                    {selectedEvent.sourceEmailSubject && (
-                      <a
-                        href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`subject:"${selectedEvent.sourceEmailSubject}"`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm underline"
-                        title="Opens Gmail search - will search across all your logged-in Gmail accounts"
-                      >
-                        Search in Gmail
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
-            <div className="mt-6 flex gap-3">
+            {/* Action Buttons */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
               <button
                 onClick={async () => {
                   if (confirm(`Delete "${selectedEvent.title}"?`)) {
@@ -745,22 +810,26 @@ function CalendarContent() {
                     setSelectedEvent(null);
                   }
                 }}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+                className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow-soft flex items-center justify-center gap-2"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
                 Delete
               </button>
               <div className="flex-1" />
               <button
-                onClick={() => {
-                  setEditingEvent(true);
-                }}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
+                onClick={() => setEditingEvent(true)}
+                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 Edit
               </button>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
               >
                 Close
               </button>
