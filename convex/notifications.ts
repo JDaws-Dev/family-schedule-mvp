@@ -245,6 +245,7 @@ export const sendEventReminders = internalAction({
                     eventTime: event.eventTime,
                     eventLocation: event.location,
                     childName: event.childName,
+                    reminderHoursBefore: prefs.reminderHoursBefore,
                   });
 
                   // Log successful send
@@ -369,7 +370,7 @@ export const getFamilyUsers = query({
   },
 });
 
-// Internal actions to actually send emails (placeholder - you'll need to implement with Resend or similar)
+// Internal actions to actually send emails with Resend
 export const sendReminderEmail = internalAction({
   args: {
     userId: v.id("users"),
@@ -380,32 +381,81 @@ export const sendReminderEmail = internalAction({
     eventTime: v.optional(v.string()),
     eventLocation: v.optional(v.string()),
     childName: v.optional(v.string()),
+    reminderHoursBefore: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // TODO: Implement with Resend, SendGrid, or similar email service
     console.log(`Sending reminder email to ${args.userEmail} for event: ${args.eventTitle}`);
 
-    // For now, just log - in production you'd call an email API
     const eventTimeStr = args.eventTime ? ` at ${args.eventTime}` : "";
     const locationStr = args.eventLocation ? ` at ${args.eventLocation}` : "";
     const memberStr = args.childName ? ` for ${args.childName}` : "";
 
-    console.log(`Event: ${args.eventTitle}${memberStr} on ${args.eventDate}${eventTimeStr}${locationStr}`);
+    // Send email via Resend API
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+        to: args.userEmail,
+        subject: `Reminder: ${args.eventTitle}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
+                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                .event-details { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #667eea; }
+                .detail-item { margin: 10px 0; }
+                .label { font-weight: bold; color: #667eea; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>📅 Event Reminder</h1>
+                </div>
+                <div class="content">
+                  <p>Hi! This is a reminder about an upcoming event${memberStr}.</p>
+                  <div class="event-details">
+                    <h2 style="margin-top: 0; color: #667eea;">${args.eventTitle}</h2>
+                    <div class="detail-item">
+                      <span class="label">📆 Date:</span> ${args.eventDate}${eventTimeStr}
+                    </div>
+                    ${args.eventLocation ? `<div class="detail-item"><span class="label">📍 Location:</span> ${args.eventLocation}</div>` : ''}
+                    ${args.childName ? `<div class="detail-item"><span class="label">👤 For:</span> ${args.childName}</div>` : ''}
+                    ${args.reminderHoursBefore ? `<div class="detail-item" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                      <span class="label">⏰ Reminder:</span> ${args.reminderHoursBefore} hours before the event
+                    </div>` : ''}
+                  </div>
+                  <p style="margin-top: 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/calendar" style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Calendar</a>
+                  </p>
+                  <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                    Don't want these reminders? <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings" style="color: #667eea;">Update your notification settings</a>.
+                  </p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+      }),
+    });
 
-    // Example with Resend (commented out):
-    // await fetch("https://api.resend.com/emails", {
-    //   method: "POST",
-    //   headers: {
-    //     "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     from: "Our Daily Family <reminders@ourdailyfamily.com>",
-    //     to: args.userEmail,
-    //     subject: `Reminder: ${args.eventTitle}`,
-    //     html: `<h1>Event Reminder</h1><p>Don't forget about ${args.eventTitle}${memberStr} on ${args.eventDate}${eventTimeStr}${locationStr}</p>`,
-    //   }),
-    // });
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Resend API error:", error);
+      throw new Error(`Failed to send email: ${JSON.stringify(error)}`);
+    }
+
+    const result = await response.json();
+    console.log("Email sent successfully:", result);
+    return result;
   },
 });
 
@@ -420,26 +470,70 @@ export const sendRSVPAlertEmail = internalAction({
     childName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // TODO: Implement with Resend, SendGrid, or similar email service
     console.log(`Sending RSVP alert to ${args.userEmail} for event: ${args.eventTitle}`);
 
     const memberStr = args.childName ? ` for ${args.childName}` : "";
-    console.log(`RSVP needed${memberStr} by ${args.actionDeadline} for ${args.eventTitle} on ${args.eventDate}`);
 
-    // Example with Resend (commented out):
-    // await fetch("https://api.resend.com/emails", {
-    //   method: "POST",
-    //   headers: {
-    //     "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     from: "Family Schedule <reminders@familyschedule.app>",
-    //     to: args.userEmail,
-    //     subject: `Action Required: RSVP for ${args.eventTitle}`,
-    //     html: `<h1>RSVP Deadline Approaching</h1><p>Don't forget to RSVP${memberStr} by ${args.actionDeadline} for ${args.eventTitle} on ${args.eventDate}</p>`,
-    //   }),
-    //   }),
-    // });
+    // Send email via Resend API
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+        to: args.userEmail,
+        subject: `⚠️ Action Required: RSVP for ${args.eventTitle}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
+                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                .alert-box { background: #fef3c7; border: 2px solid #f59e0b; padding: 20px; border-radius: 8px; margin-top: 20px; }
+                .deadline { font-size: 24px; font-weight: bold; color: #dc2626; text-align: center; margin: 15px 0; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>⚠️ RSVP Deadline Approaching</h1>
+                </div>
+                <div class="content">
+                  <p><strong>Action required${memberStr}!</strong></p>
+                  <div class="alert-box">
+                    <h2 style="margin-top: 0; color: #dc2626;">${args.eventTitle}</h2>
+                    <p><strong>Event Date:</strong> ${args.eventDate}</p>
+                    <p><strong>RSVP Deadline:</strong></p>
+                    <div class="deadline">${args.actionDeadline}</div>
+                    <p style="margin-bottom: 0;">Don't forget to respond before the deadline!</p>
+                  </div>
+                  <p style="margin-top: 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/calendar" style="display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Event Details</a>
+                  </p>
+                  <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                    Questions? Visit your <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/settings" style="color: #dc2626;">settings page</a>.
+                  </p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Resend API error:", error);
+      throw new Error(`Failed to send RSVP alert email: ${JSON.stringify(error)}`);
+    }
+
+    const result = await response.json();
+    console.log("RSVP alert email sent successfully:", result);
+    return result;
   },
 });

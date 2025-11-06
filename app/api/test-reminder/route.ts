@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { Resend } from "resend";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,31 +27,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send test email (for now, just log it)
+    // Send test email with Resend
     console.log(`Sending test reminder to ${userEmail}`);
 
-    // In production, you would integrate with an email service like Resend:
-    // await fetch("https://api.resend.com/emails", {
-    //   method: "POST",
-    //   headers: {
-    //     "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     from: "Our Daily Family <reminders@ourdailyfamily.com>",
-    //     to: userEmail,
-    //     subject: "Test Reminder - Our Daily Family",
-    //     html: `
-    //       <h1>Test Reminder</h1>
-    //       <p>This is a test reminder from Our Daily Family!</p>
-    //       <p>Your reminders are working correctly. You'll receive notifications like this based on your preferences:</p>
-    //       <ul>
-    //         <li>Reminder timing: ${prefs.reminderHoursBefore} hours before events</li>
-    //         <li>Email reminders: ${prefs.emailRemindersEnabled ? 'Enabled' : 'Disabled'}</li>
-    //       </ul>
-    //     `,
-    //   }),
-    // });
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+      to: userEmail,
+      subject: "Test Reminder - Our Daily Family",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+              .settings { background: white; padding: 20px; border-radius: 8px; margin-top: 20px; }
+              .settings li { margin: 10px 0; }
+              .success { color: #10b981; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>✅ Test Reminder</h1>
+              </div>
+              <div class="content">
+                <p><strong class="success">Success!</strong> This is a test reminder from Our Daily Family.</p>
+                <p>Your reminders are working correctly. You'll receive notifications like this based on your preferences:</p>
+                <div class="settings">
+                  <h3>Your Current Settings:</h3>
+                  <ul>
+                    <li><strong>Reminder timing:</strong> ${prefs.reminderHoursBefore} hours before events</li>
+                    <li><strong>Email reminders:</strong> ${prefs.emailRemindersEnabled ? '✅ Enabled' : '❌ Disabled'}</li>
+                  </ul>
+                </div>
+                <p style="margin-top: 20px;">You'll receive reminders for upcoming events based on these settings.</p>
+                <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                  Questions? Just reply to this email or visit our <a href="${process.env.NEXT_PUBLIC_APP_URL}/settings" style="color: #667eea;">settings page</a>.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
+
+    console.log("Email sent successfully:", data);
 
     return NextResponse.json({
       success: true,
