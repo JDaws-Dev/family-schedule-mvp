@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
     redirectUri,
     clientId: process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 15)}...` : "MISSING",
     clientIdLength: process.env.GOOGLE_CLIENT_ID?.length,
+    clientIdHasNewline: process.env.GOOGLE_CLIENT_ID?.includes('\n'),
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET ? `${process.env.GOOGLE_CLIENT_SECRET.substring(0, 10)}...` : "MISSING",
+    clientSecretLength: process.env.GOOGLE_CLIENT_SECRET?.length,
+    clientSecretHasNewline: process.env.GOOGLE_CLIENT_SECRET?.includes('\n'),
     fullUrl: googleAuthUrl.toString(),
   });
 }
