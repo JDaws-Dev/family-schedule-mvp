@@ -6,6 +6,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "../components/Toast";
+import { SyncStatus } from "../components/SyncStatus";
 
 export default function Dashboard() {
   const { showToast } = useToast();
@@ -301,6 +302,15 @@ export default function Dashboard() {
             Here's what's happening with your family schedule
           </p>
         </div>
+
+        {/* Sync Status */}
+        {convexUser?.familyId && isGmailConnected && (
+          <SyncStatus
+            familyId={convexUser.familyId}
+            onScanNow={handleScanEmail}
+            isScanning={isScanning}
+          />
+        )}
 
         {/* Gmail Connection Banner */}
         {!isGmailConnected && (
