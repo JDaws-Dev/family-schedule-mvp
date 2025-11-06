@@ -184,7 +184,15 @@ export default defineSchema({
     rating: v.optional(v.number()),
     imageUrl: v.optional(v.string()),
     sourceUrl: v.optional(v.string()), // Where we found this info
+    sourceName: v.optional(v.string()), // Name of the source (e.g., "Library", "Parks Dept")
     aiSummary: v.optional(v.string()), // AI-generated summary of why this is good for their family
+    // Event date/time information
+    date: v.optional(v.string()), // YYYY-MM-DD
+    time: v.optional(v.string()), // HH:MM (24-hour format)
+    endTime: v.optional(v.string()), // HH:MM (24-hour format)
+    recurring: v.optional(v.boolean()),
+    registrationRequired: v.optional(v.boolean()),
+    registrationDeadline: v.optional(v.string()), // YYYY-MM-DD
     status: v.union(
       v.literal("suggested"), // AI suggested, not yet reviewed
       v.literal("interested"), // Family marked as interested

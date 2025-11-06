@@ -72,6 +72,14 @@ export const saveDiscoveredActivities = mutation({
           aiSummary: activity.aiSummary,
           status: "suggested",
           suggestedAt: Date.now(),
+          // Save event date/time information
+          date: activity.date,
+          time: activity.time,
+          endTime: activity.endTime,
+          recurring: activity.recurring,
+          registrationRequired: activity.registrationRequired,
+          registrationDeadline: activity.registrationDeadline,
+          sourceName: activity.sourceName,
           distance: undefined, // TODO: Calculate distance from family location
           rating: undefined, // Could integrate Google Places API for ratings
           imageUrl: undefined, // Could fetch from website or use placeholder

@@ -93,9 +93,18 @@ IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're
 
     const openaiData = await openaiResponse.json();
     const aiResponse = JSON.parse(openaiData.choices[0].message.content);
+
+    // Check all possible keys that AI might return
     const sources = aiResponse.sources || aiResponse.eventSources || aiResponse.event_sources || [];
 
     console.log(`[discover-sources] Found ${sources.length} potential sources for ${location}`);
+
+    // If no sources found, log the response for debugging
+    if (sources.length === 0) {
+      console.error(`[discover-sources] No sources extracted. AI response keys:`, Object.keys(aiResponse));
+      console.error(`[discover-sources] Full AI response:`, JSON.stringify(aiResponse).substring(0, 500));
+    }
+
     return sources;
   } catch (error) {
     console.error("[discover-sources] Error discovering sources:", error);

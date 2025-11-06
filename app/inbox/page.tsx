@@ -25,6 +25,12 @@ export default function InboxPage() {
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set());
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set()); // For add modal
   const [editSelectedMembers, setEditSelectedMembers] = useState<Set<string>>(new Set()); // For edit modal
+  const [showPasteSMSModal, setShowPasteSMSModal] = useState(false);
+  const [showUploadSMSModal, setShowUploadSMSModal] = useState(false);
+  const [smsText, setSmsText] = useState("");
+  const [smsScreenshot, setSmsScreenshot] = useState<File | null>(null);
+  const [smsProcessing, setSmsProcessing] = useState(false);
+  const [smsResult, setSmsResult] = useState<any>(null);
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
 
@@ -198,6 +204,131 @@ export default function InboxPage() {
     }
   };
 
+  const handlePasteSMS = async () => {
+    if (!smsText.trim()) {
+      setSmsResult({ error: "Please paste some text to analyze" });
+      return;
+    }
+
+    setSmsProcessing(true);
+    setSmsResult(null);
+
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ smsText }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.hasEvent) {
+        // Create an unconfirmed event from the SMS data
+        await createEvent({
+          familyId: convexUser!.familyId,
+          title: data.event.title,
+          date: data.event.date,
+          time: data.event.time,
+          endTime: data.event.endTime,
+          location: data.event.location,
+          category: data.event.category || "other",
+          childName: Array.from(selectedMembers).join(", ") || undefined,
+          description: data.event.description,
+          confirmed: false, // Add to inbox for review
+        });
+
+        setSmsResult({
+          success: true,
+          message: `Event extracted: "${data.event.title}". Check your inbox to review!`,
+          confidence: data.confidence,
+        });
+        setSmsText("");
+        setSelectedMembers(new Set());
+        setTimeout(() => {
+          setShowPasteSMSModal(false);
+          setSmsResult(null);
+        }, 3000);
+      } else if (response.ok && !data.hasEvent) {
+        setSmsResult({
+          success: false,
+          message: `No event found in the text. ${data.explanation || ""}`,
+        });
+      } else {
+        setSmsResult({ error: data.error || "Failed to extract event" });
+      }
+    } catch (error: any) {
+      console.error("SMS extraction error:", error);
+      setSmsResult({ error: "Failed to process SMS text" });
+    } finally {
+      setSmsProcessing(false);
+    }
+  };
+
+  const handleUploadScreenshot = async () => {
+    if (!smsScreenshot) {
+      setSmsResult({ error: "Please select a screenshot to upload" });
+      return;
+    }
+
+    setSmsProcessing(true);
+    setSmsResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", smsScreenshot);
+
+      const response = await fetch("/api/sms/analyze-screenshot", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.hasEvent && data.events && data.events.length > 0) {
+        // Create unconfirmed events for each detected event
+        for (const event of data.events) {
+          await createEvent({
+            familyId: convexUser!.familyId,
+            title: event.title,
+            date: event.date,
+            time: event.time,
+            endTime: event.endTime,
+            location: event.location,
+            category: event.category || "other",
+            childName: Array.from(selectedMembers).join(", ") || undefined,
+            description: event.description,
+            confirmed: false, // Add to inbox for review
+          });
+        }
+
+        setSmsResult({
+          success: true,
+          message: `Found ${data.events.length} event(s). Check your inbox to review!`,
+          confidence: data.confidence,
+          cost: data.usage ? `~${Math.round(data.usage.total_tokens / 1000)}K tokens used` : undefined,
+        });
+        setSmsScreenshot(null);
+        setSelectedMembers(new Set());
+        setTimeout(() => {
+          setShowUploadSMSModal(false);
+          setSmsResult(null);
+        }, 3000);
+      } else if (response.ok && !data.hasEvent) {
+        setSmsResult({
+          success: false,
+          message: `No events found in screenshot. ${data.explanation || ""}`,
+        });
+      } else {
+        setSmsResult({ error: data.error || "Failed to analyze screenshot" });
+      }
+    } catch (error: any) {
+      console.error("Screenshot analysis error:", error);
+      setSmsResult({ error: "Failed to process screenshot" });
+    } finally {
+      setSmsProcessing(false);
+    }
+  };
+
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
       case "high": return "bg-green-100 text-green-800 border-green-300";
@@ -293,7 +424,7 @@ export default function InboxPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <button
             onClick={() => setShowAddEventModal(true)}
             className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
@@ -304,9 +435,24 @@ export default function InboxPage() {
           <button
             onClick={handleScanEmail}
             disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isScanning ? "Scanning..." : "Scan Emails Now"}
+            <span>📧</span>
+            {isScanning ? "Scanning..." : "Scan Emails"}
+          </button>
+          <button
+            onClick={() => setShowPasteSMSModal(true)}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2"
+          >
+            <span>💬</span>
+            Paste SMS Text
+          </button>
+          <button
+            onClick={() => setShowUploadSMSModal(true)}
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-2"
+          >
+            <span>📸</span>
+            Upload Screenshot
           </button>
         </div>
 
@@ -905,6 +1051,227 @@ export default function InboxPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paste SMS Text Modal */}
+      {showPasteSMSModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-4">📱 Paste SMS Text</h2>
+              <p className="text-gray-600 mb-6">
+                Copy a text message from your phone and paste it here. Our AI will extract event information automatically.
+              </p>
+
+              {smsResult && (
+                <div
+                  className={`mb-4 p-4 rounded-lg border ${
+                    smsResult.error
+                      ? "bg-red-50 border-red-200 text-red-800"
+                      : smsResult.success
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : "bg-yellow-50 border-yellow-200 text-yellow-800"
+                  }`}
+                >
+                  <p className="font-semibold">{smsResult.message || smsResult.error}</p>
+                  {smsResult.confidence && (
+                    <p className="text-sm mt-1">
+                      Confidence: <span className="font-medium capitalize">{smsResult.confidence}</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    SMS Text *
+                  </label>
+                  <textarea
+                    value={smsText}
+                    onChange={(e) => setSmsText(e.target.value)}
+                    placeholder="Example: 'Don't forget - Emily's birthday party next Sunday at 2pm at Chuck E Cheese!'"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    rows={6}
+                    disabled={smsProcessing}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Works best with messages that include event name, date/time, and location
+                  </p>
+                </div>
+
+                {familyMembers && familyMembers.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Assign to Family Member (Optional)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {familyMembers.map((member) => (
+                        <label key={member._id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedMembers.has(member.name)}
+                            onChange={(e) => {
+                              const newSet = new Set(selectedMembers);
+                              if (e.target.checked) {
+                                newSet.add(member.name);
+                              } else {
+                                newSet.delete(member.name);
+                              }
+                              setSelectedMembers(newSet);
+                            }}
+                            className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                            disabled={smsProcessing}
+                          />
+                          <span className="text-sm">{member.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handlePasteSMS}
+                  disabled={smsProcessing || !smsText.trim()}
+                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {smsProcessing ? "Analyzing..." : "Extract Event"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPasteSMSModal(false);
+                    setSmsText("");
+                    setSmsResult(null);
+                    setSelectedMembers(new Set());
+                  }}
+                  disabled={smsProcessing}
+                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload SMS Screenshot Modal */}
+      {showUploadSMSModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-4">📸 Upload SMS Screenshot</h2>
+              <p className="text-gray-600 mb-6">
+                Take a screenshot of your text messages and upload it here. Our AI will read and extract event information.
+              </p>
+
+              {smsResult && (
+                <div
+                  className={`mb-4 p-4 rounded-lg border ${
+                    smsResult.error
+                      ? "bg-red-50 border-red-200 text-red-800"
+                      : smsResult.success
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : "bg-yellow-50 border-yellow-200 text-yellow-800"
+                  }`}
+                >
+                  <p className="font-semibold">{smsResult.message || smsResult.error}</p>
+                  {smsResult.confidence && (
+                    <p className="text-sm mt-1">
+                      Confidence: <span className="font-medium capitalize">{smsResult.confidence}</span>
+                    </p>
+                  )}
+                  {smsResult.cost && (
+                    <p className="text-xs mt-1 text-gray-600">{smsResult.cost}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Screenshot Image *
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setSmsScreenshot(e.target.files?.[0] || null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    disabled={smsProcessing}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Supports PNG, JPEG, WEBP. For best results, ensure text is clear and readable.
+                  </p>
+                  {smsScreenshot && (
+                    <p className="text-sm text-gray-700 mt-2">
+                      Selected: {smsScreenshot.name} ({Math.round(smsScreenshot.size / 1024)}KB)
+                    </p>
+                  )}
+                </div>
+
+                {familyMembers && familyMembers.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Assign to Family Member (Optional)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {familyMembers.map((member) => (
+                        <label key={member._id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedMembers.has(member.name)}
+                            onChange={(e) => {
+                              const newSet = new Set(selectedMembers);
+                              if (e.target.checked) {
+                                newSet.add(member.name);
+                              } else {
+                                newSet.delete(member.name);
+                              }
+                              setSelectedMembers(newSet);
+                            }}
+                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            disabled={smsProcessing}
+                          />
+                          <span className="text-sm">{member.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    <strong>Cost:</strong> This feature uses GPT-4 Vision and costs approximately $0.01-0.02 per screenshot.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handleUploadScreenshot}
+                  disabled={smsProcessing || !smsScreenshot}
+                  className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {smsProcessing ? "Analyzing..." : "Analyze Screenshot"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUploadSMSModal(false);
+                    setSmsScreenshot(null);
+                    setSmsResult(null);
+                    setSelectedMembers(new Set());
+                  }}
+                  disabled={smsProcessing}
+                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
