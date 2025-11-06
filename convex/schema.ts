@@ -132,11 +132,17 @@ export default defineSchema({
 
   userPreferences: defineTable({
     userId: v.id("users"),
+    // Email preferences (for detailed info & digests)
     emailRemindersEnabled: v.boolean(),
-    smsRemindersEnabled: v.boolean(),
-    reminderHoursBefore: v.number(), // How many hours before event to send reminder
+    emailReminderHoursBefore: v.number(), // Hours before event to send email reminder (default: 24)
     weeklyDigestEnabled: v.boolean(),
     weeklyDigestDay: v.string(), // Day of week for digest
+    // SMS preferences (for urgent/immediate notifications)
+    smsRemindersEnabled: v.boolean(),
+    smsReminderHoursBefore: v.number(), // Hours before event to send SMS (default: 1)
+    dailySmsDigestEnabled: v.boolean(), // One daily SMS with today's events
+    dailySmsDigestTime: v.string(), // Time to send daily SMS (HH:MM format, e.g., "07:00")
+    // Email scanning
     autoScanEmails: v.boolean(),
     scanIntervalHours: v.number(), // How often to scan emails
   }).index("by_user", ["userId"]),

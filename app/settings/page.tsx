@@ -63,6 +63,16 @@ export default function Settings() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
 
+  // Phone number state
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  // Update phone number when user data loads
+  useEffect(() => {
+    if (convexUser?.phoneNumber) {
+      setPhoneNumber(convexUser.phoneNumber);
+    }
+  }, [convexUser]);
+
   // Mutations
   const removeGmailAccount = useMutation(api.gmailAccounts.removeGmailAccount);
   const addFamilyMember = useMutation(api.familyMembers.addFamilyMember);
@@ -70,6 +80,7 @@ export default function Settings() {
   const deleteFamilyMember = useMutation(api.familyMembers.deleteFamilyMember);
   const addToWhitelist = useMutation(api.emailProcessing.addToWhitelist);
   const addToBlacklist = useMutation(api.emailProcessing.addToBlacklist);
+  const updateUserPhoneNumber = useMutation(api.users.updatePhoneNumber);
 
   const handleDisconnectAccount = async (accountId: string, gmailEmail: string) => {
     if (!confirm(`Disconnect ${gmailEmail}? You can reconnect it anytime from this page.`)) {
@@ -156,10 +167,13 @@ export default function Settings() {
 
   const [preferences, setPreferences] = useState({
     emailReminders: true,
-    smsReminders: true,
-    reminderHoursBefore: 24,
-    weeklyDigest: true,
+    emailReminderHoursBefore: 24,
+    weeklyDigest: false,
     weeklyDigestDay: "Sunday",
+    smsReminders: false,
+    smsReminderHoursBefore: 1,
+    dailySmsDigest: false,
+    dailySmsDigestTime: "07:00",
   });
 
   // Update local preferences when Convex data loads
@@ -167,10 +181,13 @@ export default function Settings() {
     if (userPreferences) {
       setPreferences({
         emailReminders: userPreferences.emailRemindersEnabled,
-        smsReminders: userPreferences.smsRemindersEnabled,
-        reminderHoursBefore: userPreferences.reminderHoursBefore,
+        emailReminderHoursBefore: userPreferences.emailReminderHoursBefore || 24,
         weeklyDigest: userPreferences.weeklyDigestEnabled,
         weeklyDigestDay: userPreferences.weeklyDigestDay,
+        smsReminders: userPreferences.smsRemindersEnabled,
+        smsReminderHoursBefore: userPreferences.smsReminderHoursBefore || 1,
+        dailySmsDigest: userPreferences.dailySmsDigestEnabled || false,
+        dailySmsDigestTime: userPreferences.dailySmsDigestTime || "07:00",
       });
     }
   }, [userPreferences]);
@@ -189,13 +206,25 @@ export default function Settings() {
     if (!convexUser?._id) return;
 
     try {
+      // Save phone number if changed
+      if (phoneNumber !== (convexUser.phoneNumber || "")) {
+        await updateUserPhoneNumber({
+          userId: convexUser._id,
+          phoneNumber: phoneNumber,
+        });
+      }
+
+      // Save preferences
       await updatePreferences({
         userId: convexUser._id,
         emailRemindersEnabled: preferences.emailReminders,
-        smsRemindersEnabled: preferences.smsReminders,
-        reminderHoursBefore: preferences.reminderHoursBefore,
+        emailReminderHoursBefore: preferences.emailReminderHoursBefore,
         weeklyDigestEnabled: preferences.weeklyDigest,
         weeklyDigestDay: preferences.weeklyDigestDay,
+        smsRemindersEnabled: preferences.smsReminders,
+        smsReminderHoursBefore: preferences.smsReminderHoursBefore,
+        dailySmsDigestEnabled: preferences.dailySmsDigest,
+        dailySmsDigestTime: preferences.dailySmsDigestTime,
       });
       alert("Preferences saved successfully!");
     } catch (error) {
@@ -432,9 +461,14 @@ export default function Settings() {
                   </label>
                   <input
                     type="tel"
-                    defaultValue={convexUser.phoneNumber || ""}
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+1234567890"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Required for SMS notifications. Include country code (e.g., +1 for US)
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -454,54 +488,182 @@ export default function Settings() {
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Configure when and how you receive reminders about upcoming events
+              Choose how you want to stay updated about your family's activities
             </p>
           </div>
-          <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-900">Email Reminders</h3>
-                <p className="text-sm text-gray-600">
-                  Get email reminders before events
-                </p>
+          <div className="p-6 space-y-6">
+            {/* Email Section */}
+            <div className="border-l-4 border-blue-500 pl-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <span>📧</span> Email Notifications
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Detailed reminders with full event information and links
+                  </p>
+                </div>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={preferences.emailReminders}
-                  onChange={(e) =>
-                    setPreferences({ ...preferences, emailReminders: e.target.checked })
-                  }
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-              </label>
+
+              <div className="space-y-3 ml-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Event Reminders</p>
+                    <p className="text-xs text-gray-500">Get notified before each event</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.emailReminders}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, emailReminders: e.target.checked })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                {preferences.emailReminders && (
+                  <div className="ml-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Send email
+                    </label>
+                    <select
+                      value={preferences.emailReminderHoursBefore}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          emailReminderHoursBefore: Number(e.target.value),
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value={24}>24 hours before (1 day)</option>
+                      <option value={48}>48 hours before (2 days)</option>
+                      <option value={72}>72 hours before (3 days)</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Weekly Digest</p>
+                    <p className="text-xs text-gray-500">Summary of upcoming week</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.weeklyDigest}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, weeklyDigest: e.target.checked })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-gray-900 mb-2">
-                Reminder Timing
-              </label>
-              <select
-                value={preferences.reminderHoursBefore}
-                onChange={(e) =>
-                  setPreferences({
-                    ...preferences,
-                    reminderHoursBefore: Number(e.target.value),
-                  })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value={1}>1 hour before</option>
-                <option value={2}>2 hours before</option>
-                <option value={4}>4 hours before</option>
-                <option value={12}>12 hours before</option>
-                <option value={24}>24 hours before (1 day)</option>
-                <option value={48}>48 hours before (2 days)</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Reminders are checked every hour by our system
-              </p>
+            {/* SMS Section */}
+            <div className="border-l-4 border-green-500 pl-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <span>📱</span> SMS Notifications
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Quick text alerts for urgent reminders
+                  </p>
+                  {!phoneNumber && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      ⚠️ Add phone number above to enable
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3 ml-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Event Reminders</p>
+                    <p className="text-xs text-gray-500">Last-minute text alerts</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.smsReminders}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, smsReminders: e.target.checked })
+                      }
+                      disabled={!phoneNumber}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
+                  </label>
+                </div>
+
+                {preferences.smsReminders && (
+                  <div className="ml-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Send text
+                    </label>
+                    <select
+                      value={preferences.smsReminderHoursBefore}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          smsReminderHoursBefore: Number(e.target.value),
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value={1}>1 hour before</option>
+                      <option value={2}>2 hours before</option>
+                      <option value={4}>4 hours before</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Daily Digest</p>
+                    <p className="text-xs text-gray-500">One text with today's events</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preferences.dailySmsDigest}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, dailySmsDigest: e.target.checked })
+                      }
+                      disabled={!phoneNumber}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
+                  </label>
+                </div>
+
+                {preferences.dailySmsDigest && (
+                  <div className="ml-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Send at
+                    </label>
+                    <input
+                      type="time"
+                      value={preferences.dailySmsDigestTime}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          dailySmsDigestTime: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="pt-4 flex flex-col sm:flex-row gap-3">

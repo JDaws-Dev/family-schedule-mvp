@@ -16,10 +16,13 @@ export const getUserPreferences = query({
       return {
         userId: args.userId,
         emailRemindersEnabled: true,
-        smsRemindersEnabled: false,
-        reminderHoursBefore: 24, // 24 hours before
+        emailReminderHoursBefore: 24, // Email 24 hours before
         weeklyDigestEnabled: false,
         weeklyDigestDay: "Sunday",
+        smsRemindersEnabled: false,
+        smsReminderHoursBefore: 1, // SMS 1 hour before (urgent)
+        dailySmsDigestEnabled: false,
+        dailySmsDigestTime: "07:00", // 7am daily digest
         autoScanEmails: true,
         scanIntervalHours: 24,
       };
@@ -34,10 +37,13 @@ export const updateUserPreferences = mutation({
   args: {
     userId: v.id("users"),
     emailRemindersEnabled: v.optional(v.boolean()),
-    smsRemindersEnabled: v.optional(v.boolean()),
-    reminderHoursBefore: v.optional(v.number()),
+    emailReminderHoursBefore: v.optional(v.number()),
     weeklyDigestEnabled: v.optional(v.boolean()),
     weeklyDigestDay: v.optional(v.string()),
+    smsRemindersEnabled: v.optional(v.boolean()),
+    smsReminderHoursBefore: v.optional(v.number()),
+    dailySmsDigestEnabled: v.optional(v.boolean()),
+    dailySmsDigestTime: v.optional(v.string()),
     autoScanEmails: v.optional(v.boolean()),
     scanIntervalHours: v.optional(v.number()),
   },
@@ -57,10 +63,13 @@ export const updateUserPreferences = mutation({
       return await ctx.db.insert("userPreferences", {
         userId,
         emailRemindersEnabled: updates.emailRemindersEnabled ?? true,
-        smsRemindersEnabled: updates.smsRemindersEnabled ?? false,
-        reminderHoursBefore: updates.reminderHoursBefore ?? 24,
+        emailReminderHoursBefore: updates.emailReminderHoursBefore ?? 24,
         weeklyDigestEnabled: updates.weeklyDigestEnabled ?? false,
         weeklyDigestDay: updates.weeklyDigestDay ?? "Sunday",
+        smsRemindersEnabled: updates.smsRemindersEnabled ?? false,
+        smsReminderHoursBefore: updates.smsReminderHoursBefore ?? 1,
+        dailySmsDigestEnabled: updates.dailySmsDigestEnabled ?? false,
+        dailySmsDigestTime: updates.dailySmsDigestTime ?? "07:00",
         autoScanEmails: updates.autoScanEmails ?? true,
         scanIntervalHours: updates.scanIntervalHours ?? 24,
       });
@@ -204,7 +213,7 @@ export const sendEventReminders = internalAction({
             userId: user._id,
           });
 
-          if (!prefs.emailRemindersEnabled) continue;
+          if (!prefs.emailRemindersEnabled && !prefs.smsRemindersEnabled) continue;
 
           // Get events that need reminders
           const events = await ctx.runQuery(internal.notifications.getEventsNeedingReminders, {
@@ -212,7 +221,8 @@ export const sendEventReminders = internalAction({
           });
 
           const now = Date.now();
-          const reminderWindowMs = prefs.reminderHoursBefore * 60 * 60 * 1000;
+          const emailReminderWindowMs = prefs.emailReminderHoursBefore * 60 * 60 * 1000;
+          const smsReminderWindowMs = prefs.smsReminderHoursBefore * 60 * 60 * 1000;
 
           for (const event of events) {
             // Calculate event datetime
@@ -225,8 +235,8 @@ export const sendEventReminders = internalAction({
             const eventMs = eventDate.getTime();
             const timeDiff = eventMs - now;
 
-            // Check if we should send reminder (within reminder window, but not already sent)
-            if (timeDiff > 0 && timeDiff <= reminderWindowMs) {
+            // Check if we should send EMAIL reminder
+            if (prefs.emailRemindersEnabled && timeDiff > 0 && timeDiff <= emailReminderWindowMs) {
               const alreadySent = await ctx.runQuery(internal.notifications.wasReminderSent, {
                 userId: user._id,
                 eventId: event._id,
@@ -234,7 +244,6 @@ export const sendEventReminders = internalAction({
               });
 
               if (!alreadySent) {
-                // Send reminder email
                 try {
                   await ctx.runAction(internal.notifications.sendReminderEmail, {
                     userId: user._id,
@@ -245,7 +254,7 @@ export const sendEventReminders = internalAction({
                     eventTime: event.eventTime,
                     eventLocation: event.location,
                     childName: event.childName,
-                    reminderHoursBefore: prefs.reminderHoursBefore,
+                    reminderHoursBefore: prefs.emailReminderHoursBefore,
                   });
 
                   // Log successful send
@@ -261,6 +270,47 @@ export const sendEventReminders = internalAction({
                     userId: user._id,
                     eventId: event._id,
                     reminderType: "email",
+                    status: "failed",
+                    errorMessage: error.message,
+                  });
+                }
+              }
+            }
+
+            // Check if we should send SMS reminder (separate timing window)
+            if (prefs.smsRemindersEnabled && user.phoneNumber && timeDiff > 0 && timeDiff <= smsReminderWindowMs) {
+              const alreadySentSMS = await ctx.runQuery(internal.notifications.wasReminderSent, {
+                userId: user._id,
+                eventId: event._id,
+                reminderType: "sms",
+              });
+
+              if (!alreadySentSMS) {
+                try {
+                  await ctx.runAction(internal.notifications.sendReminderSMS, {
+                    userId: user._id,
+                    eventId: event._id,
+                    phoneNumber: user.phoneNumber,
+                    eventTitle: event.title,
+                    eventDate: event.eventDate,
+                    eventTime: event.eventTime,
+                    eventLocation: event.location,
+                    childName: event.childName,
+                  });
+
+                  // Log successful send
+                  await ctx.runMutation(internal.notifications.logReminderSent, {
+                    userId: user._id,
+                    eventId: event._id,
+                    reminderType: "sms",
+                    status: "sent",
+                  });
+                } catch (error: any) {
+                  // Log failed send
+                  await ctx.runMutation(internal.notifications.logReminderSent, {
+                    userId: user._id,
+                    eventId: event._id,
+                    reminderType: "sms",
                     status: "failed",
                     errorMessage: error.message,
                   });
@@ -535,5 +585,141 @@ export const sendRSVPAlertEmail = internalAction({
     const result = await response.json();
     console.log("RSVP alert email sent successfully:", result);
     return result;
+  },
+});
+
+// Internal action to send SMS reminder
+export const sendReminderSMS = internalAction({
+  args: {
+    userId: v.id("users"),
+    eventId: v.id("events"),
+    phoneNumber: v.string(),
+    eventTitle: v.string(),
+    eventDate: v.string(),
+    eventTime: v.optional(v.string()),
+    eventLocation: v.optional(v.string()),
+    childName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    console.log(`Sending reminder SMS to ${args.phoneNumber} for event: ${args.eventTitle}`);
+
+    const eventTimeStr = args.eventTime ? ` at ${args.eventTime}` : "";
+    const locationStr = args.eventLocation ? `\nLocation: ${args.eventLocation}` : "";
+    const memberStr = args.childName ? ` for ${args.childName}` : "";
+
+    const message = `Reminder${memberStr}: ${args.eventTitle}\nDate: ${args.eventDate}${eventTimeStr}${locationStr}`;
+
+    // Send SMS via Twilio API
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
+            ).toString("base64"),
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: args.phoneNumber,
+          From: process.env.TWILIO_PHONE_NUMBER!,
+          Body: message,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Twilio API error:", error);
+      throw new Error(`Failed to send SMS: ${JSON.stringify(error)}`);
+    }
+
+    const result = await response.json();
+    console.log("SMS sent successfully:", result);
+    return result;
+  },
+});
+
+// Send daily SMS digest with today's events
+export const sendDailySmsDigests = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    // Get all families
+    const families = await ctx.runQuery(internal.notifications.getAllFamilies);
+
+    for (const family of families) {
+      // Get all users in this family
+      const users = await ctx.runQuery(internal.notifications.getFamilyUsers, {
+        familyId: family._id,
+      });
+
+      for (const user of users) {
+        try {
+          // Get user preferences
+          const prefs = await ctx.runQuery(internal.notifications.getUserPreferences, {
+            userId: user._id,
+          });
+
+          // Skip if daily SMS digest is disabled or no phone number
+          if (!prefs.dailySmsDigestEnabled || !user.phoneNumber) continue;
+
+          // Get today's events
+          const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+          const events = await ctx.runQuery(internal.notifications.getEventsNeedingReminders, {
+            familyId: family._id,
+          });
+
+          // Filter to only today's events
+          const todayEvents = events.filter((event) => event.eventDate === today);
+
+          if (todayEvents.length === 0) continue; // No events today, skip
+
+          // Build SMS message
+          let message = `Good morning! Today's schedule (${todayEvents.length} event${todayEvents.length > 1 ? "s" : ""}):\n\n`;
+
+          todayEvents.slice(0, 3).forEach((event, index) => {
+            const timeStr = event.eventTime ? ` at ${event.eventTime}` : "";
+            const childStr = event.childName ? ` - ${event.childName}` : "";
+            message += `${index + 1}. ${event.title}${timeStr}${childStr}\n`;
+          });
+
+          if (todayEvents.length > 3) {
+            message += `\n...and ${todayEvents.length - 3} more. Check the app for details.`;
+          }
+
+          // Send SMS
+          const response = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`,
+            {
+              method: "POST",
+              headers: {
+                Authorization:
+                  "Basic " +
+                  Buffer.from(
+                    `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
+                  ).toString("base64"),
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                To: user.phoneNumber,
+                From: process.env.TWILIO_PHONE_NUMBER!,
+                Body: message,
+              }),
+            }
+          );
+
+          if (response.ok) {
+            console.log(`Daily SMS digest sent to ${user.phoneNumber}`);
+          } else {
+            const error = await response.json();
+            console.error("Failed to send daily SMS digest:", error);
+          }
+        } catch (error) {
+          console.error(`Error sending daily SMS digest for user ${user._id}:`, error);
+        }
+      }
+    }
   },
 });

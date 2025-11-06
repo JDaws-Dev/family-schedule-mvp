@@ -163,3 +163,16 @@ export const updatePreferences = mutation({
     }
   },
 });
+
+// Update user phone number
+export const updatePhoneNumber = mutation({
+  args: {
+    userId: v.id("users"),
+    phoneNumber: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      phoneNumber: args.phoneNumber,
+    });
+  },
+});
