@@ -6,6 +6,7 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import MobileNav from "@/app/components/MobileNav";
 
 export default function ReviewPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -182,31 +183,11 @@ export default function ReviewPage() {
           </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <nav className="flex flex-col py-2">
-              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Dashboard
-              </Link>
-              <Link href="/calendar" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Calendar
-              </Link>
-              <Link href="/review" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">
-                Review
-              </Link>
-              <Link href="/discover" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Discover
-              </Link>
-              <Link href="/settings" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Settings
-              </Link>
-              <button onClick={() => signOut()} className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50">
-                Log Out
-              </button>
-            </nav>
-          </div>
-        )}
+        <MobileNav
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          currentPage="review"
+        />
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

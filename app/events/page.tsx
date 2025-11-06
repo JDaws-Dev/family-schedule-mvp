@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { useSearchParams } from "next/navigation";
+import MobileNav from "@/app/components/MobileNav";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../calendar/calendar.css";
 
@@ -371,39 +372,11 @@ function EventsContent() {
           </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <nav className="flex flex-col py-2">
-              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Dashboard
-              </Link>
-              <Link href="/calendar" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">
-                Calendar
-              </Link>
-              <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50 relative">
-                <span>Review</span>
-                {unconfirmedEvents && unconfirmedEvents.length > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                    {unconfirmedEvents.length}
-                  </span>
-                )}
-              </Link>
-              <Link href="/discover" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Discover
-              </Link>
-              <Link href="/settings" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Settings
-              </Link>
-              <button
-                onClick={() => signOut()}
-                className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50 w-full"
-              >
-                Log Out
-              </button>
-            </nav>
-          </div>
-        )}
+        <MobileNav
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          currentPage="calendar"
+        />
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
