@@ -80,6 +80,11 @@ export const saveDiscoveredActivities = mutation({
           registrationRequired: activity.registrationRequired,
           registrationDeadline: activity.registrationDeadline,
           sourceName: activity.sourceName,
+          // Save new fields from scraping/recommendations
+          scrapedAt: activity.scrapedAt,
+          sourceCategories: activity.sourceCategories,
+          targetMembers: activity.targetMembers,
+          matchScore: activity.matchScore,
           distance: undefined, // TODO: Calculate distance from family location
           rating: undefined, // Could integrate Google Places API for ratings
           imageUrl: undefined, // Could fetch from website or use placeholder
