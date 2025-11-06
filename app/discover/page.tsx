@@ -16,6 +16,17 @@ export default function DiscoverPage() {
   const [discoveryProgress, setDiscoveryProgress] = useState("");
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState(15); // Default 15 miles
+  const [startDate, setStartDate] = useState(() => {
+    // Default to today
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    // Default to 30 days from now
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    return futureDate.toISOString().split('T')[0];
+  });
 
   // Get current user from Convex
   const convexUser = useQuery(
@@ -56,7 +67,7 @@ export default function DiscoverPage() {
           setDiscoveryMessage("📄 Reading event calendars and websites...");
           return "Step 2 of 3";
         } else if (prev === "Step 2 of 3") {
-          setDiscoveryMessage("🤖 AI analyzing events for your family...");
+          setDiscoveryMessage("✨ Analyzing events for your family...");
           return "Step 3 of 3";
         }
         return prev;
@@ -64,11 +75,13 @@ export default function DiscoverPage() {
     }, 8000); // Update every 8 seconds
 
     try {
-      console.log("[Discover] Starting discovery for:", location, "within", distance, "miles");
+      console.log("[Discover] Starting discovery for:", location, "within", distance, "miles", "from", startDate, "to", endDate);
       const result = await discoverActivities({
         familyId: convexUser.familyId,
         userLocation: location,
         distance: distance,
+        startDate: startDate,
+        endDate: endDate,
         apiBaseUrl: window.location.origin, // Pass current site URL to Convex action
       });
 
@@ -216,7 +229,7 @@ export default function DiscoverPage() {
 
             {/* Location and Distance Controls */}
             <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Location
@@ -245,6 +258,28 @@ export default function DiscoverPage() {
                     <option value={25}>25 miles</option>
                     <option value={30}>30 miles</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
                 </div>
               </div>
 

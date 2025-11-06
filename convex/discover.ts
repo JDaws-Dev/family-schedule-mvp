@@ -120,6 +120,8 @@ export const discoverActivitiesForFamily = action({
     familyId: v.id("families"),
     userLocation: v.optional(v.string()),
     distance: v.optional(v.number()), // Search radius in miles
+    startDate: v.optional(v.string()), // Date range filter (YYYY-MM-DD)
+    endDate: v.optional(v.string()), // Date range filter (YYYY-MM-DD)
     apiBaseUrl: v.optional(v.string()), // Pass from client (window.location.origin)
   },
   handler: async (ctx, args) => {
@@ -195,7 +197,7 @@ export const discoverActivitiesForFamilyInternal = internalAction({
 });
 
 // Shared handler logic
-async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: any; userLocation?: string; distance?: number; apiBaseUrl?: string }) {
+async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: any; userLocation?: string; distance?: number; startDate?: string; endDate?: string; apiBaseUrl?: string }) {
   // Determine API base URL (use passed value or construct from env for cron)
   const baseUrl = args.apiBaseUrl || process.env.SITE_URL || "http://localhost:3000";
 
@@ -214,18 +216,26 @@ async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: an
   // Get distance (default to 15 miles if not provided)
   const distance = args.distance || 15;
 
+  // Get date range (defaults for 30 days from now if not provided)
+  const startDate = args.startDate || new Date().toISOString().split('T')[0];
+  const endDate = args.endDate || (() => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    return futureDate.toISOString().split('T')[0];
+  })();
+
   // Step 2: Get family members for personalization
   const familyMembers = await ctx.runQuery(api.familyMembers.getFamilyMembers, {
     familyId: args.familyId,
   });
 
-  // Step 3: Call the scraping API with location and distance
+  // Step 3: Call the scraping API with location, distance, and date range
   let scrapeResponse;
   try {
     scrapeResponse = await fetch(`${baseUrl}/api/discover/scrape-events`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ location, distance }),
+      body: JSON.stringify({ location, distance, startDate, endDate }),
     });
 
     if (!scrapeResponse.ok) {

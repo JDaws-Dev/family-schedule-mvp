@@ -40,59 +40,8 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lon: nu
   }
 }
 
-// Hardcoded reliable sources for Georgia locations
-function getGeorgiaSources(location: string): any[] {
-  const sources: any[] = [];
-  const lowerLocation = location.toLowerCase();
-
-  // If location is in Gwinnett County area (Suwanee, Duluth, Lawrenceville, etc.)
-  if (lowerLocation.includes('suwanee') || lowerLocation.includes('duluth') ||
-      lowerLocation.includes('gwinnett') || lowerLocation.includes('lawrenceville') ||
-      lowerLocation.includes('30024') || lowerLocation.includes('30096') || lowerLocation.includes('30519')) {
-    sources.push(
-      {
-        name: "Gwinnett County Parks & Recreation",
-        url: "https://www.gwinnettcounty.com/web/gwinnett/departments/communitServices/parksandrecreation/activities/specialevents",
-        categories: ["recreation", "community", "family", "sports"]
-      },
-      {
-        name: "City of Suwanee Events",
-        url: "https://www.suwanee.com/residents/special-events",
-        categories: ["community", "family", "arts", "recreation"]
-      },
-      {
-        name: "Gwinnett County Public Library",
-        url: "https://www.gwinnettpl.org/events/",
-        categories: ["education", "arts", "family"]
-      },
-      {
-        name: "Hudgens Center for Art & Learning",
-        url: "https://thehudgens.org/calendar/",
-        categories: ["arts", "education", "family"]
-      }
-    );
-  }
-
-  // General Georgia sources
-  if (lowerLocation.includes('georgia') || lowerLocation.includes(' ga')) {
-    sources.push(
-      {
-        name: "Georgia State Parks Events",
-        url: "https://gastateparks.org/Events",
-        categories: ["recreation", "family", "community"]
-      }
-    );
-  }
-
-  return sources;
-}
-
 // Function to dynamically discover event sources for any location
 async function discoverEventSources(location: string): Promise<any[]> {
-  // Start with any hardcoded sources for this location
-  const hardcodedSources = getGeorgiaSources(location);
-  console.log(`[discover-sources] Found ${hardcodedSources.length} hardcoded sources for ${location}`);
-
   // Use OpenAI to generate a list of relevant local event sources
   const systemPrompt = `You are an expert at finding local event sources and community calendars for families with children.
 
@@ -160,11 +109,7 @@ IMPORTANT: Return at least 8-10 diverse sources if possible.`;
       console.error(`[discover-sources] Full AI response:`, JSON.stringify(aiResponse).substring(0, 500));
     }
 
-    // Combine hardcoded and AI-discovered sources
-    const allSources = [...hardcodedSources, ...sources];
-    console.log(`[discover-sources] Total sources: ${allSources.length} (${hardcodedSources.length} hardcoded + ${sources.length} discovered)`);
-
-    return allSources;
+    return sources;
   } catch (error) {
     console.error("[discover-sources] Error discovering sources:", error);
     return [];
@@ -195,10 +140,22 @@ interface ExtractedEvent {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { sourceUrl, zipCode, location, distance } = await request.json();
+    const { sourceUrl, zipCode, location, distance, startDate, endDate } = await request.json();
 
     const searchDistance = distance || 15;
-    console.log(`[scrape-events] Location: ${location}, Distance: ${searchDistance} miles`);
+
+    // Set default date range if not provided (today to 30 days from now)
+    const today = new Date().toISOString().split('T')[0];
+    const defaultEndDate = (() => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+      return futureDate.toISOString().split('T')[0];
+    })();
+
+    const dateRangeStart = startDate || today;
+    const dateRangeEnd = endDate || defaultEndDate;
+
+    console.log(`[scrape-events] Location: ${location}, Distance: ${searchDistance} miles, Date Range: ${dateRangeStart} to ${dateRangeEnd}`);
 
     let sourcesToScrape: any[] = [];
 
@@ -295,12 +252,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Step 2: Use OpenAI to extract structured event data
-      const today = new Date().toISOString().split('T')[0];
       const currentYear = new Date().getFullYear();
 
-      const systemPrompt = `You are an expert at extracting event information from website content. Today's date is ${today}.
+      const systemPrompt = `You are an expert at extracting event information from website content. Today's date is ${dateRangeStart}.
 
-Extract ALL upcoming events from this webpage. For each event, provide:
+Extract ONLY events occurring between ${dateRangeStart} and ${dateRangeEnd} from this webpage. For each event, provide:
 
 - title (string, REQUIRED): Event name/title
 - description (string, optional): Brief description of what the event is about
@@ -376,9 +332,21 @@ IMPORTANT: Only extract actual events with specific details. Skip general progra
     const results = await Promise.all(scrapePromises);
 
     // Flatten array of arrays into single array of events
-    const allEvents = results.flat();
+    let allEvents = results.flat();
 
-    console.log(`[scrape-events] Completed scraping. Total events found: ${allEvents.length}`);
+    // Filter events by date range (some events might not have dates)
+    allEvents = allEvents.filter((event: any) => {
+      if (!event.date) {
+        // Keep events without dates (might be recurring or ongoing)
+        return true;
+      }
+
+      // Check if event date is within range
+      const eventDate = event.date;
+      return eventDate >= dateRangeStart && eventDate <= dateRangeEnd;
+    });
+
+    console.log(`[scrape-events] Completed scraping. Total events found: ${allEvents.length} (after date filtering)`);
 
     return NextResponse.json({
       success: true,
