@@ -315,32 +315,110 @@ function CalendarContent() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Family Calendar</h1>
-            <p className="text-gray-600 mt-1">
-              {confirmedEvents === undefined
-                ? "Loading events..."
-                : `Showing ${calendarEvents.length} of ${confirmedEvents.length} confirmed event${confirmedEvents.length !== 1 ? "s" : ""}`}
-            </p>
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Family Calendar</h1>
+              <p className="text-gray-600 mt-1">
+                {confirmedEvents === undefined
+                  ? "Loading events..."
+                  : `Showing ${calendarEvents.length} of ${confirmedEvents.length} confirmed event${confirmedEvents.length !== 1 ? "s" : ""}`}
+              </p>
+            </div>
+            {calendarEvents.length > 0 && (
+              <button
+                onClick={handleSyncAllToGoogleCalendar}
+                disabled={syncing}
+                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-soft"
+              >
+                {syncing ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    📅 Sync to Google Calendar
+                  </>
+                )}
+              </button>
+            )}
           </div>
-          {calendarEvents.length > 0 && (
-            <button
-              onClick={handleSyncAllToGoogleCalendar}
-              disabled={syncing}
-              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {syncing ? (
-                <>
-                  <span className="animate-spin">⏳</span>
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  📅 Sync to Google Calendar
-                </>
-              )}
-            </button>
+
+          {/* Enhanced Calendar Controls */}
+          {confirmedEvents && confirmedEvents.length > 0 && (
+            <div className="bg-white rounded-lg shadow-soft p-4 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* View Selector */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 mr-2">View:</span>
+                  <div className="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-1">
+                    {(['month', 'week', 'day', 'agenda'] as View[]).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setView(v)}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                          view === v
+                            ? 'bg-primary-600 text-white shadow-soft'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-white'
+                        }`}
+                      >
+                        {v.charAt(0).toUpperCase() + v.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Date Navigation */}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      const newDate = new Date(date);
+                      if (view === 'month') newDate.setMonth(date.getMonth() - 1);
+                      else if (view === 'week') newDate.setDate(date.getDate() - 7);
+                      else if (view === 'day') newDate.setDate(date.getDate() - 1);
+                      setDate(newDate);
+                    }}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition"
+                    title="Previous"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  <button
+                    onClick={() => setDate(new Date())}
+                    className="px-4 py-2 text-sm font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition"
+                  >
+                    Today
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const newDate = new Date(date);
+                      if (view === 'month') newDate.setMonth(date.getMonth() + 1);
+                      else if (view === 'week') newDate.setDate(date.getDate() + 7);
+                      else if (view === 'day') newDate.setDate(date.getDate() + 1);
+                      setDate(newDate);
+                    }}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition"
+                    title="Next"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  <span className="text-sm font-semibold text-gray-900 ml-2">
+                    {view === 'month' && format(date, 'MMMM yyyy')}
+                    {view === 'week' && `Week of ${format(date, 'MMM d, yyyy')}`}
+                    {view === 'day' && format(date, 'MMMM d, yyyy')}
+                    {view === 'agenda' && 'Upcoming Events'}
+                  </span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
