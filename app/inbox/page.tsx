@@ -466,11 +466,19 @@ export default function InboxPage() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-2 items-center">
-                        {event.childName && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
-                            {event.childName}
-                          </div>
-                        )}
+                        {event.childName && (() => {
+                          const firstName = event.childName.split(",")[0].trim();
+                          const member = familyMembers?.find(m => m.name === firstName);
+                          const color = member?.color || "#6366f1";
+                          return (
+                            <div
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                              style={{ backgroundColor: color }}
+                            >
+                              {event.childName}
+                            </div>
+                          );
+                        })()}
                         {event.category && (
                           <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
                             {event.category}

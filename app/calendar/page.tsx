@@ -240,13 +240,14 @@ function CalendarContent() {
     const childName = event.resource?.childName;
     let backgroundColor = "#6366f1"; // indigo default
 
-    if (childName) {
-      // Generate a consistent color based on the child's name
-      const hash = childName.split("").reduce((acc, char) => {
-        return char.charCodeAt(0) + ((acc << 5) - acc);
-      }, 0);
-      const colors = ["#f43f5e", "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ec4899"];
-      backgroundColor = colors[Math.abs(hash) % colors.length];
+    // If event has a family member, look up their color
+    if (childName && familyMembers) {
+      // Get first name from comma-separated list for multi-member events
+      const firstName = childName.split(",")[0].trim();
+      const member = familyMembers.find(m => m.name === firstName);
+      if (member?.color) {
+        backgroundColor = member.color;
+      }
     }
 
     return {
@@ -522,9 +523,19 @@ function CalendarContent() {
                       </div>
                       {event.childName && (
                         <div className="sm:ml-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                            {event.childName}
-                          </span>
+                          {(() => {
+                            const firstName = event.childName.split(",")[0].trim();
+                            const member = familyMembers?.find(m => m.name === firstName);
+                            const color = member?.color || "#6366f1";
+                            return (
+                              <span
+                                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white"
+                                style={{ backgroundColor: color }}
+                              >
+                                {event.childName}
+                              </span>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
@@ -581,9 +592,19 @@ function CalendarContent() {
               {selectedEvent.childName && (
                 <div className="flex items-start gap-2">
                   <span className="text-gray-600 font-medium w-24">Child:</span>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
-                    {selectedEvent.childName}
-                  </span>
+                  {(() => {
+                    const firstName = selectedEvent.childName.split(",")[0].trim();
+                    const member = familyMembers?.find(m => m.name === firstName);
+                    const color = member?.color || "#6366f1";
+                    return (
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                        style={{ backgroundColor: color }}
+                      >
+                        {selectedEvent.childName}
+                      </span>
+                    );
+                  })()}
                 </div>
               )}
 
