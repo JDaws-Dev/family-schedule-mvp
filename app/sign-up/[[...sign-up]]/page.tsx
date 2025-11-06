@@ -235,8 +235,8 @@ export default function SignUpPage() {
           <button
             onClick={() => {
               // TODO: Integrate with Stripe and Convex
-              // For now, redirect to events page
-              window.location.href = "/events";
+              // For now, redirect to dashboard
+              window.location.href = "/dashboard";
             }}
             className="w-full py-4 bg-indigo-600 text-white rounded-lg font-bold text-lg hover:bg-indigo-700 transition"
           >

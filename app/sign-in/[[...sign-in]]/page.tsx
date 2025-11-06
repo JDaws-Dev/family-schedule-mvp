@@ -9,7 +9,7 @@ export default function SignInPage() {
           <p className="text-gray-600">Log in to access your family schedule</p>
         </div>
         <SignIn
-          forceRedirectUrl="/events"
+          forceRedirectUrl="/dashboard"
           appearance={{
             elements: {
               rootBox: "mx-auto",
