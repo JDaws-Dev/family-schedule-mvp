@@ -20,6 +20,7 @@ export default function ReviewPage() {
   const [approvedEventId, setApprovedEventId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 10;
+  const [recentlyDismissed, setRecentlyDismissed] = useState<{eventId: string, event: any, timeout: NodeJS.Timeout} | null>(null);
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     eventDate: "",
@@ -130,7 +131,61 @@ export default function ReviewPage() {
   };
 
   const handleReject = async (eventId: Id<"events">) => {
+    // Find the event being dismissed
+    const eventToDismiss = unconfirmedEvents?.find((e: any) => e._id === eventId);
+
+    if (!eventToDismiss) {
+      await deleteEvent({ eventId });
+      return;
+    }
+
+    // Clear any existing dismissed event timeout
+    if (recentlyDismissed) {
+      clearTimeout(recentlyDismissed.timeout);
+    }
+
+    // Delete the event immediately from the view
     await deleteEvent({ eventId });
+
+    // Set up undo timeout (5 seconds to undo)
+    const timeout = setTimeout(() => {
+      setRecentlyDismissed(null);
+    }, 5000);
+
+    setRecentlyDismissed({
+      eventId,
+      event: eventToDismiss,
+      timeout
+    });
+  };
+
+  const handleUndoDismiss = async () => {
+    if (!recentlyDismissed || !convexUser?.familyId) return;
+
+    // Clear the timeout
+    clearTimeout(recentlyDismissed.timeout);
+
+    // Re-create the event
+    const event = recentlyDismissed.event;
+    await createEvent({
+      familyId: convexUser.familyId,
+      createdByUserId: convexUser._id,
+      title: event.title,
+      eventDate: event.eventDate,
+      eventTime: event.eventTime,
+      endTime: event.endTime,
+      location: event.location,
+      category: event.category,
+      childName: event.childName,
+      description: event.description,
+      sourceEmailId: event.sourceEmailId,
+      sourceEmailSubject: event.sourceEmailSubject,
+      requiresAction: event.requiresAction,
+      actionDeadline: event.actionDeadline,
+      isConfirmed: false,
+    });
+
+    setRecentlyDismissed(null);
   };
 
   const handleEdit = (event: any) => {
@@ -347,6 +402,27 @@ export default function ReviewPage() {
             Approve, edit, or dismiss events found in your emails
           </p>
         </div>
+
+        {/* Undo Dismiss Banner */}
+        {recentlyDismissed && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">↩️</span>
+              <div>
+                <p className="font-semibold text-amber-900">Event dismissed</p>
+                <p className="text-sm text-amber-700">
+                  "{recentlyDismissed.event.title}" was removed
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleUndoDismiss}
+              className="px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+            >
+              Undo
+            </button>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
