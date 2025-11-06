@@ -9,12 +9,16 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const stateParam = searchParams.get("state");
 
+  // Use request origin as fallback for APP_URL
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+
   console.log("OAuth callback - code:", code ? "present" : "missing");
   console.log("OAuth callback - state:", stateParam);
+  console.log("OAuth callback - appUrl:", appUrl);
 
   if (!code || !stateParam) {
     console.error("Missing code or state parameter");
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?error=missing_params`);
+    return NextResponse.redirect(`${appUrl}/settings?error=missing_params`);
   }
 
   // Parse state to extract userId and returnUrl
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   if (!userId) {
     console.error("Missing userId in state");
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/settings?error=missing_user`);
+    return NextResponse.redirect(`${appUrl}/settings?error=missing_user`);
   }
 
   try {
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/google/callback`,
+        redirect_uri: `${appUrl}/api/auth/google/callback`,
         grant_type: "authorization_code",
       }),
     });
@@ -87,7 +91,7 @@ export async function GET(request: NextRequest) {
     console.log("Convex mutation result:", result);
 
     // Redirect to the appropriate page with success flag
-    const redirectUrl = new URL(returnUrl, process.env.NEXT_PUBLIC_APP_URL!);
+    const redirectUrl = new URL(returnUrl, appUrl);
     redirectUrl.searchParams.set("success", "gmail_connected");
 
     return NextResponse.redirect(redirectUrl.toString());
@@ -96,7 +100,7 @@ export async function GET(request: NextRequest) {
     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
 
     // Redirect back to the returnUrl with error
-    const redirectUrl = new URL(returnUrl, process.env.NEXT_PUBLIC_APP_URL!);
+    const redirectUrl = new URL(returnUrl, appUrl);
     redirectUrl.searchParams.set("error", "oauth_failed");
     return NextResponse.redirect(redirectUrl.toString());
   }
