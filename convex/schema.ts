@@ -22,6 +22,7 @@ export default defineSchema({
     // Google Calendar Integration
     googleCalendarId: v.optional(v.string()), // The shared "Family Activities" calendar ID
     calendarName: v.optional(v.string()), // e.g., "Smith Family Activities"
+    lastCalendarSyncAt: v.optional(v.number()), // Last time calendar was synced
   }).index("by_stripe_customer", ["stripeCustomerId"]),
 
   // Individual Users - Multiple users can belong to one family
