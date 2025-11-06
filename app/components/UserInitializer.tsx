@@ -58,8 +58,8 @@ export function UserInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!initialized || !existingUser || !isLoaded) return;
 
-    // Don't redirect if already on onboarding or sign-in/sign-up pages
-    const excludedPaths = ["/onboarding", "/sign-in", "/sign-up"];
+    // Don't redirect if already on onboarding, auth pages, or pages that don't require family members
+    const excludedPaths = ["/onboarding", "/sign-in", "/sign-up", "/review", "/settings", "/dashboard"];
     if (excludedPaths.some(path => pathname?.startsWith(path))) return;
 
     // If user has no family members, they haven't completed onboarding
