@@ -99,17 +99,26 @@ For each recommended event, preserve ALL original fields (especially category) a
     recommendations = recommendations.map((rec: any) => {
       // Find the original event by title
       const originalEvent = events.find((e: any) => e.title === rec.title);
+
+      // Rename familyMembers to targetMembers and summary to aiSummary for Convex schema
+      const { familyMembers, summary, ...recRest } = rec;
+      const cleanedRec = {
+        ...recRest,
+        targetMembers: familyMembers,
+        aiSummary: summary,
+      };
+
       if (originalEvent) {
         // Merge original event fields with AI recommendations
         return {
           ...originalEvent, // Start with all original fields (includes category)
-          ...rec,           // Override with AI-added fields (matchScore, summary, familyMembers)
+          ...cleanedRec,    // Override with AI-added fields (matchScore, aiSummary, targetMembers)
         };
       }
       // If no match found, ensure category exists (fallback to 'other')
       return {
-        ...rec,
-        category: rec.category || 'other',
+        ...cleanedRec,
+        category: cleanedRec.category || 'other',
       };
     });
 
