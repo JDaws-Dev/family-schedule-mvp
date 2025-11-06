@@ -48,6 +48,7 @@ function CalendarContent() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
   const [editingEvent, setEditingEvent] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMember, setFilterMember] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -842,7 +843,19 @@ function CalendarContent() {
               </button>
               <div className="flex-1" />
               <button
-                onClick={() => setEditingEvent(true)}
+                onClick={() => {
+                  setEditFormData({
+                    title: selectedEvent.title,
+                    eventDate: selectedEvent.eventDate,
+                    eventTime: selectedEvent.eventTime || "",
+                    endTime: selectedEvent.endTime || "",
+                    location: selectedEvent.location || "",
+                    childName: selectedEvent.childName || "",
+                    category: selectedEvent.category || "",
+                    description: selectedEvent.description || "",
+                  });
+                  setEditingEvent(true);
+                }}
                 className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -855,6 +868,173 @@ function CalendarContent() {
                 className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {editingEvent && selectedEvent && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => {
+            setEditingEvent(false);
+            setEditFormData(null);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <h2 className="text-2xl font-bold text-white">Edit Event</h2>
+                <button
+                  onClick={() => {
+                    setEditingEvent(false);
+                    setEditFormData(null);
+                  }}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Edit Form */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={editFormData?.title || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={editFormData?.eventDate || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    value={editFormData?.eventTime || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                  <input
+                    type="time"
+                    value={editFormData?.endTime || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, endTime: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={editFormData?.location || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Family Member</label>
+                <select
+                  value={editFormData?.childName || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, childName: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">None</option>
+                  {familyMembers?.map((member) => (
+                    <option key={member._id} value={member.name}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <input
+                  type="text"
+                  value={editFormData?.category || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editFormData?.description || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    await updateEvent({
+                      eventId: selectedEvent._id,
+                      title: editFormData.title,
+                      eventDate: editFormData.eventDate,
+                      eventTime: editFormData.eventTime || undefined,
+                      endTime: editFormData.endTime || undefined,
+                      location: editFormData.location || undefined,
+                      childName: editFormData.childName || undefined,
+                      category: editFormData.category || undefined,
+                      description: editFormData.description || undefined,
+                    });
+                    showToast("Event updated successfully", "success");
+                    setEditingEvent(false);
+                    setEditFormData(null);
+                    setSelectedEvent(null);
+                  } catch (error) {
+                    console.error("Error updating event:", error);
+                    showToast("Failed to update event. Please try again.", "error");
+                  }
+                }}
+                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Save Changes
+              </button>
+              <button
+                onClick={() => {
+                  setEditingEvent(false);
+                  setEditFormData(null);
+                }}
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+              >
+                Cancel
               </button>
             </div>
           </div>
