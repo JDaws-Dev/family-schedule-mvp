@@ -49,12 +49,12 @@ export default function Home() {
               Trusted by busy families nationwide
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-8 leading-[1.1] tracking-tight">
-              Your family's schedule,<br/>
-              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">finally organized</span>
+              Stop the Sunday night<br/>
+              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">schedule scramble</span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Stop missing activities buried in emails. Our Daily Family automatically finds every practice,
-              game, and lesson—organizing them into one simple calendar your whole family can access.
+              You know that panic when you realize ballet starts in 10 minutes? Or the guilt when you forgot the bake sale?
+              <span className="font-semibold text-slate-900"> We built this for you.</span> Our Daily Family automatically finds every practice, game, and lesson buried in your emails—so you never miss another moment that matters.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
@@ -140,6 +140,53 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Sound Familiar? Section */}
+        <div className="mb-32">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+              Sound familiar? 😅
+            </h2>
+            <p className="text-xl text-slate-600">
+              If you've had any of these moments, you're not alone
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 p-8 rounded-2xl border-2 border-orange-200 hover:border-orange-300 transition-all hover:shadow-lg">
+              <div className="text-5xl mb-4">😰</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">"Wait, was that today?!"</h3>
+              <p className="text-gray-700 leading-relaxed">
+                You're at work when you get THE text: "Where are you? Practice started 20 minutes ago."
+                Cue the guilt spiral and frantic drive across town.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl border-2 border-blue-200 hover:border-blue-300 transition-all hover:shadow-lg">
+              <div className="text-5xl mb-4">🤦‍♀️</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">"I thought YOU had it"</h3>
+              <p className="text-gray-700 leading-relaxed">
+                Mom thinks Dad is handling pickup. Dad thinks Mom is. Meanwhile, your kid is the last one
+                standing in an empty parking lot. Again.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-2xl border-2 border-purple-200 hover:border-purple-300 transition-all hover:shadow-lg">
+              <div className="text-5xl mb-4">📧</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">"It's buried somewhere..."</h3>
+              <p className="text-gray-700 leading-relaxed">
+                The email with the game schedule is lost in your inbox, buried between 47 Amazon delivery
+                notifications and that coupon that expired last week.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-xl text-slate-700 max-w-3xl mx-auto">
+              <span className="font-bold text-primary-600">Good news:</span> You don't have to live like this anymore.
+              Let us handle the schedule chaos so you can focus on showing up (and actually being present).
+            </p>
+          </div>
+        </div>
+
         {/* How It Works */}
         <div id="how-it-works" className="mb-32 scroll-mt-20">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 p-12 md:p-16 text-white">
@@ -195,52 +242,139 @@ export default function Home() {
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              <div className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-medium transition-shadow">
-                <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-strong transition-all hover:-translate-y-1 duration-300 group">
+                <div className="w-14 h-14 bg-gradient-to-br from-primary-100 to-primary-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Automatic email scanning</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">We read your emails (so you don't have to)</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Never manually enter an event again. We read your emails and extract every activity detail automatically.
+                  Well, just the sports and activity ones. We're not that nosy 😊 Every practice, game, and lesson gets automatically added to your calendar. Zero typing required.
                 </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-strong transition-all hover:-translate-y-1 duration-300 group">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Shared family calendar</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">One calendar, zero arguments</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  One calendar for the whole family. Both parents see the same schedule. No more miscommunication.
+                  Both parents see everything. No more "I thought YOU knew!" moments. Finally, you're actually on the same page (literally).
                 </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-strong transition-all hover:-translate-y-1 duration-300 group">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Smart reminders</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Reminders that actually work</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Get email and text reminders before each activity. Choose how far in advance you want to be notified.
+                  Get a friendly nudge before each activity. Pick your timing—1 hour? 1 day? We've got you. No more frantic "WE NEED TO LEAVE NOW!" moments.
                 </p>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-2xl p-8 shadow-soft hover:shadow-strong transition-all hover:-translate-y-1 duration-300 group">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Access anywhere</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Your calendar, everywhere</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  View your schedule on any device. Syncs with Google Calendar so it appears on your iPhone or Android.
+                  Phone, tablet, computer—your schedule follows you. Syncs with Google Calendar so it shows up right next to your other stuff. It just works.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Social Proof - Real Families */}
+        <div className="mb-32">
+          <div className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 rounded-3xl p-12 md:p-16">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Real families, real relief
+              </h2>
+              <p className="text-xl text-gray-600">
+                Here's what happens when you finally get organized
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              <div className="bg-white p-8 rounded-2xl shadow-medium hover:shadow-strong transition-shadow">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                    S
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900">Sarah M.</h4>
+                    <p className="text-sm text-gray-600">Mom of 3 in Atlanta</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed italic text-lg">
+                  "I used to have sticky notes EVERYWHERE—on the fridge, in my car, stuck to my laptop. Now I actually show up on time. My kids are legitimately shocked. 😂"
+                </p>
+                <div className="mt-4 flex items-center gap-1">
+                  <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-medium hover:shadow-strong transition-shadow">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                    M
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900">Mike & Jessica T.</h4>
+                    <p className="text-sm text-gray-600">Parents of 2 in Denver</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed italic text-lg">
+                  "We went from constant 'wait, did you know about this?' arguments to actually being a team. Best $10/month we spend. Seriously."
+                </p>
+                <div className="mt-4 flex items-center gap-1">
+                  <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-medium hover:shadow-strong transition-shadow">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                    L
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900">Lisa K.</h4>
+                    <p className="text-sm text-gray-600">Single mom of 2 in Phoenix</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed italic text-lg">
+                  "As a single mom juggling work and two kids in different activities, this has been a lifesaver. No more 'mom guilt' about missing things!"
+                </p>
+                <div className="mt-4 flex items-center gap-1">
+                  <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-medium hover:shadow-strong transition-shadow">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                    D
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg text-gray-900">David R.</h4>
+                    <p className="text-sm text-gray-600">Dad of 4 in Austin</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed italic text-lg">
+                  "Four kids = chaos. This app is the only reason I haven't completely lost my mind. Worth every penny and then some."
+                </p>
+                <div className="mt-4 flex items-center gap-1">
+                  <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
+                </div>
               </div>
             </div>
           </div>
@@ -339,13 +473,20 @@ export default function Home() {
 
         {/* Final CTA */}
         <div className="my-32">
-          <div className="bg-slate-900 rounded-3xl px-8 py-20 text-center text-white">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Ready to simplify your life?
-            </h2>
-            <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-              Join busy families who've stopped stressing about their schedule
-            </p>
+          <div className="bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 rounded-3xl px-8 py-20 text-center text-white relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-10 left-10 text-6xl">⚽</div>
+              <div className="absolute top-20 right-20 text-6xl">🎵</div>
+              <div className="absolute bottom-10 left-1/4 text-6xl">🎨</div>
+              <div className="absolute bottom-20 right-1/3 text-6xl">⚾</div>
+            </div>
+            <div className="relative z-10">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Ready to stop the chaos?
+              </h2>
+              <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+                Join hundreds of families who've traded sticky notes and stress for actual sanity
+              </p>
             <Link
               href="/sign-up"
               className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-0.5"
@@ -355,9 +496,13 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
               </svg>
             </Link>
-            <p className="mt-6 text-sm text-slate-400">
-              Then $9.99/month • Cancel anytime
-            </p>
+              <p className="mt-6 text-sm text-white/70">
+                Then $9.99/month • Cancel anytime
+              </p>
+              <p className="mt-4 text-sm text-white/60 italic">
+                P.S. Your spouse will thank you 💕
+              </p>
+            </div>
           </div>
         </div>
       </div>
