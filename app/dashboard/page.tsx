@@ -1043,6 +1043,26 @@ function DashboardContent() {
                       </div>
                     )}
 
+                    {(!unconfirmedEvents || unconfirmedEvents.length === 0) &&
+                     (!upcomingEvents || upcomingEvents.length === 0) && (
+                      <div className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
+                        </div>
+                        <div className="flex-1 pb-4">
+                          <p className="text-sm font-medium text-gray-900">All caught up!</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            No pending events to review
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex gap-3">
                       <div className="flex flex-col items-center">
                         <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
