@@ -1067,32 +1067,6 @@ export default function Settings() {
               </label>
             </div>
 
-            <div>
-              <label className="block font-semibold text-gray-900 mb-2">
-                Reminder Timing
-              </label>
-              <select
-                value={preferences.reminderHoursBefore}
-                onChange={(e) =>
-                  setPreferences({
-                    ...preferences,
-                    reminderHoursBefore: Number(e.target.value),
-                  })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value={1}>1 hour before</option>
-                <option value={2}>2 hours before</option>
-                <option value={4}>4 hours before</option>
-                <option value={12}>12 hours before</option>
-                <option value={24}>24 hours before (1 day)</option>
-                <option value={48}>48 hours before (2 days)</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Reminders are checked every hour by our system
-              </p>
-            </div>
-
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-gray-900">Weekly Digest</h3>
