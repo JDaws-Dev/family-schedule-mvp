@@ -59,8 +59,10 @@ export async function POST(request: NextRequest) {
                 <div class="settings">
                   <h3>Your Current Settings:</h3>
                   <ul>
-                    <li><strong>Reminder timing:</strong> ${prefs.reminderHoursBefore} hours before events</li>
+                    <li><strong>Email reminder timing:</strong> ${prefs.emailReminderHoursBefore || 24} hours before events</li>
+                    <li><strong>SMS reminder timing:</strong> ${prefs.smsReminderHoursBefore || 1} hours before events</li>
                     <li><strong>Email reminders:</strong> ${prefs.emailRemindersEnabled ? '✅ Enabled' : '❌ Disabled'}</li>
+                    <li><strong>SMS reminders:</strong> ${prefs.smsRemindersEnabled ? '✅ Enabled' : '❌ Disabled'}</li>
                   </ul>
                 </div>
                 <p style="margin-top: 20px;">You'll receive reminders for upcoming events based on these settings.</p>
@@ -86,8 +88,10 @@ export async function POST(request: NextRequest) {
       message: "Test reminder sent successfully",
       details: {
         email: userEmail,
-        reminderHoursBefore: prefs.reminderHoursBefore,
+        emailReminderHoursBefore: prefs.emailReminderHoursBefore || 24,
+        smsReminderHoursBefore: prefs.smsReminderHoursBefore || 1,
         emailRemindersEnabled: prefs.emailRemindersEnabled,
+        smsRemindersEnabled: prefs.smsRemindersEnabled,
       },
     });
   } catch (error: any) {
