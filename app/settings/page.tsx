@@ -9,7 +9,7 @@ import MobileNav from "@/app/components/MobileNav";
 
 export default function Settings() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'account' | 'family' | 'email' | 'notifications' | 'billing'>('account');
+  const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>('profile');
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
 
@@ -360,60 +360,40 @@ export default function Settings() {
         <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-2 mb-6">
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setActiveTab('account')}
-              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'account'
+              onClick={() => setActiveTab('profile')}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                activeTab === 'profile'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Account
+              Profile
             </button>
             <button
               onClick={() => setActiveTab('family')}
-              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
                 activeTab === 'family'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Family
+              Family & Events
             </button>
             <button
-              onClick={() => setActiveTab('email')}
-              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'email'
+              onClick={() => setActiveTab('integrations')}
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                activeTab === 'integrations'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Email
-            </button>
-            <button
-              onClick={() => setActiveTab('notifications')}
-              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'notifications'
-                  ? 'bg-primary-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Notifications
-            </button>
-            <button
-              onClick={() => setActiveTab('billing')}
-              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'billing'
-                  ? 'bg-primary-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Billing
+              Integrations
             </button>
           </div>
         </div>
 
-        {/* Account Tab */}
-        {activeTab === 'account' && (
+        {/* Profile Tab - Account info + Notifications */}
+        {activeTab === 'profile' && (
         <div>
         {/* Account Information */}
         <div className="bg-white rounded-lg shadow mb-6">
@@ -466,6 +446,78 @@ export default function Settings() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Notification Preferences */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Configure when and how you receive reminders about upcoming events
+            </p>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900">Email Reminders</h3>
+                <p className="text-sm text-gray-600">
+                  Get email reminders before events
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={preferences.emailReminders}
+                  onChange={(e) =>
+                    setPreferences({ ...preferences, emailReminders: e.target.checked })
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-900 mb-2">
+                Reminder Timing
+              </label>
+              <select
+                value={preferences.reminderHoursBefore}
+                onChange={(e) =>
+                  setPreferences({
+                    ...preferences,
+                    reminderHoursBefore: Number(e.target.value),
+                  })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value={1}>1 hour before</option>
+                <option value={2}>2 hours before</option>
+                <option value={4}>4 hours before</option>
+                <option value={12}>12 hours before</option>
+                <option value={24}>24 hours before (1 day)</option>
+                <option value={48}>48 hours before (2 days)</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Reminders are checked every hour by our system
+              </p>
+            </div>
+
+            <div className="pt-4 flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleSavePreferences}
+                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
+              >
+                Save Preferences
+              </button>
+              <button
+                onClick={handleTestReminder}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
+              >
+                Send Test Reminder
+              </button>
+            </div>
           </div>
         </div>
         </div>
@@ -684,8 +736,8 @@ export default function Settings() {
         </div>
         )}
 
-        {/* Email Tab */}
-        {activeTab === 'email' && (
+        {/* Integrations Tab - Gmail & Email Scanning */}
+        {activeTab === 'integrations' && (
         <div>
         {/* Gmail Connections - Multiple Accounts */}
         <div className="bg-white rounded-lg shadow mb-6">
@@ -800,8 +852,8 @@ export default function Settings() {
         </div>
         )}
 
-        {/* Notifications Tab */}
-        {activeTab === 'notifications' && (
+        {/* Notifications Tab - MOVED TO PROFILE TAB */}
+        {false && activeTab === 'profile' && (
         <div>
         {/* Notification Preferences */}
         <div className="bg-white rounded-lg shadow mb-6">
@@ -976,8 +1028,8 @@ export default function Settings() {
         </div>
         )}
 
-        {/* Billing Tab */}
-        {activeTab === 'billing' && (
+        {/* Billing Tab - HIDDEN UNTIL READY */}
+        {false && (
         <div>
         {/* Subscription Management */}
         <div className="bg-white rounded-lg shadow mb-6">
