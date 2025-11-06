@@ -383,6 +383,7 @@ export default function Home() {
             <div>
               <h3 className="font-semibold text-gray-900 mb-4">Support</h3>
               <ul className="space-y-2 text-sm text-gray-600">
+                <li><Link href="/support" className="hover:text-gray-900 transition">Help Center</Link></li>
                 <li className="text-gray-600">support@ourdailyfamily.com</li>
                 <li className="text-gray-600">Mon-Fri 9am-5pm ET</li>
               </ul>
