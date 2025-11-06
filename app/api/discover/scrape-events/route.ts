@@ -175,9 +175,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const allEvents: any[] = [];
+    // Process all sources in parallel instead of sequentially
+    console.log(`[scrape-events] Scraping ${sourcesToScrape.length} sources in parallel...`);
 
-    for (const source of sourcesToScrape) {
+    const scrapePromises = sourcesToScrape.map(async (source) => {
       console.log(`Scraping: ${source.name} (${source.url})`);
 
       // Step 1: Use Jina Reader to convert webpage to clean markdown
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
 
         if (!jinaResponse.ok) {
           console.error(`Jina Reader failed for ${source.url}: ${jinaResponse.statusText}`);
-          continue;
+          return [];
         }
 
         webContent = await jinaResponse.text();
@@ -225,7 +226,7 @@ export async function POST(request: NextRequest) {
         }
       } catch (error) {
         console.error(`Error fetching ${source.url}:`, error);
-        continue;
+        return [];
       }
 
       // Step 2: Use OpenAI to extract structured event data
@@ -279,7 +280,7 @@ IMPORTANT: Only extract actual events with specific details. Skip general progra
 
         if (!openaiResponse.ok) {
           console.error(`OpenAI API error for ${source.url}`);
-          continue;
+          return [];
         }
 
         const openaiData = await openaiResponse.json();
@@ -298,16 +299,21 @@ IMPORTANT: Only extract actual events with specific details. Skip general progra
           scrapedAt: new Date().toISOString(),
         }));
 
-        allEvents.push(...eventsWithSource);
         console.log(`Found ${events.length} events from ${source.name}`);
+        return eventsWithSource;
       } catch (error) {
         console.error(`Error processing ${source.url} with OpenAI:`, error);
-        continue;
+        return [];
       }
+    });
 
-      // Rate limiting - wait 1 second between sources
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
+    // Wait for all scraping to complete in parallel
+    const results = await Promise.all(scrapePromises);
+
+    // Flatten array of arrays into single array of events
+    const allEvents = results.flat();
+
+    console.log(`[scrape-events] Completed scraping. Total events found: ${allEvents.length}`);
 
     return NextResponse.json({
       success: true,
