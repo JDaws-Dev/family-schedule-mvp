@@ -111,7 +111,15 @@ export default function ReviewPage() {
 
   const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!convexUser?._id) return;
+    console.log("handleAddEvent called");
+    console.log("convexUser:", convexUser);
+    console.log("newEventForm:", newEventForm);
+
+    if (!convexUser?._id) {
+      console.error("No convexUser._id found");
+      alert("User not found. Please refresh the page and try again.");
+      return;
+    }
 
     // Validate required fields
     if (!newEventForm.title.trim() || !newEventForm.eventDate) {
@@ -120,6 +128,19 @@ export default function ReviewPage() {
     }
 
     try {
+      console.log("Creating event with data:", {
+        createdByUserId: convexUser._id,
+        title: newEventForm.title.trim(),
+        eventDate: newEventForm.eventDate,
+        eventTime: newEventForm.eventTime || undefined,
+        endTime: newEventForm.endTime || undefined,
+        location: newEventForm.location.trim() || undefined,
+        category: newEventForm.category || undefined,
+        childName: newEventForm.childName.trim() || undefined,
+        description: newEventForm.description.trim() || undefined,
+        isConfirmed: true,
+      });
+
       const eventId = await createEvent({
         createdByUserId: convexUser._id,
         title: newEventForm.title.trim(),
@@ -132,6 +153,8 @@ export default function ReviewPage() {
         description: newEventForm.description.trim() || undefined,
         isConfirmed: true, // Manually added events are auto-confirmed
       });
+
+      console.log("Event created successfully with ID:", eventId);
 
       // Reset form
       setNewEventForm({
