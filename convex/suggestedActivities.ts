@@ -133,7 +133,7 @@ export const addActivityToCalendar = mutation({
 export const quickAddToCalendar = mutation({
   args: {
     activityId: v.id("suggestedActivities"),
-    familyId: v.id("families"),
+    userId: v.id("users"),
     childName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -143,9 +143,16 @@ export const quickAddToCalendar = mutation({
       throw new Error("Activity not found");
     }
 
+    // Get user to get familyId
+    const user = await ctx.db.get(args.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
     // Create event using activity's date/time if available
     const eventId = await ctx.db.insert("events", {
-      familyId: args.familyId,
+      familyId: user.familyId,
+      createdByUserId: args.userId,
       title: activity.title,
       description: activity.description,
       eventDate: activity.date || new Date().toISOString().split('T')[0], // Use activity date or today
@@ -154,7 +161,7 @@ export const quickAddToCalendar = mutation({
       location: activity.location,
       category: activity.category,
       childName: args.childName,
-      confirmed: true, // Auto-confirm since user is explicitly adding
+      isConfirmed: true, // Auto-confirm since user is explicitly adding
     });
 
     // Mark activity as added

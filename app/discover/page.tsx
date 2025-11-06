@@ -94,11 +94,11 @@ export default function DiscoverPage() {
   };
 
   const handleAddToCalendar = async (activityId: any) => {
-    if (!convexUser?.familyId) return;
+    if (!convexUser?._id) return;
     try {
       await quickAddToCalendar({
         activityId,
-        familyId: convexUser.familyId
+        userId: convexUser._id
       });
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
