@@ -193,6 +193,10 @@ export default defineSchema({
     recurring: v.optional(v.boolean()),
     registrationRequired: v.optional(v.boolean()),
     registrationDeadline: v.optional(v.string()), // YYYY-MM-DD
+    scrapedAt: v.optional(v.string()), // Timestamp when the event was scraped
+    sourceCategories: v.optional(v.array(v.string())), // Categories from the source
+    targetMembers: v.optional(v.array(v.string())), // Family member names who would enjoy this
+    matchScore: v.optional(v.number()), // AI match score (0-100)
     status: v.union(
       v.literal("suggested"), // AI suggested, not yet reviewed
       v.literal("interested"), // Family marked as interested
