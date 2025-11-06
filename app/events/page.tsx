@@ -344,7 +344,7 @@ function EventsContent() {
               href="/review"
               className="text-gray-600 hover:text-gray-900 relative"
             >
-              Inbox
+              Review
               {unconfirmedEvents && unconfirmedEvents.length > 0 && (
                 <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {unconfirmedEvents.length}
@@ -382,7 +382,7 @@ function EventsContent() {
                 Calendar
               </Link>
               <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50 relative">
-                <span>Inbox</span>
+                <span>Review</span>
                 {unconfirmedEvents && unconfirmedEvents.length > 0 && (
                   <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
                     {unconfirmedEvents.length}
@@ -420,7 +420,7 @@ function EventsContent() {
             </div>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/inbox"
+                href="/review"
                 className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
               >
                 + Add Event
@@ -455,7 +455,7 @@ function EventsContent() {
                   </p>
                 </div>
                 <Link
-                  href="/inbox"
+                  href="/review"
                   className="px-4 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition"
                 >
                   Review →

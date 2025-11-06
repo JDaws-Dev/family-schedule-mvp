@@ -160,7 +160,7 @@ export default function ReviewPage() {
               Calendar
             </Link>
             <Link href="/review" className="text-primary-600 font-medium">
-              Inbox
+              Review
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
               Discover
@@ -193,7 +193,7 @@ export default function ReviewPage() {
                 Calendar
               </Link>
               <Link href="/review" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">
-                Inbox
+                Review
               </Link>
               <Link href="/discover" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
                 Discover

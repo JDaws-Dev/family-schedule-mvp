@@ -16,7 +16,7 @@ const faqs = [
   {
     question: "What if it doesn't find all my events?",
     answer:
-      "Our AI is trained to recognize activity emails from sports leagues, music schools, tutors, and more. You can also manually add events in seconds. We're constantly improving our detection.",
+      "Our system is designed to recognize activity emails from sports leagues, music schools, tutors, and more. You can also manually add events in seconds. We're constantly improving our detection.",
   },
   {
     question: "Can I track multiple kids?",
@@ -26,7 +26,7 @@ const faqs = [
   {
     question: "What email providers do you support?",
     answer:
-      "We currently support Gmail (including Google Workspace). Support for Outlook and other providers is coming soon!",
+      "We support Gmail and Google Workspace accounts (including custom domain emails like yourname@yourcompany.com that use Gmail). Support for Outlook and other providers is coming soon!",
   },
   {
     question: "Can I cancel anytime?",

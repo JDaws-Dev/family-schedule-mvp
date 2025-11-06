@@ -165,9 +165,9 @@ export default function Home() {
                 <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm text-white rounded-xl font-bold text-lg mb-6 shadow-lg">
                   2
                 </div>
-                <h3 className="text-2xl font-bold mb-3">AI organizes</h3>
+                <h3 className="text-2xl font-bold mb-3">We organize</h3>
                 <p className="text-white/90 leading-relaxed">
-                  Our AI automatically finds every practice, game, lesson, and event—extracting dates, times, and locations.
+                  We automatically find every practice, game, lesson, and event—extracting dates, times, and locations.
                 </p>
               </div>
               <div className="relative">
@@ -203,7 +203,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Automatic email scanning</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Never manually enter an event again. Our AI reads your emails and extracts every activity detail automatically.
+                  Never manually enter an event again. We read your emails and extract every activity detail automatically.
                 </p>
               </div>
 

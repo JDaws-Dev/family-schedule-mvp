@@ -328,7 +328,7 @@ export default function Settings() {
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
             <Link href="/calendar" className="text-gray-600 hover:text-gray-900">Calendar</Link>
-            <Link href="/review" className="text-gray-600 hover:text-gray-900">Inbox</Link>
+            <Link href="/review" className="text-gray-600 hover:text-gray-900">Review</Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">Discover</Link>
             <Link href="/settings" className="text-primary-600 font-medium">Settings</Link>
             <button

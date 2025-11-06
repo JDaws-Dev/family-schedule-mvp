@@ -302,7 +302,7 @@ function CalendarContent() {
               Calendar
             </Link>
             <Link href="/review" className="text-gray-600 hover:text-gray-900">
-              Inbox
+              Review
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
               Discover
