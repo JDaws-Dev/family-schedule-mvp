@@ -134,17 +134,19 @@ export default defineSchema({
     userId: v.id("users"),
     // Email preferences (for detailed info & digests)
     emailRemindersEnabled: v.boolean(),
-    emailReminderHoursBefore: v.number(), // Hours before event to send email reminder (default: 24)
+    emailReminderHoursBefore: v.optional(v.number()), // Hours before event to send email reminder (default: 24)
     weeklyDigestEnabled: v.boolean(),
     weeklyDigestDay: v.string(), // Day of week for digest
     // SMS preferences (for urgent/immediate notifications)
     smsRemindersEnabled: v.boolean(),
-    smsReminderHoursBefore: v.number(), // Hours before event to send SMS (default: 1)
-    dailySmsDigestEnabled: v.boolean(), // One daily SMS with today's events
-    dailySmsDigestTime: v.string(), // Time to send daily SMS (HH:MM format, e.g., "07:00")
+    smsReminderHoursBefore: v.optional(v.number()), // Hours before event to send SMS (default: 1)
+    dailySmsDigestEnabled: v.optional(v.boolean()), // One daily SMS with today's events
+    dailySmsDigestTime: v.optional(v.string()), // Time to send daily SMS (HH:MM format, e.g., "07:00")
     // Email scanning
     autoScanEmails: v.boolean(),
     scanIntervalHours: v.number(), // How often to scan emails
+    // Legacy field - kept for backwards compatibility with existing data
+    reminderHoursBefore: v.optional(v.number()), // DEPRECATED: Use emailReminderHoursBefore instead
   }).index("by_user", ["userId"]),
 
   // Family Members to Track (children, relatives, etc.)
