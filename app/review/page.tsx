@@ -17,6 +17,16 @@ export default function ReviewPage() {
   const [scanMessage, setScanMessage] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set());
   const [approvedEventId, setApprovedEventId] = useState<string | null>(null);
+  const [newEventForm, setNewEventForm] = useState({
+    title: "",
+    eventDate: "",
+    eventTime: "",
+    endTime: "",
+    location: "",
+    category: "Sports",
+    childName: "",
+    description: "",
+  });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
 
@@ -48,6 +58,7 @@ export default function ReviewPage() {
   const confirmEvent = useMutation(api.events.confirmEvent);
   const deleteEvent = useMutation(api.events.deleteEvent);
   const updateEvent = useMutation(api.events.updateEvent);
+  const createEvent = useMutation(api.events.createEvent);
 
   const handleApprove = async (eventId: Id<"events">) => {
     await confirmEvent({ eventId });
@@ -96,6 +107,65 @@ export default function ReviewPage() {
 
     setShowEditEventModal(false);
     setEditingEvent(null);
+  };
+
+  const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!convexUser?._id) return;
+
+    // Validate required fields
+    if (!newEventForm.title.trim() || !newEventForm.eventDate) {
+      alert("Please fill in the event title and date");
+      return;
+    }
+
+    try {
+      const eventId = await createEvent({
+        createdByUserId: convexUser._id,
+        title: newEventForm.title.trim(),
+        eventDate: newEventForm.eventDate,
+        eventTime: newEventForm.eventTime || undefined,
+        endTime: newEventForm.endTime || undefined,
+        location: newEventForm.location.trim() || undefined,
+        category: newEventForm.category || undefined,
+        childName: newEventForm.childName.trim() || undefined,
+        description: newEventForm.description.trim() || undefined,
+        isConfirmed: true, // Manually added events are auto-confirmed
+      });
+
+      // Reset form
+      setNewEventForm({
+        title: "",
+        eventDate: "",
+        eventTime: "",
+        endTime: "",
+        location: "",
+        category: "Sports",
+        childName: "",
+        description: "",
+      });
+
+      // Close modal
+      setShowAddEventModal(false);
+
+      // Show success message
+      setApprovedEventId(eventId as string);
+      setTimeout(() => setApprovedEventId(null), 3000);
+
+      // Try to sync to Google Calendar
+      try {
+        await fetch("/api/push-to-calendar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId }),
+        });
+      } catch (error) {
+        console.error("Failed to auto-sync to Google Calendar:", error);
+      }
+    } catch (error) {
+      console.error("Error creating event:", error);
+      alert("Failed to create event. Please try again.");
+    }
   };
 
   const handleScanEmail = async () => {
@@ -629,7 +699,7 @@ export default function ReviewPage() {
               </button>
             </div>
             <div className="p-4 sm:p-6">
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleAddEvent}>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Event Title *
@@ -637,7 +707,10 @@ export default function ReviewPage() {
                   <input
                     type="text"
                     placeholder="e.g., Soccer Practice"
+                    value={newEventForm.title}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, title: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    required
                   />
                 </div>
 
@@ -648,7 +721,10 @@ export default function ReviewPage() {
                     </label>
                     <input
                       type="date"
+                      value={newEventForm.eventDate}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, eventDate: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      required
                     />
                   </div>
                   <div>
@@ -657,7 +733,8 @@ export default function ReviewPage() {
                     </label>
                     <input
                       type="text"
-                      name="childName"
+                      value={newEventForm.childName}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, childName: e.target.value })}
                       list="family-members-list"
                       placeholder={familyMembers && familyMembers.length > 0 ? "Select or type a name" : "Type a name"}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
@@ -679,6 +756,8 @@ export default function ReviewPage() {
                     </label>
                     <input
                       type="time"
+                      value={newEventForm.eventTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, eventTime: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
@@ -688,6 +767,8 @@ export default function ReviewPage() {
                     </label>
                     <input
                       type="time"
+                      value={newEventForm.endTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, endTime: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
@@ -700,6 +781,8 @@ export default function ReviewPage() {
                   <input
                     type="text"
                     placeholder="e.g., West Field"
+                    value={newEventForm.location}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, location: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
@@ -708,7 +791,11 @@ export default function ReviewPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent">
+                  <select
+                    value={newEventForm.category}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, category: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                  >
                     <option>Sports</option>
                     <option>Lessons</option>
                     <option>School</option>
@@ -724,6 +811,8 @@ export default function ReviewPage() {
                   <textarea
                     rows={3}
                     placeholder="Any additional details..."
+                    value={newEventForm.description}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, description: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   ></textarea>
                 </div>
