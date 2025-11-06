@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { UserInitializer } from "./components/UserInitializer";
+import { ToastProvider } from "./components/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ConvexClientProvider>
-          <UserInitializer>{children}</UserInitializer>
+          <ToastProvider>
+            <UserInitializer>{children}</UserInitializer>
+          </ToastProvider>
         </ConvexClientProvider>
       </body>
     </html>

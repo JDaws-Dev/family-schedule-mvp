@@ -5,8 +5,10 @@ import { useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useToast } from "../components/Toast";
 
 export default function Dashboard() {
+  const { showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
@@ -54,7 +56,7 @@ export default function Dashboard() {
 
   const handleScanEmail = async () => {
     if (!gmailAccounts || gmailAccounts.length === 0) {
-      setScanMessage("Please connect a Gmail account first");
+      showToast("Please connect a Gmail account first", "warning");
       return;
     }
 
@@ -78,14 +80,20 @@ export default function Dashboard() {
         setScanMessage(
           `Scan complete! Found ${data.eventsFound} event(s) from ${data.messagesScanned} messages.`
         );
+        showToast(
+          `Found ${data.eventsFound} event(s) from ${data.messagesScanned} messages!`,
+          "success"
+        );
         setTimeout(() => setScanMessage(""), 5000);
       } else {
         setScanMessage(`Error: ${data.error}`);
+        showToast(data.error || "Failed to scan emails", "error");
         setTimeout(() => setScanMessage(""), 5000);
       }
     } catch (error) {
       console.error("Scan error:", error);
       setScanMessage("Failed to scan emails. Please try again.");
+      showToast("Failed to scan emails. Please try again.", "error");
       setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);

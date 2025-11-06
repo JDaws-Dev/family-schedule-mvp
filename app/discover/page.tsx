@@ -5,10 +5,12 @@ import { useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useToast } from "../components/Toast";
 
 export default function DiscoverPage() {
   const { signOut } = useClerk();
   const { user: clerkUser } = useUser();
+  const { showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filter, setFilter] = useState("all");
   const [isDiscovering, setIsDiscovering] = useState(false);
@@ -51,8 +53,7 @@ export default function DiscoverPage() {
     if (!convexUser?.familyId) return;
 
     if (!location.trim()) {
-      setDiscoveryMessage("❌ Please enter your city or zip code");
-      setTimeout(() => setDiscoveryMessage(""), 3000);
+      showToast("Please enter your city or zip code", "error");
       return;
     }
 
@@ -92,11 +93,19 @@ export default function DiscoverPage() {
       setDiscoveryMessage(
         `✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`
       );
+      showToast(
+        `Found ${result.activitiesDiscovered} activities in your area!`,
+        "success"
+      );
     } catch (error: any) {
       console.error("[Discover] Error during discovery:", error);
       clearInterval(progressInterval);
       setDiscoveryProgress("");
       setDiscoveryMessage(`❌ Error: ${error.message || "Unknown error occurred"}`);
+      showToast(
+        error.message || "Could not find activities. Please try again.",
+        "error"
+      );
     } finally {
       setIsDiscovering(false);
       setTimeout(() => {
@@ -113,14 +122,21 @@ export default function DiscoverPage() {
         activityId,
         userId: convexUser._id
       });
+      showToast("Activity added to calendar!", "success");
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
-      alert("Failed to add to calendar. Please try again.");
+      showToast("Failed to add to calendar. Please try again.", "error");
     }
   };
 
   const handleDismiss = async (activityId: any) => {
-    await dismissActivity({ activityId });
+    try {
+      await dismissActivity({ activityId });
+      showToast("Activity dismissed", "info");
+    } catch (error: any) {
+      console.error("Error dismissing activity:", error);
+      showToast("Failed to dismiss activity. Please try again.", "error");
+    }
   };
 
   // Use database activities or empty array

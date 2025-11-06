@@ -9,6 +9,7 @@ import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import MobileNav from "@/app/components/MobileNav";
+import { useToast } from "@/app/components/Toast";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -24,7 +25,23 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+// Helper function to convert 24-hour time to 12-hour format with AM/PM
+function formatTime12Hour(time24: string): string {
+  if (!time24) return "";
+
+  const match = time24.match(/(\d{1,2}):(\d{2})/);
+  if (!match) return time24;
+
+  const hours = parseInt(match[1]);
+  const minutes = match[2];
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHour = hours % 12 || 12;
+
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
 function CalendarContent() {
+  const { showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState(new Date());
@@ -166,21 +183,21 @@ function CalendarContent() {
       }
 
       if (successCount > 0) {
-        alert(`Successfully synced ${successCount} event${successCount !== 1 ? "s" : ""} to Google Calendar!`);
+        showToast(`Synced ${successCount} event${successCount !== 1 ? "s" : ""} to Google Calendar!`, "success");
       }
       if (errorCount > 0) {
-        alert(`Failed to sync ${errorCount} event${errorCount !== 1 ? "s" : ""}. Please try again.`);
+        showToast(`Failed to sync ${errorCount} event${errorCount !== 1 ? "s" : ""}. Please try again.`, "error");
       }
       if (successCount === 0 && errorCount === 0) {
-        alert("All events are already synced to Google Calendar!");
+        showToast("All events are already synced to Google Calendar!", "info");
       }
     } catch (error) {
       console.error("Error syncing to Google Calendar:", error);
-      alert("Failed to sync events. Please try again.");
+      showToast("Failed to sync events. Please try again.", "error");
     } finally {
       setSyncing(false);
     }
-  }, [confirmedEvents, syncing]);
+  }, [confirmedEvents, syncing, showToast]);
 
   // Show success message after reconnecting Google account
   useEffect(() => {
@@ -191,9 +208,9 @@ function CalendarContent() {
       window.history.replaceState({}, "", "/calendar");
 
       // Show success message
-      alert("Google account reconnected successfully! You can now sync your events to Google Calendar.");
+      showToast("Google account reconnected successfully! You can now sync your events.", "success");
     }
-  }, [searchParams]);
+  }, [searchParams, showToast]);
 
   // Transform Convex events to react-big-calendar format
   const calendarEvents = useMemo(() => {
@@ -566,8 +583,8 @@ function CalendarContent() {
                           </span>
                           {event.eventTime && (
                             <span className="flex items-center gap-1">
-                              🕐 {event.eventTime}
-                              {event.endTime && ` - ${event.endTime}`}
+                              🕐 {formatTime12Hour(event.eventTime)}
+                              {event.endTime && ` - ${formatTime12Hour(event.endTime)}`}
                             </span>
                           )}
                           {event.location && (
@@ -644,8 +661,8 @@ function CalendarContent() {
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
                     <div className="text-white/80 text-xs font-medium mb-1">Time</div>
                     <div className="text-white font-semibold flex items-center gap-2">
-                      🕐 {selectedEvent.eventTime}
-                      {selectedEvent.endTime && ` - ${selectedEvent.endTime}`}
+                      🕐 {formatTime12Hour(selectedEvent.eventTime)}
+                      {selectedEvent.endTime && ` - ${formatTime12Hour(selectedEvent.endTime)}`}
                     </div>
                   </div>
                 )}
@@ -791,23 +808,29 @@ function CalendarContent() {
               <button
                 onClick={async () => {
                   if (confirm(`Delete "${selectedEvent.title}"?`)) {
-                    // Delete from Google Calendar first if it was synced
-                    if (selectedEvent.googleCalendarEventId) {
-                      try {
-                        await fetch("/api/delete-from-calendar", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ eventId: selectedEvent._id }),
-                        });
-                      } catch (error) {
-                        console.error("Error deleting from Google Calendar:", error);
-                        // Continue with deletion even if Google Calendar deletion fails
+                    try {
+                      // Delete from Google Calendar first if it was synced
+                      if (selectedEvent.googleCalendarEventId) {
+                        try {
+                          await fetch("/api/delete-from-calendar", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ eventId: selectedEvent._id }),
+                          });
+                        } catch (error) {
+                          console.error("Error deleting from Google Calendar:", error);
+                          // Continue with deletion even if Google Calendar deletion fails
+                        }
                       }
-                    }
 
-                    // Delete from Convex database
-                    await deleteEvent({ eventId: selectedEvent._id });
-                    setSelectedEvent(null);
+                      // Delete from Convex database
+                      await deleteEvent({ eventId: selectedEvent._id });
+                      setSelectedEvent(null);
+                      showToast("Event deleted successfully", "success");
+                    } catch (error) {
+                      console.error("Error deleting event:", error);
+                      showToast("Failed to delete event. Please try again.", "error");
+                    }
                   }
                 }}
                 className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow-soft flex items-center justify-center gap-2"
