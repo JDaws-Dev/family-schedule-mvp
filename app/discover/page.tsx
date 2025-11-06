@@ -13,6 +13,7 @@ export default function DiscoverPage() {
   const [filter, setFilter] = useState("all");
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoveryMessage, setDiscoveryMessage] = useState("");
+  const [discoveryProgress, setDiscoveryProgress] = useState("");
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState(15); // Default 15 miles
 
@@ -45,7 +46,22 @@ export default function DiscoverPage() {
     }
 
     setIsDiscovering(true);
-    setDiscoveryMessage("🔍 Searching local websites for activities... This may take a minute.");
+    setDiscoveryProgress("Step 1 of 3");
+    setDiscoveryMessage("🔍 Finding local event sources...");
+
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setDiscoveryProgress((prev) => {
+        if (prev === "Step 1 of 3") {
+          setDiscoveryMessage("📄 Reading event calendars and websites...");
+          return "Step 2 of 3";
+        } else if (prev === "Step 2 of 3") {
+          setDiscoveryMessage("🤖 AI analyzing events for your family...");
+          return "Step 3 of 3";
+        }
+        return prev;
+      });
+    }, 8000); // Update every 8 seconds
 
     try {
       const result = await discoverActivities({
@@ -55,14 +71,21 @@ export default function DiscoverPage() {
         apiBaseUrl: window.location.origin, // Pass current site URL to Convex action
       });
 
+      clearInterval(progressInterval);
+      setDiscoveryProgress("");
       setDiscoveryMessage(
         `✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`
       );
     } catch (error: any) {
+      clearInterval(progressInterval);
+      setDiscoveryProgress("");
       setDiscoveryMessage(`❌ Error: ${error.message}`);
     } finally {
       setIsDiscovering(false);
-      setTimeout(() => setDiscoveryMessage(""), 8000);
+      setTimeout(() => {
+        setDiscoveryMessage("");
+        setDiscoveryProgress("");
+      }, 8000);
     }
   };
 
@@ -212,10 +235,45 @@ export default function DiscoverPage() {
                 disabled={isDiscovering}
                 className="w-full px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isDiscovering ? "🔄 Searching..." : "🔍 Find New Activities"}
+                {isDiscovering ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Searching...
+                  </span>
+                ) : (
+                  "🔍 Find New Activities"
+                )}
               </button>
 
-              {discoveryMessage && (
+              {isDiscovering && discoveryProgress && (
+                <div className="mt-4 p-4 bg-white/20 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold">{discoveryProgress}</span>
+                    <span className="text-xs opacity-75">This may take 30-60 seconds</span>
+                  </div>
+                  <div className="w-full bg-white/30 rounded-full h-2 mb-2">
+                    <div
+                      className="bg-white h-2 rounded-full transition-all duration-1000 ease-linear"
+                      style={{
+                        width: discoveryProgress === "Step 1 of 3" ? "33%" :
+                               discoveryProgress === "Step 2 of 3" ? "66%" : "100%"
+                      }}
+                    />
+                  </div>
+                  <p className="text-sm flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {discoveryMessage}
+                  </p>
+                </div>
+              )}
+
+              {!isDiscovering && discoveryMessage && (
                 <div className="mt-4 p-3 bg-white/20 rounded-lg">
                   <p className="text-sm">{discoveryMessage}</p>
                 </div>
