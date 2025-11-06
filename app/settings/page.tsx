@@ -320,16 +320,17 @@ export default function Settings() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
+          <Link href="/" className="text-2xl font-bold text-primary-600">
             Our Daily Family
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/events" className="text-gray-600 hover:text-gray-900">Events</Link>
-            <Link href="/inbox" className="text-gray-600 hover:text-gray-900">Inbox</Link>
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
+            <Link href="/calendar" className="text-gray-600 hover:text-gray-900">Calendar</Link>
+            <Link href="/review" className="text-gray-600 hover:text-gray-900">Inbox</Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">Discover</Link>
-            <Link href="/settings" className="text-indigo-600 font-medium">Settings</Link>
+            <Link href="/settings" className="text-primary-600 font-medium">Settings</Link>
             <button
               onClick={() => signOut()}
               className="text-gray-600 hover:text-gray-900"
@@ -371,7 +372,7 @@ export default function Settings() {
                   <input
                     type="text"
                     defaultValue={convexUser.fullName || clerkUser?.fullName || ""}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -392,7 +393,7 @@ export default function Settings() {
                   <input
                     type="tel"
                     defaultValue={convexUser.phoneNumber || ""}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -433,14 +434,14 @@ export default function Settings() {
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+                          <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold">
                             {(member.fullName || member.email).charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900">
                               {member.fullName || member.email}
                               {member.role === "primary" && (
-                                <span className="ml-2 text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                                <span className="ml-2 text-xs bg-primary-100 text-primary-800 px-2 py-1 rounded">
                                   Primary
                                 </span>
                               )}
@@ -481,7 +482,7 @@ export default function Settings() {
                   />
                   <button
                     onClick={handleSendInvite}
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
+                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
                   >
                     Send Invite
                   </button>
@@ -526,7 +527,7 @@ export default function Settings() {
                   return (
                     <div
                       key={member._id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition"
+                      className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="flex items-start gap-3 flex-1">
@@ -593,7 +594,7 @@ export default function Settings() {
             {/* Add Member Button */}
             <button
               onClick={() => setShowAddMemberModal(true)}
-              className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 font-medium hover:border-indigo-400 hover:text-indigo-600 transition flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 font-medium hover:border-primary-400 hover:text-primary-600 transition flex items-center justify-center gap-2"
             >
               <span className="text-xl">+</span>
               Add Family Member to Track
@@ -690,7 +691,7 @@ export default function Settings() {
                 onClick={() => {
                   window.location.href = "/api/auth/google";
                 }}
-                className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                className="w-full px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition flex items-center justify-center gap-2"
               >
                 <span className="text-xl">+</span>
                 Connect Email Account
@@ -706,7 +707,7 @@ export default function Settings() {
                 <button
                   onClick={handleScanAllAccounts}
                   disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isScanning ? "Scanning..." : "Scan All Active Accounts Now"}
                 </button>
@@ -752,7 +753,7 @@ export default function Settings() {
                   }
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-rose-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -773,7 +774,7 @@ export default function Settings() {
                   disabled
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-rose-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -789,7 +790,7 @@ export default function Settings() {
                     reminderHoursBefore: Number(e.target.value),
                   })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value={1}>1 hour before</option>
                 <option value={2}>2 hours before</option>
@@ -820,7 +821,7 @@ export default function Settings() {
                   disabled
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-rose-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
@@ -835,7 +836,7 @@ export default function Settings() {
                     setPreferences({ ...preferences, weeklyDigestDay: e.target.value })
                   }
                   disabled
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent opacity-50"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent opacity-50"
                 >
                   <option>Sunday</option>
                   <option>Monday</option>
@@ -851,7 +852,7 @@ export default function Settings() {
             <div className="pt-4 flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleSavePreferences}
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
+                className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
               >
                 Save Preferences
               </button>
@@ -927,7 +928,7 @@ export default function Settings() {
                   placeholder="Enter coupon code"
                   className="flex-1 px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
-                <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">
+                <button className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition">
                   Apply
                 </button>
               </div>
@@ -1026,7 +1027,7 @@ export default function Settings() {
                     name="name"
                     placeholder="e.g., Emma Johnson"
                     defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.name : ""}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1040,7 +1041,7 @@ export default function Settings() {
                       type="date"
                       name="birthdate"
                       defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.birthdate : ""}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -1052,7 +1053,7 @@ export default function Settings() {
                       name="relationship"
                       placeholder="e.g., Son, Daughter, Parent, etc."
                       defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.relationship : ""}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -1113,7 +1114,7 @@ export default function Settings() {
                     name="nicknames"
                     placeholder="e.g., Em, Emmy (separate with commas)"
                     defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.nicknames.join(", ") : ""}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Help us recognize this person in emails even when nicknames are used
@@ -1129,7 +1130,7 @@ export default function Settings() {
                     name="interests"
                     placeholder="e.g., Soccer, Piano, Dance (separate with commas)"
                     defaultValue={editingMember ? trackedMembers?.find(c => c._id === editingMember)?.interests.join(", ") : ""}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     We'll suggest relevant activities matching their interests
@@ -1139,7 +1140,7 @@ export default function Settings() {
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
                   >
                     {editingMember ? "Save Changes" : "Add Family Member"}
                   </button>

@@ -272,7 +272,7 @@ function CalendarContent() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
+          <Link href="/" className="text-2xl font-bold text-primary-600">
             Our Daily Family
           </Link>
 
@@ -281,11 +281,11 @@ function CalendarContent() {
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
               Dashboard
             </Link>
-            <Link href="/calendar" className="text-indigo-600 font-medium">
+            <Link href="/calendar" className="text-primary-600 font-medium">
               Calendar
             </Link>
             <Link href="/review" className="text-gray-600 hover:text-gray-900">
-              Review
+              Inbox
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
               Discover
@@ -328,7 +328,7 @@ function CalendarContent() {
             <button
               onClick={handleSyncAllToGoogleCalendar}
               disabled={syncing}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {syncing ? (
                 <>
@@ -359,7 +359,7 @@ function CalendarContent() {
                   placeholder="Search events..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
 
@@ -372,7 +372,7 @@ function CalendarContent() {
                   id="member"
                   value={filterMember}
                   onChange={(e) => setFilterMember(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="all">All Members</option>
                   {familyMembers?.map((member) => (
@@ -392,7 +392,7 @@ function CalendarContent() {
                   id="category"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="all">All Categories</option>
                   {categories.map((category) => (
@@ -413,7 +413,7 @@ function CalendarContent() {
                     setFilterMember("all");
                     setFilterCategory("all");
                   }}
-                  className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                  className="text-sm text-primary-600 hover:text-primary-800 font-medium"
                 >
                   Clear all filters
                 </button>
@@ -439,7 +439,7 @@ function CalendarContent() {
               <div className="flex gap-3">
                 <Link
                   href="/review"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
                 >
                   Add Events
                 </Link>
@@ -676,7 +676,7 @@ function CalendarContent() {
                 onClick={() => {
                   setEditingEvent(true);
                 }}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+                className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
               >
                 Edit
               </button>

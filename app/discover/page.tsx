@@ -152,15 +152,16 @@ export default function DiscoverPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
+          <Link href="/" className="text-2xl font-bold text-primary-600">
             Our Daily Family
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/events" className="text-gray-600 hover:text-gray-900">Events</Link>
-            <Link href="/inbox" className="text-gray-600 hover:text-gray-900">Inbox</Link>
-            <Link href="/discover" className="text-indigo-600 font-medium">Discover</Link>
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
+            <Link href="/calendar" className="text-gray-600 hover:text-gray-900">Calendar</Link>
+            <Link href="/review" className="text-gray-600 hover:text-gray-900">Inbox</Link>
+            <Link href="/discover" className="text-primary-600 font-medium">Discover</Link>
             <Link href="/settings" className="text-gray-600 hover:text-gray-900">Settings</Link>
             <button onClick={() => signOut()} className="text-gray-600 hover:text-gray-900">Log Out</button>
           </nav>
@@ -175,9 +176,10 @@ export default function DiscoverPage() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <nav className="flex flex-col py-2">
-              <Link href="/events" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Events</Link>
-              <Link href="/inbox" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Inbox</Link>
-              <Link href="/discover" className="px-4 py-3 text-indigo-600 font-medium bg-indigo-50">Discover</Link>
+              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Dashboard</Link>
+              <Link href="/calendar" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Calendar</Link>
+              <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Inbox</Link>
+              <Link href="/discover" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">Discover</Link>
               <Link href="/settings" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Settings</Link>
               <button onClick={() => signOut()} className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50">Log Out</button>
             </nav>
@@ -224,7 +226,7 @@ export default function DiscoverPage() {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="City, State or ZIP code"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   />
                 </div>
                 <div>
@@ -234,7 +236,7 @@ export default function DiscoverPage() {
                   <select
                     value={distance}
                     onChange={(e) => setDistance(Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   >
                     <option value={5}>5 miles</option>
                     <option value={10}>10 miles</option>
@@ -249,7 +251,7 @@ export default function DiscoverPage() {
               <button
                 onClick={handleDiscoverActivities}
                 disabled={isDiscovering}
-                className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDiscovering ? (
                   <span className="flex items-center justify-center gap-2">
@@ -272,7 +274,7 @@ export default function DiscoverPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
                     <div
-                      className="bg-indigo-600 h-2 rounded-full transition-all duration-1000 ease-linear"
+                      className="bg-primary-600 h-2 rounded-full transition-all duration-1000 ease-linear"
                       style={{
                         width: discoveryProgress === "Step 1 of 3" ? "33%" :
                                discoveryProgress === "Step 2 of 3" ? "66%" : "100%"
@@ -280,7 +282,7 @@ export default function DiscoverPage() {
                     />
                   </div>
                   <p className="text-sm text-gray-600 flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-4 w-4 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -318,8 +320,8 @@ export default function DiscoverPage() {
               onClick={() => setFilter(cat)}
               className={`px-5 py-2.5 rounded-lg font-semibold transition-all whitespace-nowrap border ${
                 filter === cat
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50"
+                  ? "bg-primary-600 text-white border-primary-600 shadow-sm"
+                  : "bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:bg-primary-50"
               }`}
             >
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -334,8 +336,8 @@ export default function DiscoverPage() {
             {suggestedActivities
               .filter(activity => filter === "all" || activity.category?.toLowerCase() === filter)
               .map((activity) => (
-                <div key={activity._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-200">
-                  <div className="p-6">
+                <div key={activity._id} className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all border border-gray-200">
+                  <div className="p-6 space-y-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -379,11 +381,11 @@ export default function DiscoverPage() {
 
                     {/* Why We Recommend This */}
                     {activity.aiSummary && (
-                      <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-4">
+                      <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 mb-4">
                         <div className="flex items-start gap-2">
                           <span className="text-lg">💡</span>
                           <div>
-                            <div className="text-xs font-semibold text-indigo-900 mb-1 uppercase tracking-wide">
+                            <div className="text-xs font-semibold text-primary-900 mb-1 uppercase tracking-wide">
                               Why We Recommend This
                             </div>
                             <p className="text-sm text-gray-700 leading-relaxed">
@@ -425,7 +427,7 @@ export default function DiscoverPage() {
                     <div className="flex gap-3 pt-2">
                       <button
                         onClick={() => handleAddToCalendar(activity._id)}
-                        className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
+                        className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-soft"
                       >
                         📅 Add to Calendar
                       </button>
@@ -453,7 +455,7 @@ export default function DiscoverPage() {
             <button
               onClick={handleDiscoverActivities}
               disabled={isDiscovering}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDiscovering ? "Searching..." : "Start Discovering"}
             </button>

@@ -147,7 +147,7 @@ export default function ReviewPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
+          <Link href="/" className="text-2xl font-bold text-primary-600">
             Our Daily Family
           </Link>
 
@@ -159,8 +159,8 @@ export default function ReviewPage() {
             <Link href="/calendar" className="text-gray-600 hover:text-gray-900">
               Calendar
             </Link>
-            <Link href="/review" className="text-indigo-600 font-medium">
-              Review
+            <Link href="/review" className="text-primary-600 font-medium">
+              Inbox
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
               Discover
@@ -192,8 +192,8 @@ export default function ReviewPage() {
               <Link href="/calendar" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
                 Calendar
               </Link>
-              <Link href="/review" className="px-4 py-3 text-indigo-600 font-medium bg-indigo-50">
-                Review
+              <Link href="/review" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">
+                Inbox
               </Link>
               <Link href="/discover" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
                 Discover
@@ -224,7 +224,7 @@ export default function ReviewPage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <button
             onClick={() => setShowAddEventModal(true)}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition flex items-center justify-center gap-2"
           >
             <span className="text-xl">+</span>
             Add Event Manually
@@ -232,7 +232,7 @@ export default function ReviewPage() {
           <button
             onClick={handleScanEmail}
             disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isScanning ? "Scanning..." : "Scan Emails Now"}
           </button>
@@ -246,7 +246,7 @@ export default function ReviewPage() {
         )}
 
         {/* Stats Banner */}
-        <div className="bg-indigo-50 rounded-lg p-4 sm:p-6 mb-6 border border-indigo-200">
+        <div className="bg-primary-50 rounded-lg p-4 sm:p-6 mb-6 border border-primary-200">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -303,7 +303,7 @@ export default function ReviewPage() {
                           const allIds = new Set<string>(unconfirmedEvents.map((e) => e._id));
                           setSelectedEvents(allIds);
                         }}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition"
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
                       >
                         Select All
                       </button>
@@ -351,7 +351,7 @@ export default function ReviewPage() {
             </p>
             <button
               onClick={() => setShowAddEventModal(true)}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
             >
               Add Event Manually
             </button>
@@ -376,7 +376,7 @@ export default function ReviewPage() {
                         }
                         setSelectedEvents(newSelected);
                       }}
-                      className="mt-1 h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      className="mt-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -395,7 +395,7 @@ export default function ReviewPage() {
                       </div>
                       <div className="flex flex-wrap gap-2 items-center">
                         {event.childName && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
                             {event.childName}
                           </div>
                         )}
@@ -461,7 +461,7 @@ export default function ReviewPage() {
                     </button>
                     <button
                       onClick={() => handleEdit(event)}
-                      className="px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                      className="px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
                     >
                       Edit
                     </button>
@@ -506,7 +506,7 @@ export default function ReviewPage() {
                     name="title"
                     defaultValue={editingEvent.title}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
 
@@ -520,7 +520,7 @@ export default function ReviewPage() {
                       name="eventDate"
                       defaultValue={editingEvent.eventDate}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -532,7 +532,7 @@ export default function ReviewPage() {
                       name="childName"
                       defaultValue={editingEvent.childName || ""}
                       placeholder="e.g., Emma"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -546,7 +546,7 @@ export default function ReviewPage() {
                       type="time"
                       name="eventTime"
                       defaultValue={editingEvent.eventTime || ""}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -557,7 +557,7 @@ export default function ReviewPage() {
                       type="time"
                       name="endTime"
                       defaultValue={editingEvent.endTime || ""}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -571,7 +571,7 @@ export default function ReviewPage() {
                     name="location"
                     defaultValue={editingEvent.location || ""}
                     placeholder="e.g., West Field"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
 
@@ -584,14 +584,14 @@ export default function ReviewPage() {
                     defaultValue={editingEvent.description || ""}
                     rows={3}
                     placeholder="Any additional details..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   ></textarea>
                 </div>
 
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
                   >
                     Save Changes
                   </button>
@@ -634,7 +634,7 @@ export default function ReviewPage() {
                   <input
                     type="text"
                     placeholder="e.g., Soccer Practice"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
 
@@ -645,7 +645,7 @@ export default function ReviewPage() {
                     </label>
                     <input
                       type="date"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -676,7 +676,7 @@ export default function ReviewPage() {
                     </label>
                     <input
                       type="time"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -685,7 +685,7 @@ export default function ReviewPage() {
                     </label>
                     <input
                       type="time"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -697,7 +697,7 @@ export default function ReviewPage() {
                   <input
                     type="text"
                     placeholder="e.g., West Field"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
 
@@ -721,14 +721,14 @@ export default function ReviewPage() {
                   <textarea
                     rows={3}
                     placeholder="Any additional details..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   ></textarea>
                 </div>
 
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
                   >
                     Add Event
                   </button>

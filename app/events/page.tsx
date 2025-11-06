@@ -328,17 +328,20 @@ function EventsContent() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
+          <Link href="/" className="text-2xl font-bold text-primary-600">
             Our Daily Family
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/events" className="text-indigo-600 font-medium">
-              Events
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
+              Dashboard
+            </Link>
+            <Link href="/calendar" className="text-primary-600 font-medium">
+              Calendar
             </Link>
             <Link
-              href="/inbox"
+              href="/review"
               className="text-gray-600 hover:text-gray-900 relative"
             >
               Inbox
@@ -372,13 +375,13 @@ function EventsContent() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <nav className="flex flex-col py-2">
-              <Link
-                href="/events"
-                className="px-4 py-3 text-indigo-600 font-medium bg-indigo-50"
-              >
-                Events
+              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
+                Dashboard
               </Link>
-              <Link href="/inbox" className="px-4 py-3 text-gray-600 hover:bg-gray-50 relative">
+              <Link href="/calendar" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">
+                Calendar
+              </Link>
+              <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50 relative">
                 <span>Inbox</span>
                 {unconfirmedEvents && unconfirmedEvents.length > 0 && (
                   <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
@@ -418,14 +421,14 @@ function EventsContent() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/inbox"
-                className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition"
+                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
               >
                 + Add Event
               </Link>
               <button
                 onClick={handleScanEmail}
                 disabled={isScanning || !isGmailConnected}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {isScanning ? "Scanning..." : "Scan Email"}
               </button>
@@ -471,7 +474,7 @@ function EventsContent() {
                 onClick={() => setViewMode("list")}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   viewMode === "list"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-primary-600 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -481,7 +484,7 @@ function EventsContent() {
                 onClick={() => setViewMode("calendar")}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   viewMode === "calendar"
-                    ? "bg-indigo-600 text-white"
+                    ? "bg-primary-600 text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -492,7 +495,7 @@ function EventsContent() {
               <button
                 onClick={handleSyncAllToGoogleCalendar}
                 disabled={syncing}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
               >
                 {syncing ? "Syncing..." : "📅 Sync All"}
               </button>
@@ -514,7 +517,7 @@ function EventsContent() {
                     placeholder="Search events..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
 
@@ -527,7 +530,7 @@ function EventsContent() {
                     id="member"
                     value={filterMember}
                     onChange={(e) => setFilterMember(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="all">All Members</option>
                     {familyMembers?.map((member) => (
@@ -547,7 +550,7 @@ function EventsContent() {
                     id="category"
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="all">All Categories</option>
                     {categories.map((category) => (
@@ -568,7 +571,7 @@ function EventsContent() {
                       setFilterMember("all");
                       setFilterCategory("all");
                     }}
-                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    className="text-sm text-primary-600 hover:text-primary-800 font-medium"
                   >
                     Clear all filters
                   </button>
