@@ -5,9 +5,9 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Resend } from "resend";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const { userId, userEmail } = await request.json();
 
