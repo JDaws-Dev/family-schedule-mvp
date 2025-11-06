@@ -107,6 +107,22 @@ export async function POST(request: NextRequest) {
     const calendarId = await findOrCreateFamilyCalendar(calendar);
     console.log("Calendar ID:", calendarId);
 
+    // Save calendar ID to family record if not already set
+    const family = await convex.query(api.families.getFamilyById, {
+      familyId: event.familyId,
+    });
+
+    if (!family?.googleCalendarId || family.googleCalendarId !== calendarId) {
+      console.log("Saving Google Calendar ID to family record...");
+      await convex.mutation(api.googleCalendar.createFamilyCalendar, {
+        familyId: event.familyId,
+        userId: event.createdByUserId,
+        googleCalendarId: calendarId,
+        calendarName: "Family Schedule",
+      });
+      console.log("Google Calendar ID saved successfully");
+    }
+
     // Build Google Calendar event
     const startDateTime = event.eventTime
       ? `${event.eventDate}T${event.eventTime}:00`
@@ -167,6 +183,11 @@ export async function POST(request: NextRequest) {
     await convex.mutation(api.events.updateEvent, {
       eventId: eventId as Id<"events">,
       googleCalendarEventId: googleEventId,
+    });
+
+    // Update lastCalendarSyncAt timestamp on family record
+    await convex.mutation(api.families.updateLastCalendarSync, {
+      familyId: event.familyId,
     });
 
     return NextResponse.json({

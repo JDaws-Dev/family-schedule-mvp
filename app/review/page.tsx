@@ -7,6 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import MobileNav from "@/app/components/MobileNav";
+import { EventCardSkeleton } from "@/app/components/LoadingSkeleton";
 
 export default function ReviewPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,6 +18,8 @@ export default function ReviewPage() {
   const [scanMessage, setScanMessage] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set());
   const [approvedEventId, setApprovedEventId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const eventsPerPage = 10;
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     eventDate: "",
@@ -433,28 +436,84 @@ export default function ReviewPage() {
 
         {/* Unconfirmed Events List */}
         {unconfirmedEvents === undefined ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <div className="text-gray-500">Loading events...</div>
+          <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
+            <EventCardSkeleton />
+            <EventCardSkeleton />
+            <EventCardSkeleton />
           </div>
         ) : unconfirmedEvents.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
-            <div className="text-6xl mb-4">✓</div>
+            <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="text-5xl">✓</div>
+            </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               All caught up!
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-8">
               No events need review right now. We'll notify you when new events are found.
             </p>
-            <button
-              onClick={() => setShowAddEventModal(true)}
-              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
-            >
-              Add Event Manually
-            </button>
+
+            <div className="bg-gray-50 rounded-xl p-6 mb-8 text-left max-w-md mx-auto">
+              <h3 className="font-semibold text-gray-900 mb-4 text-center">How events get here:</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">Gmail Scan</p>
+                    <p className="text-xs text-gray-600 mt-0.5">We automatically detect events from your email and send them here for review</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">Manual Entry</p>
+                    <p className="text-xs text-gray-600 mt-0.5">Events you create manually go straight to your calendar</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/dashboard"
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition inline-flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Scan for Events
+              </Link>
+              <button
+                onClick={() => setShowAddEventModal(true)}
+                className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-lg font-semibold transition inline-flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Event Manually
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {unconfirmedEvents.map((event) => (
+          <>
+            <div className="space-y-4">
+              {(() => {
+                // Pagination logic
+                const totalPages = Math.ceil(unconfirmedEvents.length / eventsPerPage);
+                const startIndex = (currentPage - 1) * eventsPerPage;
+                const endIndex = startIndex + eventsPerPage;
+                const paginatedEvents = unconfirmedEvents.slice(startIndex, endIndex);
+
+                return paginatedEvents;
+              })().map((event) => (
               <div key={event._id} className="bg-white rounded-lg shadow-md border-2 border-yellow-200">
                 {/* Event Header */}
                 <div className="p-6">
@@ -571,7 +630,96 @@ export default function ReviewPage() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+
+            {/* Pagination Controls */}
+            {unconfirmedEvents.length > eventsPerPage && (() => {
+              const totalPages = Math.ceil(unconfirmedEvents.length / eventsPerPage);
+              return (
+                <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-b-lg mt-4">
+                  <div className="flex flex-1 justify-between sm:hidden">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Showing <span className="font-medium">{(currentPage - 1) * eventsPerPage + 1}</span> to{' '}
+                        <span className="font-medium">{Math.min(currentPage * eventsPerPage, unconfirmedEvents.length)}</span> of{' '}
+                        <span className="font-medium">{unconfirmedEvents.length}</span> events
+                      </p>
+                    </div>
+                    <div>
+                      <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Previous</span>
+                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {[...Array(totalPages)].map((_, i) => {
+                          const pageNum = i + 1;
+                          // Show first page, last page, current page, and pages around current
+                          const showPage = pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1;
+                          const showEllipsis = (pageNum === 2 && currentPage > 3) || (pageNum === totalPages - 1 && currentPage < totalPages - 2);
+
+                          if (showEllipsis) {
+                            return (
+                              <span key={i} className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">
+                                ...
+                              </span>
+                            );
+                          }
+
+                          if (!showPage) return null;
+
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                currentPage === pageNum
+                                  ? 'z-10 bg-primary-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600'
+                                  : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Next</span>
+                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </>
         )}
       </div>
 

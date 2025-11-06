@@ -8,10 +8,12 @@ interface Toast {
   id: string;
   message: string;
   type: ToastType;
+  undoAction?: () => void;
+  duration?: number;
 }
 
 interface ToastContextType {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, undoAction?: () => void, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -27,16 +29,16 @@ export function useToast() {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+  const showToast = useCallback((message: string, type: ToastType = 'info', undoAction?: () => void, duration: number = 5000) => {
     const id = Math.random().toString(36).substring(7);
-    const newToast: Toast = { id, message, type };
+    const newToast: Toast = { id, message, type, undoAction, duration };
 
     setToasts((prev) => [...prev, newToast]);
 
-    // Auto-remove toast after 5 seconds
+    // Auto-remove toast after specified duration
     setTimeout(() => {
       setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, 5000);
+    }, duration);
   }, []);
 
   const removeToast = useCallback((id: string) => {
@@ -122,6 +124,27 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   {toast.message}
                 </p>
               </div>
+
+              {/* Undo Button */}
+              {toast.undoAction && (
+                <button
+                  onClick={() => {
+                    toast.undoAction!();
+                    removeToast(toast.id);
+                  }}
+                  className={`flex-shrink-0 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                    toast.type === 'success'
+                      ? 'text-green-700 hover:bg-green-100'
+                      : toast.type === 'error'
+                      ? 'text-red-700 hover:bg-red-100'
+                      : toast.type === 'warning'
+                      ? 'text-amber-700 hover:bg-amber-100'
+                      : 'text-blue-700 hover:bg-blue-100'
+                  }`}
+                >
+                  Undo
+                </button>
+              )}
 
               {/* Close Button */}
               <button

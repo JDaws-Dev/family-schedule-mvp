@@ -1,16 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as React from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "../components/Toast";
 import { SyncStatus } from "../components/SyncStatus";
+import { EventCardSkeleton, StatCardSkeleton } from "../components/LoadingSkeleton";
+import { useSearchParams } from "next/navigation";
+
+// Helper function to convert 24-hour time to 12-hour format with AM/PM
+function formatTime12Hour(time24: string): string {
+  if (!time24) return "";
+
+  const match = time24.match(/(\d{1,2}):(\d{2})/);
+  if (!match) return time24;
+
+  const hours = parseInt(match[1]);
+  const minutes = match[2];
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHour = hours % 12 || 12;
+
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
+// Helper function to get category icon
+function getCategoryIcon(category: string): string {
+  const icons: Record<string, string> = {
+    "Sports": "⚽",
+    "School": "📚",
+    "Music": "🎵",
+    "Dance": "💃",
+    "Arts & Crafts": "🎨",
+    "Tutoring": "✏️",
+    "Medical": "🏥",
+    "Birthday Party": "🎂",
+    "Play Date": "🎭",
+    "Field Trip": "🚌",
+    "Club Meeting": "👥",
+    "Other": "📌"
+  };
+  return icons[category] || "📌";
+}
 
 export default function Dashboard() {
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
   const [showScanModal, setShowScanModal] = useState(false);
@@ -19,12 +58,27 @@ export default function Dashboard() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
+  const [pastedText, setPastedText] = useState("");
+  const [isExtractingEvent, setIsExtractingEvent] = useState(false);
+  const [newEventForm, setNewEventForm] = useState({
+    title: "",
+    eventDate: "",
+    eventTime: "",
+    endTime: "",
+    location: "",
+    category: "Sports",
+    childName: "",
+    description: "",
+  });
   const { user: clerkUser } = useUser();
   const { signOut} = useClerk();
 
   // Mutations
   const updateEvent = useMutation(api.events.updateEvent);
   const deleteEvent = useMutation(api.events.deleteEvent);
+  const createEvent = useMutation(api.events.createEvent);
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -56,6 +110,38 @@ export default function Dashboard() {
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
+  // Get all events to extract unique categories
+  const allEvents = useQuery(
+    api.events.getConfirmedEvents,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Extract unique categories from existing events
+  const existingCategories = React.useMemo(() => {
+    if (!allEvents) return [];
+    const categories = new Set<string>();
+    allEvents.forEach((event: any) => {
+      if (event.category) categories.add(event.category);
+    });
+    return Array.from(categories).sort();
+  }, [allEvents]);
+
+  // Standard preset categories
+  const standardCategories = [
+    "Sports",
+    "School",
+    "Music",
+    "Dance",
+    "Arts & Crafts",
+    "Tutoring",
+    "Medical",
+    "Birthday Party",
+    "Play Date",
+    "Field Trip",
+    "Club Meeting",
+    "Other"
+  ];
+
   // Get all events for this week
   const today = new Date().toISOString().split("T")[0];
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -70,6 +156,54 @@ export default function Dashboard() {
   );
 
   const isGmailConnected = (gmailAccounts?.length ?? 0) > 0;
+
+  // Check for onboarding completion
+  useEffect(() => {
+    const onboardingComplete = searchParams.get("onboarding_complete");
+    if (onboardingComplete === "true") {
+      setShowWelcomeGuide(true);
+      // Clear the query params
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [searchParams]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore if user is typing in an input, textarea, or contenteditable
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      // Press 'N' to create new event
+      if (event.key.toLowerCase() === 'n' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        setShowAddEventModal(true);
+        showToast("Keyboard shortcut: 'N' - New event", "info", undefined, 2000);
+      }
+
+      // Press 'Escape' to close modals
+      if (event.key === 'Escape') {
+        if (showAddEventModal) {
+          setShowAddEventModal(false);
+        } else if (selectedEvent) {
+          setSelectedEvent(null);
+          setIsEditingEvent(false);
+          setEditFormData(null);
+        } else if (showScanModal) {
+          setShowScanModal(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAddEventModal, selectedEvent, showScanModal, showToast]);
 
   const handleScanEmail = async () => {
     if (!gmailAccounts || gmailAccounts.length === 0) {
@@ -132,6 +266,100 @@ export default function Dashboard() {
     }
   };
 
+  const handleExtractFromPaste = async () => {
+    if (!pastedText.trim()) {
+      showToast("Please paste some text first", "warning");
+      return;
+    }
+
+    setIsExtractingEvent(true);
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ smsText: pastedText }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event");
+      }
+
+      if (!data.hasEvent) {
+        showToast("No event information found in the pasted text. " + (data.explanation || ""), "info", undefined, 7000);
+        return;
+      }
+
+      // Pre-fill the form with extracted data
+      setNewEventForm({
+        title: data.event.title || "",
+        eventDate: data.event.date || "",
+        eventTime: data.event.time || "",
+        endTime: data.event.endTime || "",
+        location: data.event.location || "",
+        category: data.event.category ? (data.event.category.charAt(0).toUpperCase() + data.event.category.slice(1)) : "Other",
+        childName: "",
+        description: data.event.description || pastedText,
+      });
+
+      // Switch to manual tab so user can review/edit
+      setAddEventTab("manual");
+      showToast(`✓ Event extracted! Review and save below.`, "success", undefined, 5000);
+      setPastedText(""); // Clear the paste field
+    } catch (error: any) {
+      console.error("Error extracting event:", error);
+      showToast("Failed to extract event. Please try again or enter manually.", "error");
+    } finally {
+      setIsExtractingEvent(false);
+    }
+  };
+
+  const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!convexUser?._id) {
+      alert("User not found. Please refresh the page and try again.");
+      return;
+    }
+
+    if (!newEventForm.title.trim() || !newEventForm.eventDate) {
+      alert("Please fill in the event title and date");
+      return;
+    }
+
+    try {
+      await createEvent({
+        createdByUserId: convexUser._id,
+        title: newEventForm.title.trim(),
+        eventDate: newEventForm.eventDate,
+        eventTime: newEventForm.eventTime || undefined,
+        endTime: newEventForm.endTime || undefined,
+        location: newEventForm.location.trim() || undefined,
+        category: newEventForm.category || undefined,
+        childName: newEventForm.childName.trim() || undefined,
+        description: newEventForm.description.trim() || undefined,
+        isConfirmed: true,
+      });
+
+      setNewEventForm({
+        title: "",
+        eventDate: "",
+        eventTime: "",
+        endTime: "",
+        location: "",
+        category: "Sports",
+        childName: "",
+        description: "",
+      });
+
+      setShowAddEventModal(false);
+      showToast(`✓ Event "${newEventForm.title}" added successfully!`, "success", undefined, 7000);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      alert("Failed to create event. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -185,6 +413,8 @@ export default function Dashboard() {
           <button
             className="md:hidden text-2xl text-gray-600"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            title={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileMenuOpen ? '✕' : '☰'}
           </button>
@@ -316,6 +546,101 @@ export default function Dashboard() {
           </p>
         </div>
 
+        {/* Welcome Guide - Shows after onboarding */}
+        {showWelcomeGuide && (
+          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl shadow-strong p-8 mb-8 text-white relative overflow-hidden">
+            <button
+              onClick={() => setShowWelcomeGuide(false)}
+              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+              aria-label="Close welcome guide"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Welcome to Our Daily Family! 🎉</h2>
+                <p className="text-white/90 text-lg">
+                  Your account is set up! Here's what to do next to get the most out of your family calendar:
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-lg mb-2">1. Scan Your Gmail</h3>
+                <p className="text-white/80 text-sm mb-4">
+                  We'll automatically find all your kids' activities, sports schedules, and school events from your email.
+                </p>
+                {isGmailConnected && (
+                  <button
+                    onClick={() => setShowWelcomeGuide(false)}
+                    className="text-sm font-medium text-white/90 hover:text-white underline"
+                  >
+                    Scroll down to scan →
+                  </button>
+                )}
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-lg mb-2">2. Review Events</h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Check the events we found and confirm which ones you want to add to your calendar.
+                </p>
+                <Link
+                  href="/review"
+                  onClick={() => setShowWelcomeGuide(false)}
+                  className="text-sm font-medium text-white/90 hover:text-white underline"
+                >
+                  Go to Review page →
+                </Link>
+              </div>
+
+              <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
+                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="font-bold text-lg mb-2">3. Sync to Google Calendar</h3>
+                <p className="text-white/80 text-sm mb-4">
+                  Sync events to your Google Calendar so they appear on your phone, tablet, and everywhere else.
+                </p>
+                <Link
+                  href="/calendar"
+                  onClick={() => setShowWelcomeGuide(false)}
+                  className="text-sm font-medium text-white/90 hover:text-white underline"
+                >
+                  Go to Calendar →
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-white/20 flex items-center justify-between">
+              <p className="text-white/80 text-sm">
+                💡 <strong>Tip:</strong> Press <kbd className="px-2 py-1 bg-white/20 rounded text-xs font-mono">N</kbd> anytime to quickly add an event
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Sync Status */}
         {convexUser?.familyId && isGmailConnected && (
           <SyncStatus
@@ -427,7 +752,11 @@ export default function Dashboard() {
               </div>
               <div className="divide-y divide-gray-200">
                 {upcomingEvents === undefined ? (
-                  <div className="p-8 text-center text-gray-500">Loading...</div>
+                  <>
+                    <EventCardSkeleton />
+                    <EventCardSkeleton />
+                    <EventCardSkeleton />
+                  </>
                 ) : upcomingEvents.length === 0 ? (
                   <div className="p-8 sm:p-12 text-center">
                     <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -500,15 +829,15 @@ export default function Dashboard() {
                           Scan Email
                         </button>
                       )}
-                      <Link
-                        href="/review"
+                      <button
+                        onClick={() => setShowAddEventModal(true)}
                         className="px-6 py-3 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-lg font-semibold transition-colors inline-flex items-center justify-center gap-2"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                         Add Event
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -520,26 +849,39 @@ export default function Dashboard() {
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-2">
+                          <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                            {event.category && (
+                              <span title={event.category} aria-label={event.category}>
+                                {getCategoryIcon(event.category)}
+                              </span>
+                            )}
                             {event.title}
                           </h3>
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                             <span>{event.eventDate}</span>
                             {event.eventTime && (
-                              <span>{event.eventTime}</span>
+                              <span>{formatTime12Hour(event.eventTime)}</span>
                             )}
                             {event.location && (
                               <span>{event.location}</span>
                             )}
                           </div>
                         </div>
-                        {event.childName && (
-                          <div className="sm:ml-4">
+                        <div className="sm:ml-4 flex flex-col gap-2 items-end">
+                          {event.childName && (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                               {event.childName}
                             </span>
-                          </div>
-                        )}
+                          )}
+                          {event.googleCalendarEventId && (
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800" title="Synced to Google Calendar">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Synced
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
@@ -555,8 +897,8 @@ export default function Dashboard() {
                 Quick Actions
               </h2>
               <div className="space-y-3">
-                <Link
-                  href="/review"
+                <button
+                  onClick={() => setShowAddEventModal(true)}
                   className="block w-full text-left px-4 py-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
                 >
                   <div className="flex items-center gap-3">
@@ -574,7 +916,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </button>
 
                 <button
                   onClick={handleScanEmail}
@@ -737,14 +1079,16 @@ export default function Dashboard() {
       </div>
 
       {/* Floating Action Button - Mobile Only */}
-      <Link
-        href="/review"
+      <button
+        onClick={() => setShowAddEventModal(true)}
+        title="Add new event"
+        aria-label="Add new event"
         className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
-      </Link>
+      </button>
 
       {/* Email Scan Progress Modal */}
       {showScanModal && (
@@ -860,7 +1204,7 @@ export default function Dashboard() {
       {/* Event Detail Modal */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => {
             setSelectedEvent(null);
             setIsEditingEvent(false);
@@ -868,44 +1212,613 @@ export default function Dashboard() {
           }}
         >
           <div
-            className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {isEditingEvent ? "Edit Event" : selectedEvent.title}
-              </h2>
-              <button
-                onClick={() => {
-                  setSelectedEvent(null);
-                  setIsEditingEvent(false);
-                  setEditFormData(null);
-                }}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-              >
-                ✕
-              </button>
-            </div>
+            {isEditingEvent ? (
+              <>
+                {/* Edit Mode Header */}
+                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+                  <div className="flex justify-between items-start">
+                    <h2 className="text-2xl font-bold text-white">Edit Event</h2>
+                    <button
+                      onClick={() => {
+                        setIsEditingEvent(false);
+                        setEditFormData(null);
+                      }}
+                      className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* View Mode Header with Gradient */}
+                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <h2 className="text-2xl font-bold text-white pr-8">{selectedEvent.title}</h2>
+                    <button
+                      onClick={() => {
+                        setSelectedEvent(null);
+                        setIsEditingEvent(false);
+                        setEditFormData(null);
+                      }}
+                      className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Quick Info Cards */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                      <div className="text-white/80 text-xs font-medium mb-1">Date</div>
+                      <div className="text-white font-semibold flex items-center gap-2">
+                        📅 {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    </div>
+
+                    {selectedEvent.eventTime && (
+                      <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+                        <div className="text-white/80 text-xs font-medium mb-1">Time</div>
+                        <div className="text-white font-semibold flex items-center gap-2">
+                          🕐 {formatTime12Hour(selectedEvent.eventTime)}
+                          {selectedEvent.endTime && ` - ${formatTime12Hour(selectedEvent.endTime)}`}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             {isEditingEvent ? (
-              /* Edit Form */
-              <div className="space-y-4">
+              <>
+                {/* Edit Form */}
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input
+                      type="text"
+                      value={editFormData?.title || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input
+                      type="date"
+                      value={editFormData?.eventDate || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                      <input
+                        type="time"
+                        value={editFormData?.eventTime || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                      <input
+                        type="time"
+                        value={editFormData?.endTime || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, endTime: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                    <input
+                      type="text"
+                      value={editFormData?.location || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
+                    <div className="space-y-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                      {familyMembers && familyMembers.length > 0 ? (
+                        [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
+                          const selectedMembers = editFormData?.childName ? editFormData.childName.split(", ") : [];
+                          const isChecked = selectedMembers.includes(member.name);
+
+                          return (
+                            <label key={member._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  let updatedMembers = [...selectedMembers];
+                                  if (e.target.checked) {
+                                    updatedMembers.push(member.name);
+                                  } else {
+                                    updatedMembers = updatedMembers.filter(m => m !== member.name);
+                                  }
+                                  setEditFormData({
+                                    ...editFormData,
+                                    childName: updatedMembers.join(", ")
+                                  });
+                                }}
+                                className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                              />
+                              <span
+                                className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium text-white"
+                                style={{ backgroundColor: member.color || "#6366f1" }}
+                              >
+                                {member.name}
+                              </span>
+                            </label>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-gray-500">No family members added yet</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select
+                      value={editFormData?.category || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "custom") {
+                          const customCategory = prompt("Enter custom category:");
+                          if (customCategory && customCategory.trim()) {
+                            setEditFormData({ ...editFormData, category: customCategory.trim() });
+                          }
+                        } else {
+                          setEditFormData({ ...editFormData, category: value });
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                      <option value="">Select a category...</option>
+                      {/* Standard Categories */}
+                      <optgroup label="Standard Categories">
+                        {standardCategories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </optgroup>
+                      {/* Previously Used Categories (if any new ones) */}
+                      {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                        <optgroup label="Your Categories">
+                          {existingCategories
+                            .filter(cat => !standardCategories.includes(cat))
+                            .map((cat) => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))
+                          }
+                        </optgroup>
+                      )}
+                      <option value="custom">+ Add Custom Category</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      value={editFormData?.description || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await updateEvent({
+                          eventId: selectedEvent._id,
+                          title: editFormData.title,
+                          eventDate: editFormData.eventDate,
+                          eventTime: editFormData.eventTime || undefined,
+                          endTime: editFormData.endTime || undefined,
+                          location: editFormData.location || undefined,
+                          childName: editFormData.childName || undefined,
+                          category: editFormData.category || undefined,
+                          description: editFormData.description || undefined,
+                        });
+                        showToast(`✓ Event "${editFormData.title}" updated successfully!`, "success", undefined, 7000);
+                        setSelectedEvent(null);
+                        setIsEditingEvent(false);
+                        setEditFormData(null);
+                      } catch (error) {
+                        console.error("Error updating event:", error);
+                        showToast("Failed to update event. Please try again.", "error");
+                      }
+                    }}
+                    className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingEvent(false);
+                      setEditFormData(null);
+                    }}
+                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* View Mode */
+              <>
+                {/* Content */}
+                <div className="p-6">
+                  {/* Description Section */}
+                  {selectedEvent.description && (
+                    <div className="mb-6">
+                      <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">
+                        Description
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">
+                        {selectedEvent.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    {selectedEvent.location && (
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                          Location
+                        </div>
+                        <div className="text-gray-900 font-medium flex items-start gap-2">
+                          <span>📍</span>
+                          <span>{selectedEvent.location}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedEvent.category && (
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                          Category
+                        </div>
+                        <div className="text-gray-900 font-medium flex items-center gap-2">
+                          <span title={selectedEvent.category} aria-label={selectedEvent.category}>
+                            {getCategoryIcon(selectedEvent.category)}
+                          </span>
+                          <span>{selectedEvent.category}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedEvent.childName && (
+                      <div className="bg-gray-50 rounded-lg p-4 sm:col-span-2">
+                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          Family Members
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedEvent.childName.split(',').map((name: string, idx: number) => {
+                            const trimmedName = name.trim();
+                            const member = familyMembers?.find(m => m.name === trimmedName);
+                            const color = member?.color || "#6366f1";
+                            return (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                                style={{ backgroundColor: color }}
+                              >
+                                {trimmedName}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Required Badge */}
+                  {selectedEvent.requiresAction && (
+                    <div className="mb-6 bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-red-900 mb-1">
+                            Action Required: RSVP
+                          </h4>
+                          {selectedEvent.actionDeadline && (
+                            <p className="text-sm text-red-700">
+                              Deadline: {new Date(selectedEvent.actionDeadline).toLocaleDateString('en-US', {
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Source Information */}
+                  {selectedEvent.sourceEmailSubject && (
+                    <div className="mb-6 bg-blue-50 rounded-lg p-4">
+                      <div className="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">
+                        Source Information
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-sm text-blue-900">
+                          <span className="font-medium">Email:</span> {selectedEvent.sourceEmailSubject}
+                        </div>
+                        {selectedEvent.sourceGmailAccountId && gmailAccounts && (
+                          <div className="text-sm text-blue-800">
+                            <span className="font-medium">Account:</span> {gmailAccounts.find(a => a._id === selectedEvent.sourceGmailAccountId)?.gmailEmail || 'Unknown'}
+                          </div>
+                        )}
+                        <a
+                          href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`subject:"${selectedEvent.sourceEmailSubject}"`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          View in Gmail
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sync Status */}
+                  {selectedEvent.googleCalendarEventId && (
+                    <div className="mb-6 bg-green-50 rounded-lg p-4 flex items-center gap-3">
+                      <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-medium text-green-900">
+                        Synced to Google Calendar
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={async () => {
+                      if (confirm(`Delete "${selectedEvent.title}"?`)) {
+                        try {
+                          await deleteEvent({ eventId: selectedEvent._id });
+                          setSelectedEvent(null);
+                          showToast(`✓ Event "${selectedEvent.title}" deleted`, "success", undefined, 7000);
+                        } catch (error) {
+                          console.error("Error deleting event:", error);
+                          showToast("Failed to delete event. Please try again.", "error");
+                        }
+                      }
+                    }}
+                    className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow-soft flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => {
+                      setEditFormData({
+                        title: selectedEvent.title,
+                        eventDate: selectedEvent.eventDate,
+                        eventTime: selectedEvent.eventTime || "",
+                        endTime: selectedEvent.endTime || "",
+                        location: selectedEvent.location || "",
+                        childName: selectedEvent.childName || "",
+                        category: selectedEvent.category || "",
+                        description: selectedEvent.description || "",
+                      });
+                      setIsEditingEvent(true);
+                    }}
+                    className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setSelectedEvent(null)}
+                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => setShowAddEventModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Gradient */}
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-white">Add New Event</h2>
+                <button
+                  onClick={() => setShowAddEventModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAddEventTab("manual")}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    addEventTab === "manual"
+                      ? "bg-white text-primary-600 shadow-soft"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  Manual Entry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddEventTab("paste")}
+                  className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+                    addEventTab === "paste"
+                      ? "bg-white text-primary-600 shadow-soft"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Paste Text
+                </button>
+              </div>
+            </div>
+
+            {/* Paste Text Tab */}
+            {addEventTab === "paste" && (
+              <div className="p-6 space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-blue-900 mb-1">How it works</h4>
+                      <p className="text-sm text-blue-800">
+                        Paste an email, text message, or any text containing event information. Our AI will automatically extract the event details for you!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Paste Email or Text Message
+                  </label>
+                  <textarea
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    rows={10}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Paste your email or text message here...
+
+Example:
+'Soccer practice this Saturday at 9am at Memorial Park. Please bring water and shin guards!'"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleExtractFromPaste}
+                    disabled={isExtractingEvent || !pastedText.trim()}
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center justify-center gap-2"
+                  >
+                    {isExtractingEvent ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Extracting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Extract Event
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddEventModal(false)}
+                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Entry Tab */}
+            {addEventTab === "manual" && (
+              <form onSubmit={handleAddEvent}>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Title <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    value={editFormData?.title || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                    required
+                    value={newEventForm.title}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, title: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Soccer Practice"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
-                    value={editFormData?.eventDate || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
+                    required
+                    value={newEventForm.eventDate}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, eventDate: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
@@ -915,8 +1828,8 @@ export default function Dashboard() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                     <input
                       type="time"
-                      value={editFormData?.eventTime || ""}
-                      onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
+                      value={newEventForm.eventTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, eventTime: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
@@ -924,8 +1837,8 @@ export default function Dashboard() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
                     <input
                       type="time"
-                      value={editFormData?.endTime || ""}
-                      onChange={(e) => setEditFormData({ ...editFormData, endTime: e.target.value })}
+                      value={newEventForm.endTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, endTime: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
@@ -935,9 +1848,10 @@ export default function Dashboard() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                   <input
                     type="text"
-                    value={editFormData?.location || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                    value={newEventForm.location}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, location: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Local Soccer Field"
                   />
                 </div>
 
@@ -946,7 +1860,7 @@ export default function Dashboard() {
                   <div className="space-y-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
                     {familyMembers && familyMembers.length > 0 ? (
                       [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
-                        const selectedMembers = editFormData?.childName ? editFormData.childName.split(", ") : [];
+                        const selectedMembers = newEventForm.childName ? newEventForm.childName.split(", ") : [];
                         const isChecked = selectedMembers.includes(member.name);
 
                         return (
@@ -961,8 +1875,8 @@ export default function Dashboard() {
                                 } else {
                                   updatedMembers = updatedMembers.filter(m => m !== member.name);
                                 }
-                                setEditFormData({
-                                  ...editFormData,
+                                setNewEventForm({
+                                  ...newEventForm,
                                   childName: updatedMembers.join(", ")
                                 });
                               }}
@@ -978,150 +1892,82 @@ export default function Dashboard() {
                         );
                       })
                     ) : (
-                      <p className="text-sm text-gray-500">No family members added yet</p>
+                      <p className="text-sm text-gray-500">No family members added yet. Add them in Settings.</p>
                     )}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <input
-                    type="text"
-                    value={editFormData?.category || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                  <select
+                    value={newEventForm.category}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "custom") {
+                        const customCategory = prompt("Enter custom category:");
+                        if (customCategory && customCategory.trim()) {
+                          setNewEventForm({ ...newEventForm, category: customCategory.trim() });
+                        }
+                      } else {
+                        setNewEventForm({ ...newEventForm, category: value });
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  />
+                  >
+                    <option value="">Select a category...</option>
+                    {/* Standard Categories */}
+                    <optgroup label="Standard Categories">
+                      {standardCategories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </optgroup>
+                    {/* Previously Used Categories (if any new ones) */}
+                    {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                      <optgroup label="Your Categories">
+                        {existingCategories
+                          .filter(cat => !standardCategories.includes(cat))
+                          .map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))
+                        }
+                      </optgroup>
+                    )}
+                    <option value="custom">+ Add Custom Category</option>
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                   <textarea
-                    value={editFormData?.description || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                    value={newEventForm.description}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, description: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Add any additional details..."
                   />
                 </div>
-
-                <div className="mt-6 flex gap-3">
-                  <button
-                    onClick={async () => {
-                      await updateEvent({
-                        eventId: selectedEvent._id,
-                        title: editFormData.title,
-                        eventDate: editFormData.eventDate,
-                        eventTime: editFormData.eventTime || undefined,
-                        endTime: editFormData.endTime || undefined,
-                        location: editFormData.location || undefined,
-                        childName: editFormData.childName || undefined,
-                        category: editFormData.category || undefined,
-                        description: editFormData.description || undefined,
-                      });
-                      setSelectedEvent(null);
-                      setIsEditingEvent(false);
-                      setEditFormData(null);
-                    }}
-                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditingEvent(false);
-                      setEditFormData(null);
-                    }}
-                    className="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
               </div>
-            ) : (
-              /* View Mode */
-              <>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <span className="text-gray-600 font-medium w-24">Date:</span>
-                    <span className="text-gray-900">{selectedEvent.eventDate}</span>
-                  </div>
 
-                  {selectedEvent.eventTime && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-600 font-medium w-24">Time:</span>
-                      <span className="text-gray-900">
-                        {selectedEvent.eventTime}
-                        {selectedEvent.endTime && ` - ${selectedEvent.endTime}`}
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedEvent.location && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-600 font-medium w-24">Location:</span>
-                      <span className="text-gray-900">{selectedEvent.location}</span>
-                    </div>
-                  )}
-
-                  {selectedEvent.childName && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-600 font-medium w-24">Member:</span>
-                      <span className="text-gray-900">{selectedEvent.childName}</span>
-                    </div>
-                  )}
-
-                  {selectedEvent.description && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-600 font-medium w-24">Details:</span>
-                      <span className="text-gray-900">{selectedEvent.description}</span>
-                    </div>
-                  )}
-
-                  {selectedEvent.category && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-gray-600 font-medium w-24">Category:</span>
-                      <span className="text-gray-900">{selectedEvent.category}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 flex gap-3">
-                  <button
-                    onClick={() => {
-                      setIsEditingEvent(true);
-                      setEditFormData({
-                        title: selectedEvent.title,
-                        eventDate: selectedEvent.eventDate,
-                        eventTime: selectedEvent.eventTime || "",
-                        endTime: selectedEvent.endTime || "",
-                        location: selectedEvent.location || "",
-                        childName: selectedEvent.childName || "",
-                        category: selectedEvent.category || "",
-                        description: selectedEvent.description || "",
-                      });
-                    }}
-                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (confirm(`Delete "${selectedEvent.title}"?`)) {
-                        await deleteEvent({ eventId: selectedEvent._id });
-                        setSelectedEvent(null);
-                      }
-                    }}
-                    className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => setSelectedEvent(null)}
-                    className="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
-                  >
-                    Close
-                  </button>
-                </div>
-              </>
+              {/* Action Buttons */}
+              <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Add Event
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddEventModal(false)}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+              </div>
+              </form>
             )}
           </div>
         </div>

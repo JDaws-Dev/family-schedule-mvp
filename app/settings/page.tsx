@@ -58,6 +58,7 @@ export default function Settings() {
   // Family member modal state
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [editingMember, setEditingMember] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState("#6366f1"); // Default indigo
 
   // Email scanning state
   const [isScanning, setIsScanning] = useState(false);
@@ -72,6 +73,16 @@ export default function Settings() {
       setPhoneNumber(convexUser.phoneNumber);
     }
   }, [convexUser]);
+
+  // Update selected color when editing a member
+  useEffect(() => {
+    if (editingMember && trackedMembers) {
+      const member = trackedMembers.find(m => m._id === editingMember);
+      setSelectedColor(member?.color || "#6366f1");
+    } else {
+      setSelectedColor("#6366f1");
+    }
+  }, [editingMember, trackedMembers]);
 
   // Mutations
   const removeGmailAccount = useMutation(api.gmailAccounts.removeGmailAccount);
@@ -1330,11 +1341,44 @@ export default function Settings() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Calendar Color
+                    Choose a color to identify {editingMember ? trackedMembers?.find(c => c._id === editingMember)?.name || "this family member" : "this family member"}'s events
                   </label>
                   <p className="text-xs text-gray-500 mb-3">
-                    Events for this family member will appear in this color on your calendar
+                    This color helps you quickly see who each event is for on the calendar
                   </p>
+
+                  {/* Mini Calendar Preview */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl">📅</div>
+                      <div className="flex-1">
+                        <div className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                          Preview: How colors appear
+                        </div>
+                        <div className="space-y-1.5">
+                          {/* Example events showing selected color */}
+                          <div className="flex items-center gap-2 text-sm">
+                            <div className="w-1 h-8 rounded transition-colors" style={{ backgroundColor: selectedColor }}></div>
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900 text-xs">Soccer Practice</div>
+                              <div className="text-xs text-gray-500">Sat, Dec 14 • 3:00 PM</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm opacity-50">
+                            <div className="w-1 h-8 rounded bg-pink-500"></div>
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900 text-xs">Piano Recital</div>
+                              <div className="text-xs text-gray-500">Sun, Dec 15 • 2:00 PM</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2 italic">
+                          Each family member gets their own color for easy identification
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                     {[
                       { name: "Indigo", value: "#6366f1" },
@@ -1358,11 +1402,8 @@ export default function Settings() {
                           type="radio"
                           name="color"
                           value={color.value}
-                          defaultChecked={
-                            editingMember
-                              ? trackedMembers?.find(c => c._id === editingMember)?.color === color.value
-                              : color.value === "#6366f1"
-                          }
+                          checked={selectedColor === color.value}
+                          onChange={(e) => setSelectedColor(e.target.value)}
                           className="sr-only peer"
                         />
                         <div

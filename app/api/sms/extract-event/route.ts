@@ -44,14 +44,20 @@ Return a JSON object with this structure:
 
 If the message doesn't contain event information, set hasEvent to false and explain why.
 
-Current date context: ${new Date().toISOString().split('T')[0]}
+IMPORTANT CONTEXT - Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+Current date: ${new Date().toISOString().split('T')[0]}
+Current day of week: ${new Date().toLocaleDateString('en-US', { weekday: 'long' })}
 
 When parsing dates:
 - "tomorrow" = add 1 day to current date
 - "next week" = add 7 days
-- Day names (Monday, Tuesday, etc) = find the next occurrence
+- "this [day of week]" = the NEXT occurrence of that day in the current week (if it hasn't passed) OR next week (if it has passed)
+  Example: If today is Wednesday and text says "this Friday", that means the Friday coming up in 2 days
+  Example: If today is Wednesday and text says "this Monday", that means next Monday (5 days away)
+- "next [day of week]" = the occurrence of that day in the following week (7+ days away)
+- Day names alone (Monday, Tuesday, etc) = find the next occurrence from today
 - Month/day with no year = use current year if in future, otherwise next year
-- Be smart about relative dates like "this Saturday" or "next Friday"
+- Be very careful with "this" vs "next" - "this Friday" means the upcoming Friday in the current week cycle
 
 Examples:
 - "Soccer practice Saturday at 9am at City Park" → Extract: title="Soccer Practice", date=(next Saturday), time="09:00", location="City Park", category="sports"

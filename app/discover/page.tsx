@@ -58,22 +58,8 @@ export default function DiscoverPage() {
     }
 
     setIsDiscovering(true);
-    setDiscoveryProgress("Step 1 of 3");
-    setDiscoveryMessage("🔍 Finding local event sources...");
-
-    // Simulate progress updates
-    const progressInterval = setInterval(() => {
-      setDiscoveryProgress((prev) => {
-        if (prev === "Step 1 of 3") {
-          setDiscoveryMessage("📄 Reading event calendars and websites...");
-          return "Step 2 of 3";
-        } else if (prev === "Step 2 of 3") {
-          setDiscoveryMessage("✨ Analyzing events for your family...");
-          return "Step 3 of 3";
-        }
-        return prev;
-      });
-    }, 8000); // Update every 8 seconds
+    setDiscoveryProgress("");
+    setDiscoveryMessage("🔍 Discovering activities in your area...");
 
     try {
       console.log("[Discover] Starting discovery for:", location, "within", distance, "miles", "from", startDate, "to", endDate);
@@ -88,7 +74,6 @@ export default function DiscoverPage() {
 
       console.log("[Discover] Discovery completed:", result);
 
-      clearInterval(progressInterval);
       setDiscoveryProgress("");
       setDiscoveryMessage(
         `✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`
@@ -99,7 +84,6 @@ export default function DiscoverPage() {
       );
     } catch (error: any) {
       console.error("[Discover] Error during discovery:", error);
-      clearInterval(progressInterval);
       setDiscoveryProgress("");
       setDiscoveryMessage(`❌ Error: ${error.message || "Unknown error occurred"}`);
       showToast(
@@ -227,18 +211,71 @@ export default function DiscoverPage() {
           </p>
         </div>
 
+        {/* What is Discover? Explanation - Always visible but compact when they have results */}
+        {suggestedActivities.length === 0 ? (
+          // Full explanation for first-time users
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg p-8 mb-8 text-white">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="text-4xl">✨</div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-3">What is Discover?</h2>
+                <p className="text-blue-50 leading-relaxed mb-4">
+                  Discover automatically finds local events, classes, camps, and activities near you —
+                  saving you hours of searching through multiple websites and calendars.
+                </p>
+                <div className="grid md:grid-cols-3 gap-4 mt-6">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <div className="text-2xl mb-2">🎯</div>
+                    <div className="font-semibold mb-1">Personalized</div>
+                    <div className="text-sm text-blue-100">Matched to your family's ages and interests</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <div className="text-2xl mb-2">📍</div>
+                    <div className="font-semibold mb-1">Local</div>
+                    <div className="text-sm text-blue-100">Activities within your chosen distance</div>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <div className="text-2xl mb-2">⚡</div>
+                    <div className="font-semibold mb-1">One Click</div>
+                    <div className="text-sm text-blue-100">Add to your calendar instantly</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Compact reminder for returning users
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💡</span>
+              <div className="flex-1">
+                <p className="text-sm text-blue-900">
+                  <span className="font-semibold">Discover</span> searches local parks & rec, libraries, museums, and event sites to find activities personalized for your family.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Discovery Banner */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  Find Activities Near You
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {suggestedActivities.length > 0 ? 'Search for More Activities' : 'Start Discovering'}
                 </h2>
-                <p className="text-gray-600 text-base leading-relaxed">
-                  Enter your location to discover local events, classes, and activities
-                  tailored to your family's interests and ages.
+                <p className="text-gray-600 text-base leading-relaxed mb-2">
+                  {suggestedActivities.length > 0
+                    ? 'Want to see more? Update your search criteria below to find additional activities.'
+                    : 'Set your location and date range to find events, classes, sports leagues, camps, and more.'}
                 </p>
+                <div className="flex items-center gap-4 text-sm text-gray-500 mt-3">
+                  <span className="flex items-center gap-1">
+                    <span>💡</span>
+                    <span>We search parks & rec, libraries, museums, and local event sites</span>
+                  </span>
+                </div>
               </div>
               <div className="text-5xl ml-6 hidden sm:block opacity-20">🎯</div>
             </div>
@@ -285,6 +322,7 @@ export default function DiscoverPage() {
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   />
+                  <p className="text-xs text-gray-500 mt-1">When to start looking</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -296,12 +334,13 @@ export default function DiscoverPage() {
                     onChange={(e) => setEndDate(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
                   />
+                  <p className="text-xs text-gray-500 mt-1">How far ahead to search</p>
                 </div>
               </div>
 
               <button
                 onClick={handleDiscoverActivities}
-                disabled={isDiscovering}
+                disabled={isDiscovering || !location}
                 className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDiscovering ? (
@@ -310,30 +349,24 @@ export default function DiscoverPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Searching...
+                    Discovering Activities...
                   </span>
+                ) : !location ? (
+                  "⬆️ Enter Location to Start"
                 ) : (
-                  "Find New Activities"
+                  "🔍 Discover Activities"
                 )}
               </button>
+              {!location && (
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  💡 Tip: Enter your city or ZIP code above to get started
+                </p>
+              )}
 
-              {isDiscovering && discoveryProgress && (
-                <div className="mt-6 p-5 bg-white rounded-lg border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-900">{discoveryProgress}</span>
-                    <span className="text-xs text-gray-500">30-60 seconds</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
-                    <div
-                      className="bg-primary-600 h-2 rounded-full transition-all duration-1000 ease-linear"
-                      style={{
-                        width: discoveryProgress === "Step 1 of 3" ? "33%" :
-                               discoveryProgress === "Step 2 of 3" ? "66%" : "100%"
-                      }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              {isDiscovering && discoveryMessage && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -404,6 +437,36 @@ export default function DiscoverPage() {
                         <h3 className="text-xl font-bold text-gray-900 mb-1">
                           {activity.title}
                         </h3>
+
+                        {/* Source and Updated Info */}
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                          {activity.sourceUrl && (
+                            <>
+                              <span>From {(() => {
+                                try {
+                                  const hostname = new URL(activity.sourceUrl).hostname;
+                                  return hostname.replace('www.', '').split('.')[0];
+                                } catch {
+                                  return 'web';
+                                }
+                              })()}</span>
+                              <span>•</span>
+                            </>
+                          )}
+                          <span>Updated {(() => {
+                            const now = Date.now();
+                            const suggested = activity.suggestedAt;
+                            const diff = now - suggested;
+                            const hours = Math.floor(diff / (1000 * 60 * 60));
+                            const days = Math.floor(hours / 24);
+
+                            if (days === 0) return 'today';
+                            if (days === 1) return 'yesterday';
+                            if (days < 7) return `${days} days ago`;
+                            if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+                            return `${Math.floor(days / 30)} months ago`;
+                          })()}</span>
+                        </div>
 
                         {/* Date and Time Row */}
                         {(activity.date || activity.time) && (
@@ -529,54 +592,57 @@ export default function DiscoverPage() {
               ))}
           </div>
         ) : (
-          /* Empty State */
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
-            <div className="text-7xl mb-6 opacity-40">🔍</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              No Activities Yet
-            </h2>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
-              Enter your location above and click "Find New Activities" to discover local events and activities tailored to your family.
-            </p>
-            <button
-              onClick={handleDiscoverActivities}
-              disabled={isDiscovering}
-              className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDiscovering ? "Searching..." : "Start Discovering"}
-            </button>
+          /* Empty State - Show Examples */
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-12 text-center border-b border-gray-200">
+              <div className="text-7xl mb-6 opacity-40">🔍</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                Ready to Discover Activities?
+              </h2>
+              <p className="text-gray-600 mb-6 max-w-xl mx-auto leading-relaxed">
+                Enter your location above and we'll search local sources to find events and activities for your family.
+              </p>
+            </div>
+
+            {/* Example Activities Preview */}
+            <div className="bg-gray-50 p-8">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center uppercase tracking-wide">
+                Example Activities We Find:
+              </h3>
+              <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">⚽</span>
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded">Sports</span>
+                  </div>
+                  <div className="font-semibold text-gray-900 text-sm">Youth Soccer League</div>
+                  <div className="text-xs text-gray-500 mt-1">Parks & Rec • Spring Season</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">🎨</span>
+                    <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-semibold rounded">Arts</span>
+                  </div>
+                  <div className="font-semibold text-gray-900 text-sm">Kids Art Workshop</div>
+                  <div className="text-xs text-gray-500 mt-1">Local Museum • Saturdays</div>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">🏕️</span>
+                    <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded">Camps</span>
+                  </div>
+                  <div className="font-semibold text-gray-900 text-sm">Summer STEM Camp</div>
+                  <div className="text-xs text-gray-500 mt-1">Community Center • June-Aug</div>
+                </div>
+              </div>
+              <div className="text-center mt-6">
+                <p className="text-xs text-gray-500 italic">
+                  Plus music lessons, story times, festivals, field trips, and more!
+                </p>
+              </div>
+            </div>
           </div>
         )}
-
-        {/* How It Works */}
-        <div className="mt-12 bg-white rounded-xl shadow p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            How Discovery Works
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <div className="text-3xl mb-3">🔍</div>
-              <h3 className="font-semibold text-gray-900 mb-2">1. We Search Local Sources</h3>
-              <p className="text-gray-600 text-sm">
-                We check local websites, community boards, library calendars, and recreation departments to find activities and events in your area.
-              </p>
-            </div>
-            <div>
-              <div className="text-3xl mb-3">🎯</div>
-              <h3 className="font-semibold text-gray-900 mb-2">2. Personalized Matching</h3>
-              <p className="text-gray-600 text-sm">
-                Activities are matched to your family based on your kids' ages, location, and interests. Only the best matches are shown to you.
-              </p>
-            </div>
-            <div>
-              <div className="text-3xl mb-3">⭐</div>
-              <h3 className="font-semibold text-gray-900 mb-2">3. Save What You Like</h3>
-              <p className="text-gray-600 text-sm">
-                Click "Add to Calendar" to instantly add activities to your family calendar, or dismiss ones that aren't a good fit. It's completely free to use.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

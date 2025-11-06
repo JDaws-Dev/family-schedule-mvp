@@ -10,6 +10,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import MobileNav from "@/app/components/MobileNav";
 import { useToast } from "@/app/components/Toast";
+import { CalendarSkeleton } from "@/app/components/LoadingSkeleton";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -84,8 +85,24 @@ function CalendarContent() {
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
+  // Standard preset categories
+  const standardCategories = [
+    "Sports",
+    "School",
+    "Music",
+    "Dance",
+    "Arts & Crafts",
+    "Tutoring",
+    "Medical",
+    "Birthday Party",
+    "Play Date",
+    "Field Trip",
+    "Club Meeting",
+    "Other"
+  ];
+
   // Extract unique categories from events
-  const categories = useMemo(() => {
+  const existingCategories = useMemo(() => {
     if (!confirmedEvents) return [];
     const uniqueCategories = new Set<string>();
     confirmedEvents.forEach((event: any) => {
@@ -93,6 +110,11 @@ function CalendarContent() {
     });
     return Array.from(uniqueCategories).sort();
   }, [confirmedEvents]);
+
+  // Combined categories for filter dropdown
+  const categories = useMemo(() => {
+    return Array.from(new Set([...standardCategories, ...existingCategories])).sort();
+  }, [existingCategories]);
 
   // Filter events based on search and filters
   const filteredEvents = useMemo(() => {
@@ -208,10 +230,43 @@ function CalendarContent() {
       // Clear the query params
       window.history.replaceState({}, "", "/calendar");
 
-      // Show success message
-      showToast("Google account reconnected successfully! You can now sync your events.", "success");
+      // Show success message (10 seconds for important connection status)
+      showToast("Google account reconnected successfully! You can now sync your events.", "success", undefined, 10000);
     }
   }, [searchParams, showToast]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore if user is typing in an input, textarea, or contenteditable
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      // Press 'T' to go to today
+      if (event.key.toLowerCase() === 't' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        setDate(new Date());
+        showToast("Keyboard shortcut: 'T' - Go to today", "info", undefined, 2000);
+      }
+
+      // Press 'Escape' to close modals
+      if (event.key === 'Escape') {
+        if (selectedEvent) {
+          setSelectedEvent(null);
+          setEditingEvent(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedEvent, editingEvent, showToast]);
 
   // Transform Convex events to react-big-calendar format
   const calendarEvents = useMemo(() => {
@@ -521,9 +576,7 @@ function CalendarContent() {
         {/* Calendar */}
         <div className="bg-white rounded-lg shadow p-4 sm:p-6" style={{ height: "700px" }}>
           {confirmedEvents === undefined ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-500">Loading calendar...</div>
-            </div>
+            <CalendarSkeleton />
           ) : calendarEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full">
               <div className="text-xl font-semibold text-gray-900 mb-2">
@@ -1002,12 +1055,41 @@ function CalendarContent() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <input
-                  type="text"
+                <select
                   value={editFormData?.category || ""}
-                  onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "custom") {
+                      const customCategory = prompt("Enter custom category:");
+                      if (customCategory && customCategory.trim()) {
+                        setEditFormData({ ...editFormData, category: customCategory.trim() });
+                      }
+                    } else {
+                      setEditFormData({ ...editFormData, category: value });
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
+                >
+                  <option value="">Select a category...</option>
+                  {/* Standard Categories */}
+                  <optgroup label="Standard Categories">
+                    {standardCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </optgroup>
+                  {/* Previously Used Categories (if any new ones) */}
+                  {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                    <optgroup label="Your Categories">
+                      {existingCategories
+                        .filter(cat => !standardCategories.includes(cat))
+                        .map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))
+                      }
+                    </optgroup>
+                  )}
+                  <option value="custom">+ Add Custom Category</option>
+                </select>
               </div>
 
               <div>
@@ -1082,7 +1164,14 @@ function CalendarContent() {
 
 export default function CalendarPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6 h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+          <CalendarSkeleton />
+        </div>
+      </div>
+    }>
       <CalendarContent />
     </Suspense>
   );

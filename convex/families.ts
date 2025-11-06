@@ -232,3 +232,17 @@ export const updateFamilyLocation = mutation({
     return { success: true };
   },
 });
+
+// Update last calendar sync timestamp
+export const updateLastCalendarSync = mutation({
+  args: {
+    familyId: v.id("families"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.familyId, {
+      lastCalendarSyncAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});

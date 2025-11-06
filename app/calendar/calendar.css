@@ -13,6 +13,8 @@
 
 .rbc-today {
   background-color: #eef2ff;
+  border: 2px solid #6366f1 !important;
+  box-shadow: inset 0 0 0 1px #6366f1;
 }
 
 .rbc-off-range-bg {
@@ -61,8 +63,16 @@
 }
 
 .rbc-now > a {
-  color: #6366f1;
+  color: white;
   font-weight: 700;
+  background-color: #6366f1;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
 }
 
 .rbc-agenda-view table {
