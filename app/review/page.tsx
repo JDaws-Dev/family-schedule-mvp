@@ -735,6 +735,8 @@ export default function ReviewPage() {
                   setEditingEvent(null);
                 }}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
+                aria-label="Close edit modal"
+                title="Close"
               >
                 ×
               </button>
@@ -865,6 +867,8 @@ export default function ReviewPage() {
               <button
                 onClick={() => setShowAddEventModal(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
+                aria-label="Close add event modal"
+                title="Close"
               >
                 ×
               </button>

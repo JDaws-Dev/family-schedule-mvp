@@ -438,6 +438,8 @@ function DashboardContent() {
                   <button
                     onClick={() => setMobileMenuOpen(false)}
                     className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                    aria-label="Close menu"
+                    title="Close"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1247,6 +1249,8 @@ function DashboardContent() {
                         setEditFormData(null);
                       }}
                       className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                      aria-label="Close edit event modal"
+                      title="Close"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1268,6 +1272,8 @@ function DashboardContent() {
                         setEditFormData(null);
                       }}
                       className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                      aria-label="Close event details"
+                      title="Close"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1707,6 +1713,8 @@ function DashboardContent() {
                 <button
                   onClick={() => setShowAddEventModal(false)}
                   className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close add event modal"
+                  title="Close"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

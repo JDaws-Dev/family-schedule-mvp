@@ -1327,6 +1327,8 @@ export default function Settings() {
                   setEditingMember(null);
                 }}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
+                aria-label="Close family member modal"
+                title="Close"
               >
                 ×
               </button>
