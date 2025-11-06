@@ -44,7 +44,16 @@ Your task:
 4. Only recommend events with score >= 60
 5. Provide a brief summary explaining why it's a good match
 
-Return a JSON object with a 'recommendations' array:`;
+IMPORTANT: For each recommendation, you MUST include:
+- title (from original event)
+- category (from original event - REQUIRED)
+- description (from original event)
+- date, time, endTime, location, address, website, phoneNumber (from original event if available)
+- matchScore (0-100)
+- summary (your explanation of why it's a good match)
+- familyMembers (array of names who would enjoy it)
+
+Return a JSON object with a 'recommendations' array where each item preserves ALL fields from the original event.`;
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -60,7 +69,9 @@ Return a JSON object with a 'recommendations' array:`;
             role: 'user',
             content: `Here are ${events.length} local events to analyze:
 
-${JSON.stringify(events, null, 2)}`,
+${JSON.stringify(events, null, 2)}
+
+For each recommended event, preserve ALL original fields (especially category) and add matchScore, summary, and familyMembers.`,
           },
         ],
         response_format: { type: 'json_object' },
@@ -80,9 +91,27 @@ ${JSON.stringify(events, null, 2)}`,
     const aiResponse = JSON.parse(openaiData.choices[0].message.content);
 
     // Handle both {recommendations: [...]} and direct array responses
-    const recommendations = Array.isArray(aiResponse)
+    let recommendations = Array.isArray(aiResponse)
       ? aiResponse
       : aiResponse.recommendations || [];
+
+    // Ensure all recommendations have required fields by merging with original events
+    recommendations = recommendations.map((rec: any) => {
+      // Find the original event by title
+      const originalEvent = events.find((e: any) => e.title === rec.title);
+      if (originalEvent) {
+        // Merge original event fields with AI recommendations
+        return {
+          ...originalEvent, // Start with all original fields (includes category)
+          ...rec,           // Override with AI-added fields (matchScore, summary, familyMembers)
+        };
+      }
+      // If no match found, ensure category exists (fallback to 'other')
+      return {
+        ...rec,
+        category: rec.category || 'other',
+      };
+    });
 
     return NextResponse.json({
       success: true,
