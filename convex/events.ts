@@ -85,16 +85,23 @@ export const createUnconfirmedEvent = mutation({
       const s2 = normalize(str2);
       if (s1 === s2) return 1;
 
-      // Simple character-based similarity
+      // Check if one string contains the other (e.g., "dental appointment" in "michelles dental appointment")
       const longer = s1.length > s2.length ? s1 : s2;
       const shorter = s1.length > s2.length ? s2 : s1;
       if (longer.length === 0) return 1.0;
 
-      let matches = 0;
-      for (let i = 0; i < shorter.length; i++) {
-        if (longer.includes(shorter[i])) matches++;
+      // If shorter is fully contained in longer, high similarity
+      if (longer.includes(shorter)) {
+        return Math.max(0.85, shorter.length / longer.length);
       }
-      return matches / longer.length;
+
+      // Levenshtein-like distance for better matching
+      const maxLength = Math.max(s1.length, s2.length);
+      let distance = 0;
+      for (let i = 0; i < maxLength; i++) {
+        if (s1[i] !== s2[i]) distance++;
+      }
+      return 1 - (distance / maxLength);
     };
 
     // Helper to check if times are within 1 hour of each other
