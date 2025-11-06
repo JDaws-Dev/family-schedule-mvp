@@ -12,8 +12,11 @@ export default function Dashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanResults, setScanResults] = useState<{eventsFound: number; messagesScanned: number} | null>(null);
   const { user: clerkUser } = useUser();
-  const { signOut } = useClerk();
+  const { signOut} = useClerk();
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -61,9 +64,22 @@ export default function Dashboard() {
     }
 
     setIsScanning(true);
-    setScanMessage("Scanning emails...");
+    setShowScanModal(true);
+    setScanProgress(0);
+    setScanResults(null);
+    setScanMessage("Connecting to Gmail...");
+
+    // Simulate progress updates (since we can't get real progress from the backend)
+    const progressInterval = setInterval(() => {
+      setScanProgress((prev) => {
+        if (prev >= 90) return 90; // Stop at 90% until we get real results
+        return prev + Math.random() * 15;
+      });
+    }, 800);
 
     try {
+      setScanMessage("Scanning your inbox for events...");
+
       const response = await fetch("/api/scan-emails", {
         method: "POST",
         headers: {
@@ -75,26 +91,28 @@ export default function Dashboard() {
       });
 
       const data = await response.json();
+      clearInterval(progressInterval);
 
       if (response.ok) {
+        setScanProgress(100);
+        setScanResults({
+          eventsFound: data.eventsFound || 0,
+          messagesScanned: data.messagesScanned || 0,
+        });
         setScanMessage(
-          `Scan complete! Found ${data.eventsFound} event(s) from ${data.messagesScanned} messages.`
+          data.eventsFound > 0
+            ? `✓ Found ${data.eventsFound} event${data.eventsFound !== 1 ? "s" : ""} from ${data.messagesScanned} email${data.messagesScanned !== 1 ? "s" : ""}!`
+            : `Scanned ${data.messagesScanned} emails, but didn't find any new events.`
         );
-        showToast(
-          `Found ${data.eventsFound} event(s) from ${data.messagesScanned} messages!`,
-          "success"
-        );
-        setTimeout(() => setScanMessage(""), 5000);
       } else {
-        setScanMessage(`Error: ${data.error}`);
+        setScanMessage(`Error: ${data.error || "Failed to scan emails"}`);
         showToast(data.error || "Failed to scan emails", "error");
-        setTimeout(() => setScanMessage(""), 5000);
       }
     } catch (error) {
+      clearInterval(progressInterval);
       console.error("Scan error:", error);
       setScanMessage("Failed to scan emails. Please try again.");
       showToast("Failed to scan emails. Please try again.", "error");
-      setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);
     }
@@ -629,6 +647,117 @@ export default function Dashboard() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </Link>
+
+      {/* Email Scan Progress Modal */}
+      {showScanModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-strong max-w-md w-full p-8 transform transition-all">
+            <div className="text-center">
+              {isScanning ? (
+                <>
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                    <svg className="w-10 h-10 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Scanning Your Emails</h3>
+                  <p className="text-gray-600 mb-6">{scanMessage}</p>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${scanProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-500">{Math.round(scanProgress)}% complete</p>
+                </>
+              ) : (
+                <>
+                  {scanResults && scanResults.eventsFound > 0 ? (
+                    <>
+                      <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Scan Complete!</h3>
+                      <p className="text-gray-600 mb-6">{scanMessage}</p>
+
+                      <div className="bg-green-50 rounded-lg p-4 mb-6 border border-green-200">
+                        <div className="grid grid-cols-2 gap-4 text-center">
+                          <div>
+                            <p className="text-3xl font-bold text-green-600">{scanResults.eventsFound}</p>
+                            <p className="text-sm text-gray-600 mt-1">Event{scanResults.eventsFound !== 1 ? "s" : ""} Found</p>
+                          </div>
+                          <div>
+                            <p className="text-3xl font-bold text-green-600">{scanResults.messagesScanned}</p>
+                            <p className="text-sm text-gray-600 mt-1">Email{scanResults.messagesScanned !== 1 ? "s" : ""} Scanned</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+                        <div className="flex gap-3">
+                          <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="text-left">
+                            <h4 className="font-semibold text-blue-900 text-sm">What's next?</h4>
+                            <p className="text-sm text-blue-800 mt-1">
+                              Review the new events to confirm details and add them to your calendar.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setShowScanModal(false)}
+                          className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          Close
+                        </button>
+                        <Link
+                          href="/review"
+                          className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-lg font-medium transition-colors text-center"
+                          onClick={() => setShowScanModal(false)}
+                        >
+                          Review Events →
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-20 h-20 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">No New Events Found</h3>
+                      <p className="text-gray-600 mb-6">{scanMessage}</p>
+
+                      <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                        <p className="text-sm text-gray-600">
+                          We scanned <span className="font-semibold">{scanResults?.messagesScanned || 0}</span> recent emails but didn't find any new activity-related events.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setShowScanModal(false)}
+                        className="w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Close
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

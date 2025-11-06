@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 
@@ -14,8 +14,19 @@ export default function Onboarding() {
   const [familyMembers, setFamilyMembers] = useState<Array<{ name: string; birthdate: string; relationship: string }>>([
     { name: "", birthdate: "", relationship: "Child" }
   ]);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionMessage, setCompletionMessage] = useState("");
   const { user: clerkUser } = useUser();
   const router = useRouter();
+
+  // Get current user to access familyId
+  const currentUser = useQuery(api.users.getUserByClerkId,
+    clerkUser?.id ? { clerkId: clerkUser.id } : "skip"
+  );
+
+  // Mutations
+  const updateFamilyName = useMutation(api.families.createFamily);
+  const saveFamilyMember = useMutation(api.familyMembers.addFamilyMember);
 
   const totalSteps = 3;
 
@@ -35,9 +46,45 @@ export default function Onboarding() {
     router.push("/dashboard");
   };
 
-  const handleComplete = () => {
-    // TODO: Save onboarding data to Convex
-    router.push("/dashboard");
+  const handleComplete = async () => {
+    if (!currentUser?.familyId) {
+      alert("Unable to save data. Please try again.");
+      return;
+    }
+
+    setIsCompleting(true);
+    setCompletionMessage("Saving your family information...");
+
+    try {
+      // Save family members
+      const validMembers = familyMembers.filter(m => m.name.trim() !== "");
+
+      for (const member of validMembers) {
+        await saveFamilyMember({
+          familyId: currentUser.familyId,
+          name: member.name.trim(),
+          birthdate: member.birthdate || undefined,
+          relationship: member.relationship || undefined,
+          nicknames: "", // Empty for now, can be added later in settings
+          interests: "", // Empty for now, can be added later in settings
+          color: undefined, // Will be auto-assigned in settings
+        });
+      }
+
+      setCompletionMessage("✓ Family members saved! Redirecting to Gmail connection...");
+
+      // Wait a moment to show success message
+      setTimeout(() => {
+        // Redirect to Gmail OAuth
+        window.location.href = "/api/auth/google?returnUrl=/dashboard?onboarding_complete=true";
+      }, 1500);
+
+    } catch (error) {
+      console.error("Error saving onboarding data:", error);
+      alert("Failed to save your information. Please try again.");
+      setIsCompleting(false);
+      setCompletionMessage("");
+    }
   };
 
   const addFamilyMember = () => {
@@ -260,70 +307,68 @@ export default function Onboarding() {
           {/* Step 3: Connect Gmail */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
-                  </svg>
-                </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Connect Your Gmail</h1>
-                <p className="text-gray-600">Let us scan your email to automatically find all your kids' activities.</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white">
-                  <h3 className="font-bold text-lg mb-2">What we'll do:</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Scan your email for school schedules, sports practices, and activities</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Extract event details like dates, times, and locations</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Organize everything into your family calendar automatically</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <div className="flex gap-3">
-                    <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              {isCompleting ? (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <div>
-                      <h4 className="font-semibold text-green-900 text-sm">Your privacy is protected</h4>
-                      <p className="text-sm text-green-800 mt-1">
-                        We only read emails related to schedules and activities. We never store your email content.
-                      </p>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{completionMessage}</h2>
+                  <p className="text-gray-600">Please wait while we set everything up...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-8">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+                      </svg>
+                    </div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Ready to Connect Gmail!</h1>
+                    <p className="text-gray-600">We'll save your family info and connect your email to find activities automatically.</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white">
+                      <h3 className="font-bold text-lg mb-2">What we'll do:</h3>
+                      <ul className="space-y-2">
+                        <li className="flex items-start gap-3">
+                          <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Scan your email for school schedules, sports practices, and activities</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Extract event details like dates, times, and locations</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Organize everything into your family calendar automatically</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                      <div className="flex gap-3">
+                        <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <div>
+                          <h4 className="font-semibold text-green-900 text-sm">Your privacy is protected</h4>
+                          <p className="text-sm text-green-800 mt-1">
+                            We only read emails related to schedules and activities. We never store your email content.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    window.location.href = "/api/auth/google?returnUrl=/dashboard";
-                  }}
-                  className="w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold shadow-medium hover:shadow-strong transition-all duration-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-3"
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                  </svg>
-                  Connect with Google
-                </button>
-              </div>
+                </>
+              )}
             </div>
           )}
 
@@ -331,13 +376,14 @@ export default function Onboarding() {
           <div className="flex items-center justify-between pt-8 border-t border-gray-200 mt-8">
             <button
               onClick={handleSkip}
-              className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              disabled={isCompleting}
+              className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Skip for now
             </button>
 
             <div className="flex gap-3">
-              {currentStep > 1 && (
+              {currentStep > 1 && !isCompleting && (
                 <button
                   onClick={handleBack}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
@@ -355,9 +401,20 @@ export default function Onboarding() {
               ) : (
                 <button
                   onClick={handleComplete}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                  disabled={isCompleting}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Complete Setup
+                  {isCompleting ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    "Save & Connect Gmail"
+                  )}
                 </button>
               )}
             </div>
