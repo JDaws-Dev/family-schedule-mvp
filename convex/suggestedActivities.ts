@@ -117,7 +117,44 @@ export const addActivityToCalendar = mutation({
       location: activity.location,
       category: activity.category,
       childName: args.childName,
-      isConfirmed: true, // User is manually adding, so auto-confirm
+      confirmed: true, // User is manually adding, so auto-confirm
+    });
+
+    // Mark activity as added
+    await ctx.db.patch(args.activityId, {
+      status: "added",
+    });
+
+    return eventId;
+  },
+});
+
+// Quick add activity to calendar using its existing date/time
+export const quickAddToCalendar = mutation({
+  args: {
+    activityId: v.id("suggestedActivities"),
+    familyId: v.id("families"),
+    childName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Get activity details
+    const activity = await ctx.db.get(args.activityId);
+    if (!activity) {
+      throw new Error("Activity not found");
+    }
+
+    // Create event using activity's date/time if available
+    const eventId = await ctx.db.insert("events", {
+      familyId: args.familyId,
+      title: activity.title,
+      description: activity.description,
+      eventDate: activity.date || new Date().toISOString().split('T')[0], // Use activity date or today
+      eventTime: activity.time,
+      endTime: activity.endTime,
+      location: activity.location,
+      category: activity.category,
+      childName: args.childName,
+      confirmed: true, // Auto-confirm since user is explicitly adding
     });
 
     // Mark activity as added

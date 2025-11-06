@@ -154,7 +154,13 @@ export async function POST(request: NextRequest) {
     } else if (location) {
       // Dynamically discover event sources for the given location
       console.log(`[scrape-events] Discovering event sources for ${location}...`);
-      sourcesToScrape = await discoverEventSources(location);
+      const discoveredSources = await discoverEventSources(location);
+
+      // Add location to each source
+      sourcesToScrape = discoveredSources.map(source => ({
+        ...source,
+        location: location,
+      }));
 
       if (sourcesToScrape.length === 0) {
         console.log(`[scrape-events] No event sources discovered for ${location}`);

@@ -30,7 +30,7 @@ export default function DiscoverPage() {
   );
 
   // Mutations for activity actions
-  const markAsInterested = useMutation(api.suggestedActivities.markAsInterested);
+  const quickAddToCalendar = useMutation(api.suggestedActivities.quickAddToCalendar);
   const dismissActivity = useMutation(api.suggestedActivities.dismissActivity);
 
   // Action to trigger discovery
@@ -93,8 +93,17 @@ export default function DiscoverPage() {
     }
   };
 
-  const handleMarkInterested = async (activityId: any) => {
-    await markAsInterested({ activityId });
+  const handleAddToCalendar = async (activityId: any) => {
+    if (!convexUser?.familyId) return;
+    try {
+      await quickAddToCalendar({
+        activityId,
+        familyId: convexUser.familyId
+      });
+    } catch (error: any) {
+      console.error("Error adding to calendar:", error);
+      alert("Failed to add to calendar. Please try again.");
+    }
   };
 
   const handleDismiss = async (activityId: any) => {
@@ -415,10 +424,10 @@ export default function DiscoverPage() {
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-2">
                       <button
-                        onClick={() => handleMarkInterested(activity._id)}
+                        onClick={() => handleAddToCalendar(activity._id)}
                         className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
                       >
-                        ⭐ Interested
+                        📅 Add to Calendar
                       </button>
                       <button
                         onClick={() => handleDismiss(activity._id)}
@@ -475,7 +484,7 @@ export default function DiscoverPage() {
               <div className="text-3xl mb-3">⭐</div>
               <h3 className="font-semibold text-gray-900 mb-2">3. Save What You Like</h3>
               <p className="text-gray-600 text-sm">
-                Mark activities as "Interested" to save them for later, or dismiss ones that aren't a good fit. It's completely free to use.
+                Click "Add to Calendar" to instantly add activities to your family calendar, or dismiss ones that aren't a good fit. It's completely free to use.
               </p>
             </div>
           </div>

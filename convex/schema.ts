@@ -185,6 +185,7 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     sourceUrl: v.optional(v.string()), // Where we found this info
     sourceName: v.optional(v.string()), // Name of the source (e.g., "Library", "Parks Dept")
+    sourceLocation: v.optional(v.string()), // Location of the source (e.g., "30519")
     aiSummary: v.optional(v.string()), // AI-generated summary of why this is good for their family
     // Event date/time information
     date: v.optional(v.string()), // YYYY-MM-DD
