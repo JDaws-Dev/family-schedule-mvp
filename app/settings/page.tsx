@@ -9,6 +9,7 @@ import MobileNav from "@/app/components/MobileNav";
 
 export default function Settings() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'account' | 'family' | 'email' | 'notifications' | 'billing'>('account');
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
 
@@ -355,6 +356,65 @@ export default function Settings() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
 
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-2 mb-6">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveTab('account')}
+              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                activeTab === 'account'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Account
+            </button>
+            <button
+              onClick={() => setActiveTab('family')}
+              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                activeTab === 'family'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Family
+            </button>
+            <button
+              onClick={() => setActiveTab('email')}
+              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                activeTab === 'email'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Email
+            </button>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                activeTab === 'notifications'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Notifications
+            </button>
+            <button
+              onClick={() => setActiveTab('billing')}
+              className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                activeTab === 'billing'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Billing
+            </button>
+          </div>
+        </div>
+
+        {/* Account Tab */}
+        {activeTab === 'account' && (
+        <div>
         {/* Account Information */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
@@ -408,7 +468,12 @@ export default function Settings() {
             )}
           </div>
         </div>
+        </div>
+        )}
 
+        {/* Family Tab */}
+        {activeTab === 'family' && (
+        <div>
         {/* Family Members */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
@@ -616,7 +681,12 @@ export default function Settings() {
             </div>
           </div>
         </div>
+        </div>
+        )}
 
+        {/* Email Tab */}
+        {activeTab === 'email' && (
+        <div>
         {/* Gmail Connections - Multiple Accounts */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
@@ -727,7 +797,12 @@ export default function Settings() {
             </div>
           </div>
         </div>
+        </div>
+        )}
 
+        {/* Notifications Tab */}
+        {activeTab === 'notifications' && (
+        <div>
         {/* Notification Preferences */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
@@ -898,7 +973,12 @@ export default function Settings() {
             </div>
           </div>
         </div>
+        </div>
+        )}
 
+        {/* Billing Tab */}
+        {activeTab === 'billing' && (
+        <div>
         {/* Subscription Management */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
@@ -995,6 +1075,8 @@ export default function Settings() {
               </button>
             </div>
           </div>
+        )}
+        </div>
         )}
       </div>
 
