@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import MobileNav from "@/app/components/MobileNav";
 
 export default function Settings() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -343,23 +344,11 @@ export default function Settings() {
           </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <nav className="flex flex-col py-2">
-              <Link href="/events" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Events</Link>
-              <Link href="/inbox" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Inbox</Link>
-              <Link href="/discover" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Discover</Link>
-              <Link href="/settings" className="px-4 py-3 text-indigo-600 font-medium bg-indigo-50">Settings</Link>
-              <button
-                onClick={() => signOut()}
-                className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50 w-full"
-              >
-                Log Out
-              </button>
-            </nav>
-          </div>
-        )}
+        <MobileNav
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          currentPage="settings"
+        />
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

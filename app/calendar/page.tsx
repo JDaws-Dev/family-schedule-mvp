@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { useSearchParams } from "next/navigation";
+import MobileNav from "@/app/components/MobileNav";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -306,34 +307,11 @@ function CalendarContent() {
           </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <nav className="flex flex-col py-2">
-              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Dashboard
-              </Link>
-              <Link href="/calendar" className="px-4 py-3 text-indigo-600 font-medium bg-indigo-50">
-                Calendar
-              </Link>
-              <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Review
-              </Link>
-              <Link href="/discover" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Discover
-              </Link>
-              <Link href="/settings" className="px-4 py-3 text-gray-600 hover:bg-gray-50">
-                Settings
-              </Link>
-              <button
-                onClick={() => signOut()}
-                className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50"
-              >
-                Log Out
-              </button>
-            </nav>
-          </div>
-        )}
+        <MobileNav
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          currentPage="calendar"
+        />
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -712,6 +690,16 @@ function CalendarContent() {
           </div>
         </div>
       )}
+
+      {/* Floating Action Button - Mobile Only */}
+      <Link
+        href="/review"
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </Link>
     </div>
   );
 }

@@ -150,48 +150,118 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Navigation Menu - Overlay */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <nav className="flex flex-col py-2">
-              <Link
-                href="/dashboard"
-                className="px-4 py-3 text-indigo-600 font-medium bg-indigo-50"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/calendar"
-                className="px-4 py-3 text-gray-600 hover:bg-gray-50"
-              >
-                Calendar
-              </Link>
-              <Link
-                href="/review"
-                className="px-4 py-3 text-gray-600 hover:bg-gray-50"
-              >
-                Review
-              </Link>
-              <Link
-                href="/discover"
-                className="px-4 py-3 text-gray-600 hover:bg-gray-50"
-              >
-                Discover
-              </Link>
-              <Link
-                href="/settings"
-                className="px-4 py-3 text-gray-600 hover:bg-gray-50"
-              >
-                Settings
-              </Link>
-              <button
-                onClick={() => signOut()}
-                className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50 w-full"
-              >
-                Log Out
-              </button>
-            </nav>
-          </div>
+          <>
+            {/* Backdrop */}
+            <div
+              className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Slide-out Menu */}
+            <div className="md:hidden fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 shadow-strong transform transition-transform duration-300 ease-in-out">
+              {/* Menu Header */}
+              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-primary-500 to-primary-600">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white">Menu</h2>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-white font-bold text-lg">
+                      {clerkUser?.firstName?.charAt(0) || "U"}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold truncate">
+                      {clerkUser?.firstName || "User"}
+                    </p>
+                    <p className="text-white/80 text-xs truncate">
+                      {clerkUser?.primaryEmailAddress?.emailAddress}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Items */}
+              <nav className="flex flex-col p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-primary-600 font-medium bg-primary-50 rounded-lg mb-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Dashboard
+                </Link>
+                <Link
+                  href="/calendar"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors mb-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Calendar
+                </Link>
+                <Link
+                  href="/review"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors mb-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                  Review Events
+                </Link>
+                <Link
+                  href="/discover"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors mb-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Discover
+                </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors mb-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Settings
+                </Link>
+
+                <div className="border-t border-gray-200 my-4"></div>
+
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    signOut();
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors w-full"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Log Out
+                </button>
+              </nav>
+            </div>
+          </>
         )}
       </header>
 
@@ -231,30 +301,62 @@ export default function Dashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-600 font-medium mb-2">This Week</h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {weekEvents === undefined ? "-" : weekEvents.length}
+          {/* This Week Card */}
+          <div className="bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">7 days</span>
+            </div>
+            <h3 className="text-white/90 font-medium mb-2 text-sm">This Week</h3>
+            <p className="text-4xl font-bold mb-1">
+              {weekEvents === undefined ? (
+                <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
+              ) : weekEvents.length}
             </p>
-            <p className="text-sm text-gray-500">Upcoming events</p>
+            <p className="text-sm text-white/80">Upcoming events</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-600 font-medium mb-2">Needs Action</h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {weekEvents === undefined
-                ? "-"
-                : weekEvents.filter((e) => e.requiresAction).length}
+          {/* Needs Action Card */}
+          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Action</span>
+            </div>
+            <h3 className="text-white/90 font-medium mb-2 text-sm">Needs Action</h3>
+            <p className="text-4xl font-bold mb-1">
+              {weekEvents === undefined ? (
+                <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
+              ) : weekEvents.filter((e) => e.requiresAction).length}
             </p>
-            <p className="text-sm text-gray-500">Forms & payments due</p>
+            <p className="text-sm text-white/80">Forms & payments due</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-gray-600 font-medium mb-2">To Review</h3>
-            <p className="text-3xl font-bold text-gray-900">
-              {unconfirmedEvents === undefined ? "-" : unconfirmedEvents.length}
+          {/* To Review Card */}
+          <div className="bg-gradient-to-br from-amber-500 to-amber-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1">
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </div>
+              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">New</span>
+            </div>
+            <h3 className="text-white/90 font-medium mb-2 text-sm">To Review</h3>
+            <p className="text-4xl font-bold mb-1">
+              {unconfirmedEvents === undefined ? (
+                <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
+              ) : unconfirmedEvents.length}
             </p>
-            <p className="text-sm text-gray-500">New events found</p>
+            <p className="text-sm text-white/80">New events found</p>
           </div>
         </div>
 
@@ -324,63 +426,201 @@ export default function Dashboard() {
 
           {/* Quick Actions */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-soft p-6 mb-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Quick Actions
               </h2>
               <div className="space-y-3">
                 <Link
                   href="/review"
-                  className="w-full text-left px-4 py-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
+                  className="block w-full text-left px-4 py-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
                 >
-                  <div className="font-semibold text-gray-900">
-                    Add Event
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    Manually add an event
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-white">
+                        Add Event
+                      </div>
+                      <div className="text-xs text-white/80">
+                        Manually add an event
+                      </div>
+                    </div>
                   </div>
                 </Link>
 
                 <button
                   onClick={handleScanEmail}
                   disabled={isScanning || !isGmailConnected}
-                  className="w-full text-left px-4 py-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
                 >
-                  <div className="font-semibold text-gray-900">
-                    {isScanning ? "Scanning..." : "Scan Email"}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {scanMessage || "Check for new events"}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-white">
+                        {isScanning ? "Scanning..." : "Scan Email"}
+                      </div>
+                      <div className="text-xs text-white/80">
+                        {scanMessage || "Check for new events"}
+                      </div>
+                    </div>
                   </div>
                 </button>
 
                 <Link
                   href="/settings"
-                  className="block w-full text-left px-4 py-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition"
+                  className="block w-full text-left px-4 py-4 bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
                 >
-                  <div className="font-semibold text-gray-900">
-                    Settings
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    Manage preferences
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-white">
+                        Settings
+                      </div>
+                      <div className="text-xs text-white/80">
+                        Manage preferences
+                      </div>
+                    </div>
                   </div>
                 </Link>
               </div>
             </div>
 
             {/* Help Card */}
-            <div className="bg-indigo-50 rounded-lg p-6 border border-indigo-200">
+            <div className="bg-primary-50 rounded-lg p-6 border border-primary-200 mb-6">
               <h3 className="font-bold text-gray-900 mb-2">Need Help?</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Check out our guides or contact support anytime.
               </p>
-              <a href="mailto:support@familyschedule.com" className="text-indigo-600 hover:text-indigo-700 font-medium text-sm">
+              <a href="mailto:support@familyschedule.com" className="text-primary-600 hover:text-primary-700 font-medium text-sm">
                 Contact Support →
               </a>
+            </div>
+
+            {/* Recent Activity Timeline */}
+            <div className="bg-white rounded-lg shadow-soft p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Recent Activity
+              </h2>
+              <div className="space-y-4">
+                {/* Activity items - showing mock data for now */}
+                {isGmailConnected ? (
+                  <>
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
+                      </div>
+                      <div className="flex-1 pb-4">
+                        <p className="text-sm font-medium text-gray-900">Email scan completed</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {gmailAccounts?.[0]?.lastSyncAt
+                            ? new Date(gmailAccounts[0].lastSyncAt).toLocaleDateString()
+                            : "Today"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {unconfirmedEvents && unconfirmedEvents.length > 0 && (
+                      <div className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
+                        </div>
+                        <div className="flex-1 pb-4">
+                          <p className="text-sm font-medium text-gray-900">
+                            {unconfirmedEvents.length} new event{unconfirmedEvents.length !== 1 ? "s" : ""} found
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">Waiting for review</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {upcomingEvents && upcomingEvents.length > 0 && (
+                      <div className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
+                        </div>
+                        <div className="flex-1 pb-4">
+                          <p className="text-sm font-medium text-gray-900">
+                            {upcomingEvents[0].title}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Upcoming: {upcomingEvents[0].eventDate}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Gmail connected</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {gmailAccounts?.[0]?.gmailEmail}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-gray-600">No recent activity</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Connect Gmail to start tracking
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Floating Action Button - Mobile Only */}
+      <Link
+        href="/review"
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </Link>
     </div>
   );
 }
