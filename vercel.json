@@ -1,3 +1,13 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/scan-all-emails",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/send-reminders",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
