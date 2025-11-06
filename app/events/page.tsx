@@ -38,6 +38,8 @@ function EventsContent() {
   const [calendarView, setCalendarView] = useState<View>("month");
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isEditingEvent, setIsEditingEvent] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMember, setFilterMember] = useState<string>("all");
@@ -50,6 +52,7 @@ function EventsContent() {
 
   // Mutations
   const deleteEvent = useMutation(api.events.deleteEvent);
+  const updateEvent = useMutation(api.events.updateEvent);
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -664,157 +667,313 @@ function EventsContent() {
       {selectedEvent && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={() => setSelectedEvent(null)}
+          onClick={() => {
+            setSelectedEvent(null);
+            setIsEditingEvent(false);
+            setEditFormData(null);
+          }}
         >
           <div
             className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">{selectedEvent.title}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {isEditingEvent ? "Edit Event" : selectedEvent.title}
+              </h2>
               <button
-                onClick={() => setSelectedEvent(null)}
+                onClick={() => {
+                  setSelectedEvent(null);
+                  setIsEditingEvent(false);
+                  setEditFormData(null);
+                }}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-start gap-2">
-                <span className="text-gray-600 font-medium w-24">Date:</span>
-                <span className="text-gray-900">{selectedEvent.eventDate}</span>
+            {isEditingEvent ? (
+              /* Edit Form */
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={editFormData?.title || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={editFormData?.eventDate || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={editFormData?.eventTime || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={editFormData?.endTime || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, endTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={editFormData?.location || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Family Member</label>
+                  <select
+                    value={editFormData?.childName || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, childName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">None</option>
+                    {familyMembers?.map((member) => (
+                      <option key={member._id} value={member.name}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <input
+                    type="text"
+                    value={editFormData?.category || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={editFormData?.description || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={async () => {
+                      await updateEvent({
+                        eventId: selectedEvent._id,
+                        title: editFormData.title,
+                        eventDate: editFormData.eventDate,
+                        eventTime: editFormData.eventTime || undefined,
+                        endTime: editFormData.endTime || undefined,
+                        location: editFormData.location || undefined,
+                        childName: editFormData.childName || undefined,
+                        category: editFormData.category || undefined,
+                        description: editFormData.description || undefined,
+                      });
+                      setSelectedEvent(null);
+                      setIsEditingEvent(false);
+                      setEditFormData(null);
+                    }}
+                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingEvent(false);
+                      setEditFormData(null);
+                    }}
+                    className="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
+            ) : (
+              /* View Mode */
+              <>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-gray-600 font-medium w-24">Date:</span>
+                    <span className="text-gray-900">{selectedEvent.eventDate}</span>
+                  </div>
 
-              {selectedEvent.eventTime && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Time:</span>
-                  <span className="text-gray-900">
-                    {formatTime12Hour(selectedEvent.eventTime)}
-                    {selectedEvent.endTime && ` - ${formatTime12Hour(selectedEvent.endTime)}`}
-                  </span>
-                </div>
-              )}
-
-              {selectedEvent.location && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Location:</span>
-                  <span className="text-gray-900">{selectedEvent.location}</span>
-                </div>
-              )}
-
-              {selectedEvent.childName && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Member:</span>
-                  {(() => {
-                    const firstName = selectedEvent.childName.split(",")[0].trim();
-                    const member = familyMembers?.find(m => m.name === firstName);
-                    const color = member?.color || "#6366f1";
-                    return (
-                      <span
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
-                        style={{ backgroundColor: color }}
-                      >
-                        {selectedEvent.childName}
+                  {selectedEvent.eventTime && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-600 font-medium w-24">Time:</span>
+                      <span className="text-gray-900">
+                        {formatTime12Hour(selectedEvent.eventTime)}
+                        {selectedEvent.endTime && ` - ${formatTime12Hour(selectedEvent.endTime)}`}
                       </span>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {selectedEvent.description && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Details:</span>
-                  <span className="text-gray-900">{selectedEvent.description}</span>
-                </div>
-              )}
-
-              {selectedEvent.category && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Category:</span>
-                  <span className="text-gray-900">{selectedEvent.category}</span>
-                </div>
-              )}
-
-              {selectedEvent.requiresAction && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Action:</span>
-                  <div className="flex-1">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                      RSVP Required
-                    </span>
-                    {selectedEvent.actionDeadline && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        Deadline: {selectedEvent.actionDeadline}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {selectedEvent.sourceEmailSubject && (
-                <div className="flex items-start gap-2">
-                  <span className="text-gray-600 font-medium w-24">Source:</span>
-                  <div className="flex-1">
-                    <div className="text-gray-600 text-sm mb-1">
-                      From email: <span className="font-medium">{selectedEvent.sourceEmailSubject}</span>
                     </div>
-                    {selectedEvent.sourceGmailAccountId && gmailAccounts && (
-                      <div className="text-gray-500 text-xs mb-2">
-                        Gmail:{" "}
-                        {gmailAccounts.find((a) => a._id === selectedEvent.sourceGmailAccountId)
-                          ?.gmailEmail || "Unknown"}
+                  )}
+
+                  {selectedEvent.location && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-600 font-medium w-24">Location:</span>
+                      <span className="text-gray-900">{selectedEvent.location}</span>
+                    </div>
+                  )}
+
+                  {selectedEvent.childName && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-600 font-medium w-24">Member:</span>
+                      {(() => {
+                        const firstName = selectedEvent.childName.split(",")[0].trim();
+                        const member = familyMembers?.find(m => m.name === firstName);
+                        const color = member?.color || "#6366f1";
+                        return (
+                          <span
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                            style={{ backgroundColor: color }}
+                          >
+                            {selectedEvent.childName}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {selectedEvent.description && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-600 font-medium w-24">Details:</span>
+                      <span className="text-gray-900">{selectedEvent.description}</span>
+                    </div>
+                  )}
+
+                  {selectedEvent.category && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-600 font-medium w-24">Category:</span>
+                      <span className="text-gray-900">{selectedEvent.category}</span>
+                    </div>
+                  )}
+
+                  {selectedEvent.requiresAction && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-600 font-medium w-24">Action:</span>
+                      <div className="flex-1">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          RSVP Required
+                        </span>
+                        {selectedEvent.actionDeadline && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            Deadline: {selectedEvent.actionDeadline}
+                          </p>
+                        )}
                       </div>
-                    )}
-                    {selectedEvent.sourceEmailSubject && (
-                      <a
-                        href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(
-                          `subject:"${selectedEvent.sourceEmailSubject}"`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm underline"
-                      >
-                        Search in Gmail
-                      </a>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {selectedEvent.sourceEmailSubject && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-600 font-medium w-24">Source:</span>
+                      <div className="flex-1">
+                        <div className="text-gray-600 text-sm mb-1">
+                          From email: <span className="font-medium">{selectedEvent.sourceEmailSubject}</span>
+                        </div>
+                        {selectedEvent.sourceGmailAccountId && gmailAccounts && (
+                          <div className="text-gray-500 text-xs mb-2">
+                            Gmail:{" "}
+                            {gmailAccounts.find((a) => a._id === selectedEvent.sourceGmailAccountId)
+                              ?.gmailEmail || "Unknown"}
+                          </div>
+                        )}
+                        {selectedEvent.sourceEmailSubject && (
+                          <a
+                            href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(
+                              `subject:"${selectedEvent.sourceEmailSubject}"`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                          >
+                            Search in Gmail
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={async () => {
-                  if (confirm(`Delete "${selectedEvent.title}"?`)) {
-                    if (selectedEvent.googleCalendarEventId) {
-                      try {
-                        await fetch("/api/delete-from-calendar", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ eventId: selectedEvent._id }),
-                        });
-                      } catch (error) {
-                        console.error("Error deleting from Google Calendar:", error);
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setIsEditingEvent(true);
+                      setEditFormData({
+                        title: selectedEvent.title,
+                        eventDate: selectedEvent.eventDate,
+                        eventTime: selectedEvent.eventTime || "",
+                        endTime: selectedEvent.endTime || "",
+                        location: selectedEvent.location || "",
+                        childName: selectedEvent.childName || "",
+                        category: selectedEvent.category || "",
+                        description: selectedEvent.description || "",
+                      });
+                    }}
+                    className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (confirm(`Delete "${selectedEvent.title}"?`)) {
+                        if (selectedEvent.googleCalendarEventId) {
+                          try {
+                            await fetch("/api/delete-from-calendar", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ eventId: selectedEvent._id }),
+                            });
+                          } catch (error) {
+                            console.error("Error deleting from Google Calendar:", error);
+                          }
+                        }
+
+                        await deleteEvent({ eventId: selectedEvent._id });
+                        setSelectedEvent(null);
                       }
-                    }
-
-                    await deleteEvent({ eventId: selectedEvent._id });
-                    setSelectedEvent(null);
-                  }
-                }}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
-              >
-                Delete
-              </button>
-              <div className="flex-1" />
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
-              >
-                Close
-              </button>
-            </div>
+                    }}
+                    className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+                  >
+                    Delete
+                  </button>
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => setSelectedEvent(null)}
+                    className="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
