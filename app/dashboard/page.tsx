@@ -406,13 +406,87 @@ export default function Dashboard() {
                 {upcomingEvents === undefined ? (
                   <div className="p-8 text-center text-gray-500">Loading...</div>
                 ) : upcomingEvents.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <p className="text-gray-600 mb-2">No upcoming events</p>
-                    <p className="text-sm text-gray-500">
-                      {isGmailConnected
-                        ? "Scan your email to find events"
-                        : "Connect your Gmail to get started"}
-                    </p>
+                  <div className="p-8 sm:p-12 text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Your calendar is empty!</h3>
+                    <p className="text-gray-600 mb-6">Let's get you set up with your family's activities.</p>
+
+                    <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left max-w-md mx-auto">
+                      <h4 className="font-semibold text-gray-900 mb-3">Getting started:</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Connect Gmail to automatically find events</p>
+                            <p className="text-xs text-gray-600 mt-0.5">We'll scan for sports, schools, and activities</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Add events manually</p>
+                            <p className="text-xs text-gray-600 mt-0.5">Quick entry for any activity or appointment</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Discover local activities</p>
+                            <p className="text-xs text-gray-600 mt-0.5">Find new opportunities for your kids</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      {!isGmailConnected ? (
+                        <Link
+                          href="/settings"
+                          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-colors inline-flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
+                          </svg>
+                          Connect Gmail
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={handleScanEmail}
+                          disabled={isScanning}
+                          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
+                          </svg>
+                          Scan Email
+                        </button>
+                      )}
+                      <Link
+                        href="/review"
+                        className="px-6 py-3 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-lg font-semibold transition-colors inline-flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Event
+                      </Link>
+                    </div>
                   </div>
                 ) : (
                   upcomingEvents.map((event) => (

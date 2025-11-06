@@ -16,6 +16,7 @@ export default function ReviewPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set());
+  const [approvedEventId, setApprovedEventId] = useState<string | null>(null);
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
 
@@ -50,6 +51,10 @@ export default function ReviewPage() {
 
   const handleApprove = async (eventId: Id<"events">) => {
     await confirmEvent({ eventId });
+
+    // Show confirmation feedback
+    setApprovedEventId(eventId);
+    setTimeout(() => setApprovedEventId(null), 3000);
 
     // Automatically sync to Google Calendar
     try {
@@ -223,6 +228,23 @@ export default function ReviewPage() {
         {scanMessage && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
             {scanMessage}
+          </div>
+        )}
+
+        {/* Approval Success Message */}
+        {approvedEventId && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-green-900">Event approved and synced to Google Calendar</p>
+                <p className="text-sm text-green-700 mt-0.5">The event has been added to your calendar and will appear in Google Calendar.</p>
+              </div>
+            </div>
           </div>
         )}
 
