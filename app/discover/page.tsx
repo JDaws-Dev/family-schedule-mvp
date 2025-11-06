@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -36,6 +36,12 @@ export default function DiscoverPage() {
     clerkUser?.id ? { clerkId: clerkUser.id } : "skip"
   );
 
+  // Get family data for saved location
+  const family = useQuery(
+    api.families.getFamilyById,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
   // Get suggested activities from database
   const dbActivities = useQuery(
     api.suggestedActivities.getSuggestedActivitiesByFamily,
@@ -45,9 +51,17 @@ export default function DiscoverPage() {
   // Mutations for activity actions
   const quickAddToCalendar = useMutation(api.suggestedActivities.quickAddToCalendar);
   const dismissActivity = useMutation(api.suggestedActivities.dismissActivity);
+  const updateFamilyLocation = useMutation(api.families.updateFamilyLocation);
 
   // Action to trigger discovery
   const discoverActivities = useAction(api.discover.discoverActivitiesForFamily);
+
+  // Load saved family location on mount
+  useEffect(() => {
+    if (family?.location && !location) {
+      setLocation(family.location);
+    }
+  }, [family]);
 
   const handleDiscoverActivities = async () => {
     if (!convexUser?.familyId) return;
@@ -73,6 +87,12 @@ export default function DiscoverPage() {
       });
 
       console.log("[Discover] Discovery completed:", result);
+
+      // Save the location to family record for future use
+      await updateFamilyLocation({
+        familyId: convexUser.familyId,
+        location: location.trim(),
+      });
 
       setDiscoveryProgress("");
       setDiscoveryMessage(
@@ -442,14 +462,27 @@ export default function DiscoverPage() {
                         <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
                           {activity.sourceUrl && (
                             <>
-                              <span>From {(() => {
-                                try {
-                                  const hostname = new URL(activity.sourceUrl).hostname;
-                                  return hostname.replace('www.', '').split('.')[0];
-                                } catch {
-                                  return 'web';
-                                }
-                              })()}</span>
+                              <a
+                                href={activity.sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary-600 hover:text-primary-700 hover:underline font-medium"
+                              >
+                                From {activity.sourceName || (() => {
+                                  try {
+                                    const hostname = new URL(activity.sourceUrl).hostname;
+                                    return hostname.replace('www.', '').split('.')[0];
+                                  } catch {
+                                    return 'web';
+                                  }
+                                })()}
+                              </a>
+                              {activity.sourceLocation && (
+                                <>
+                                  <span>in</span>
+                                  <span className="font-medium">{activity.sourceLocation}</span>
+                                </>
+                              )}
                               <span>•</span>
                             </>
                           )}
