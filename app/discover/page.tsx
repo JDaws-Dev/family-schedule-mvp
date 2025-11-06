@@ -64,6 +64,7 @@ export default function DiscoverPage() {
     }, 8000); // Update every 8 seconds
 
     try {
+      console.log("[Discover] Starting discovery for:", location, "within", distance, "miles");
       const result = await discoverActivities({
         familyId: convexUser.familyId,
         userLocation: location,
@@ -71,15 +72,18 @@ export default function DiscoverPage() {
         apiBaseUrl: window.location.origin, // Pass current site URL to Convex action
       });
 
+      console.log("[Discover] Discovery completed:", result);
+
       clearInterval(progressInterval);
       setDiscoveryProgress("");
       setDiscoveryMessage(
         `✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`
       );
     } catch (error: any) {
+      console.error("[Discover] Error during discovery:", error);
       clearInterval(progressInterval);
       setDiscoveryProgress("");
-      setDiscoveryMessage(`❌ Error: ${error.message}`);
+      setDiscoveryMessage(`❌ Error: ${error.message || "Unknown error occurred"}`);
     } finally {
       setIsDiscovering(false);
       setTimeout(() => {
@@ -99,6 +103,10 @@ export default function DiscoverPage() {
 
   // Use database activities or empty array
   const suggestedActivities = dbActivities || [];
+
+  // Debug logging
+  console.log("[Discover] Current user:", convexUser);
+  console.log("[Discover] Suggested activities from DB:", suggestedActivities.length, "activities");
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
