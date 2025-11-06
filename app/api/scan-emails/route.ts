@@ -8,6 +8,7 @@ function getConvexClient() {
 }
 
 async function refreshAccessToken(refreshToken: string) {
+  console.log("[refreshAccessToken] Attempting to refresh Google OAuth token...");
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -20,6 +21,18 @@ async function refreshAccessToken(refreshToken: string) {
   });
 
   const data = await response.json();
+
+  if (!response.ok || !data.access_token) {
+    console.error("[refreshAccessToken] Failed to refresh token:", {
+      status: response.status,
+      statusText: response.statusText,
+      error: data.error,
+      error_description: data.error_description,
+    });
+    throw new Error(`Failed to refresh access token: ${data.error_description || data.error || "Unknown error"}`);
+  }
+
+  console.log("[refreshAccessToken] Successfully refreshed access token");
   return data.access_token;
 }
 
@@ -247,29 +260,36 @@ If no clear events with dates, return {"events": []}.`;
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[scan-emails] Starting email scan...");
     const { accountId } = await request.json();
 
     if (!accountId) {
+      console.error("[scan-emails] Missing accountId");
       return NextResponse.json({ error: "Missing accountId" }, { status: 400 });
     }
 
+    console.log("[scan-emails] Creating Convex client...");
     // Create fresh Convex client for this request
     const convex = getConvexClient();
 
+    console.log("[scan-emails] Fetching Gmail account from Convex...");
     // Get Gmail account from Convex
     const account = await convex.query(api.gmailAccounts.getGmailAccountById, { accountId });
 
     if (!account) {
+      console.error("[scan-emails] Gmail account not found:", accountId);
       return NextResponse.json({ error: "Gmail account not found" }, { status: 404 });
     }
 
+    console.log("[scan-emails] Fetching family members...");
     // Get tracked family members for this family
     const familyMembers = await convex.query(api.familyMembers.getFamilyMembers, {
       familyId: account.familyId,
     });
 
-    console.log(`Found ${familyMembers.length} tracked family members for filtering`);
+    console.log(`[scan-emails] Found ${familyMembers.length} tracked family members for filtering`);
 
+    console.log("[scan-emails] Refreshing access token...");
     // Refresh access token
     const accessToken = await refreshAccessToken(account.refreshToken);
 
@@ -359,9 +379,17 @@ export async function POST(request: NextRequest) {
       events: extractedEvents,
     });
   } catch (error: any) {
-    console.error("Email scanning error:", error);
+    console.error("[scan-emails] Email scanning error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return NextResponse.json(
-      { error: "Failed to scan emails", details: error.message },
+      {
+        error: "Failed to scan emails",
+        details: error.message,
+        errorType: error.name,
+      },
       { status: 500 }
     );
   }
