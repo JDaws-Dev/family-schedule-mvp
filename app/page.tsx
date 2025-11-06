@@ -78,6 +78,44 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Mobile App Announcement Banner */}
+        <div className="mb-12">
+          <div className="max-w-4xl mx-auto">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-secondary-500 to-primary-600 p-1">
+              <div className="relative bg-white rounded-xl p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1 text-center sm:text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-semibold mb-2">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
+                      </svg>
+                      COMING 2026
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                      Native Mobile Apps Coming Soon
+                    </h3>
+                    <p className="text-gray-600 text-sm sm:text-base">
+                      Get ready for iOS and Android apps with offline access, push notifications, and widget support. Be the first to know when they launch!
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button className="px-6 py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all shadow-md hover:shadow-lg whitespace-nowrap">
+                      Join Waitlist
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Trust Indicators - Minimal and Clean */}
         <div className="border-y border-gray-200 py-8 mb-20">
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
