@@ -54,13 +54,13 @@ export const saveDiscoveredActivities = mutation({
         .first();
 
       if (existing) {
-        // Update existing activity with new info
+        // Update existing activity with new info (convert null to undefined)
         await ctx.db.patch(existing._id, {
-          description: activity.description,
-          website: activity.website,
-          phoneNumber: activity.phoneNumber,
-          priceRange: activity.priceRange,
-          aiSummary: activity.aiSummary,
+          description: nullToUndefined(activity.description),
+          website: nullToUndefined(activity.website),
+          phoneNumber: nullToUndefined(activity.phoneNumber),
+          priceRange: nullToUndefined(activity.priceRange),
+          aiSummary: nullToUndefined(activity.aiSummary),
         });
         savedActivities.push(existing._id);
       } else {
