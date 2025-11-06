@@ -737,37 +737,57 @@ export default function ReviewPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={newEventForm.eventDate}
-                      onChange={(e) => setNewEventForm({ ...newEventForm, eventDate: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Family Member
-                    </label>
-                    <input
-                      type="text"
-                      value={newEventForm.childName}
-                      onChange={(e) => setNewEventForm({ ...newEventForm, childName: e.target.value })}
-                      list="family-members-list"
-                      placeholder={familyMembers && familyMembers.length > 0 ? "Select or type a name" : "Type a name"}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                    />
-                    {familyMembers && familyMembers.length > 0 && (
-                      <datalist id="family-members-list">
-                        {familyMembers.map((member) => (
-                          <option key={member._id} value={member.name} />
-                        ))}
-                      </datalist>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={newEventForm.eventDate}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, eventDate: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
+                  <div className="space-y-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                    {familyMembers && familyMembers.length > 0 ? (
+                      familyMembers.map((member) => {
+                        const selectedMembers = newEventForm.childName ? newEventForm.childName.split(", ") : [];
+                        const isChecked = selectedMembers.includes(member.name);
+
+                        return (
+                          <label key={member._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                let updatedMembers = [...selectedMembers];
+                                if (e.target.checked) {
+                                  updatedMembers.push(member.name);
+                                } else {
+                                  updatedMembers = updatedMembers.filter(m => m !== member.name);
+                                }
+                                setNewEventForm({
+                                  ...newEventForm,
+                                  childName: updatedMembers.join(", ")
+                                });
+                              }}
+                              className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                            />
+                            <span
+                              className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium text-white"
+                              style={{ backgroundColor: member.color || "#6366f1" }}
+                            >
+                              {member.name}
+                            </span>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">No family members added yet. Add them in Settings.</p>
                     )}
                   </div>
                 </div>
