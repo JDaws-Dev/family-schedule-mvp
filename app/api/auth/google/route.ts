@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   });
 
   const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-  googleAuthUrl.searchParams.set("client_id", process.env.GOOGLE_CLIENT_ID!);
+  googleAuthUrl.searchParams.set("client_id", process.env.GOOGLE_CLIENT_ID!.trim());
   googleAuthUrl.searchParams.set("redirect_uri", redirectUri);
   googleAuthUrl.searchParams.set("response_type", "code");
   googleAuthUrl.searchParams.set("scope", "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile");

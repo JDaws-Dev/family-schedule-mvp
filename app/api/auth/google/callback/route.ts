@@ -47,8 +47,8 @@ export async function GET(request: NextRequest) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         code,
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        client_id: process.env.GOOGLE_CLIENT_ID!.trim(),
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
         redirect_uri: `${appUrl}/api/auth/google/callback`,
         grant_type: "authorization_code",
       }),
