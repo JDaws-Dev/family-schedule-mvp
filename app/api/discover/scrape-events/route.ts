@@ -42,7 +42,7 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lon: nu
 
 // Hardcoded reliable sources for Georgia locations
 function getGeorgiaSources(location: string): any[] {
-  const sources = [];
+  const sources: any[] = [];
   const lowerLocation = location.toLowerCase();
 
   // If location is in Gwinnett County area (Suwanee, Duluth, Lawrenceville, etc.)
