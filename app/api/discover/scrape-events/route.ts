@@ -40,8 +40,59 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lon: nu
   }
 }
 
+// Hardcoded reliable sources for Georgia locations
+function getGeorgiaSources(location: string): any[] {
+  const sources = [];
+  const lowerLocation = location.toLowerCase();
+
+  // If location is in Gwinnett County area (Suwanee, Duluth, Lawrenceville, etc.)
+  if (lowerLocation.includes('suwanee') || lowerLocation.includes('duluth') ||
+      lowerLocation.includes('gwinnett') || lowerLocation.includes('lawrenceville') ||
+      lowerLocation.includes('30024') || lowerLocation.includes('30096') || lowerLocation.includes('30519')) {
+    sources.push(
+      {
+        name: "Gwinnett County Parks & Recreation",
+        url: "https://www.gwinnettcounty.com/web/gwinnett/departments/communitServices/parksandrecreation/activities/specialevents",
+        categories: ["recreation", "community", "family", "sports"]
+      },
+      {
+        name: "City of Suwanee Events",
+        url: "https://www.suwanee.com/residents/special-events",
+        categories: ["community", "family", "arts", "recreation"]
+      },
+      {
+        name: "Gwinnett County Public Library",
+        url: "https://www.gwinnettpl.org/events/",
+        categories: ["education", "arts", "family"]
+      },
+      {
+        name: "Hudgens Center for Art & Learning",
+        url: "https://thehudgens.org/calendar/",
+        categories: ["arts", "education", "family"]
+      }
+    );
+  }
+
+  // General Georgia sources
+  if (lowerLocation.includes('georgia') || lowerLocation.includes(' ga')) {
+    sources.push(
+      {
+        name: "Georgia State Parks Events",
+        url: "https://gastateparks.org/Events",
+        categories: ["recreation", "family", "community"]
+      }
+    );
+  }
+
+  return sources;
+}
+
 // Function to dynamically discover event sources for any location
 async function discoverEventSources(location: string): Promise<any[]> {
+  // Start with any hardcoded sources for this location
+  const hardcodedSources = getGeorgiaSources(location);
+  console.log(`[discover-sources] Found ${hardcodedSources.length} hardcoded sources for ${location}`);
+
   // Use OpenAI to generate a list of relevant local event sources
   const systemPrompt = `You are an expert at finding local event sources and community calendars for families with children.
 
@@ -54,7 +105,10 @@ Focus on:
 4. Community centers
 5. School district calendars (for public events)
 6. Local museums and cultural institutions
-7. YMCA/community organizations
+7. Local theaters and performing arts centers
+8. Sports facilities and youth leagues
+9. Nature centers and science museums
+10. Community festivals and seasonal events
 
 Return a JSON array of event sources with this structure:
 [
@@ -65,7 +119,8 @@ Return a JSON array of event sources with this structure:
   }
 ]
 
-IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're not certain about a URL, omit it.`;
+IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're not certain about a URL, omit it.
+IMPORTANT: Return at least 8-10 diverse sources if possible.`;
 
   try {
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -97,7 +152,7 @@ IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're
     // Check all possible keys that AI might return
     const sources = aiResponse.sources || aiResponse.eventSources || aiResponse.event_sources || [];
 
-    console.log(`[discover-sources] Found ${sources.length} potential sources for ${location}`);
+    console.log(`[discover-sources] Found ${sources.length} sources from OpenAI for ${location}`);
 
     // If no sources found, log the response for debugging
     if (sources.length === 0) {
@@ -105,7 +160,11 @@ IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're
       console.error(`[discover-sources] Full AI response:`, JSON.stringify(aiResponse).substring(0, 500));
     }
 
-    return sources;
+    // Combine hardcoded and AI-discovered sources
+    const allSources = [...hardcodedSources, ...sources];
+    console.log(`[discover-sources] Total sources: ${allSources.length} (${hardcodedSources.length} hardcoded + ${sources.length} discovered)`);
+
+    return allSources;
   } catch (error) {
     console.error("[discover-sources] Error discovering sources:", error);
     return [];

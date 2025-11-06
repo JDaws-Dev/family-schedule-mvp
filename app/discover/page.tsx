@@ -353,6 +353,41 @@ export default function DiscoverPage() {
                         <h3 className="text-xl font-bold text-gray-900 mb-1">
                           {activity.title}
                         </h3>
+
+                        {/* Date and Time Row */}
+                        {(activity.date || activity.time) && (
+                          <div className="flex items-center gap-3 text-sm font-medium text-gray-900 mb-2">
+                            {activity.date && (
+                              <span className="flex items-center gap-1">
+                                📅 {new Date(activity.date).toLocaleDateString('en-US', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: new Date(activity.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                                })}
+                              </span>
+                            )}
+                            {activity.time && (
+                              <span className="flex items-center gap-1">
+                                🕐 {(() => {
+                                  const [hours, minutes] = activity.time.split(':');
+                                  const hour = parseInt(hours);
+                                  const ampm = hour >= 12 ? 'PM' : 'AM';
+                                  const displayHour = hour % 12 || 12;
+                                  return `${displayHour}:${minutes} ${ampm}`;
+                                })()}
+                                {activity.endTime && ` - ${(() => {
+                                  const [hours, minutes] = activity.endTime.split(':');
+                                  const hour = parseInt(hours);
+                                  const ampm = hour >= 12 ? 'PM' : 'AM';
+                                  const displayHour = hour % 12 || 12;
+                                  return `${displayHour}:${minutes} ${ampm}`;
+                                })()}`}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
                           {activity.distance && (
                             <span className="flex items-center gap-1">
@@ -470,9 +505,9 @@ export default function DiscoverPage() {
           <div className="grid md:grid-cols-3 gap-6">
             <div>
               <div className="text-3xl mb-3">🔍</div>
-              <h3 className="font-semibold text-gray-900 mb-2">1. We Search Daily</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">1. We Search Local Sources</h3>
               <p className="text-gray-600 text-sm">
-                We automatically check local websites, community boards, library calendars, and recreation departments to find new activities and events.
+                We check local websites, community boards, library calendars, and recreation departments to find activities and events in your area.
               </p>
             </div>
             <div>
