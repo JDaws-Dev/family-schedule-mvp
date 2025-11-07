@@ -22,6 +22,9 @@ export default function ReviewPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const eventsPerPage = 10;
   const [recentlyDismissed, setRecentlyDismissed] = useState<{eventId: string, event: any, timeout: NodeJS.Timeout} | null>(null);
+  const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
+  const [pastedText, setPastedText] = useState("");
+  const [isExtractingEvent, setIsExtractingEvent] = useState(false);
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     eventDate: "",
@@ -213,6 +216,50 @@ export default function ReviewPage() {
 
     setShowEditEventModal(false);
     setEditingEvent(null);
+  };
+
+  const handleExtractFromPaste = async () => {
+    if (!pastedText.trim()) {
+      showToast("Please paste some text first", "error");
+      return;
+    }
+
+    setIsExtractingEvent(true);
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: pastedText }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        showToast(data.error, "error");
+        return;
+      }
+
+      // Populate the form with extracted data
+      setNewEventForm({
+        title: data.title || "",
+        eventDate: data.eventDate || "",
+        eventTime: data.eventTime || "",
+        endTime: data.endTime || "",
+        location: data.location || "",
+        category: data.category || "Sports",
+        childName: data.childName || "",
+        description: data.description || "",
+      });
+
+      // Switch to manual tab to show the populated form
+      setAddEventTab("manual");
+      showToast("Event details extracted! Review and save below.", "success");
+    } catch (error) {
+      console.error("Error extracting event:", error);
+      showToast("Failed to extract event details. Please try again.", "error");
+    } finally {
+      setIsExtractingEvent(false);
+    }
   };
 
   const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -992,9 +1039,13 @@ export default function ReviewPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Add Event Manually</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Add Event</h2>
               <button
-                onClick={() => setShowAddEventModal(false)}
+                onClick={() => {
+                  setShowAddEventModal(false);
+                  setAddEventTab("manual");
+                  setPastedText("");
+                }}
                 className="text-gray-400 hover:text-gray-600 text-2xl"
                 aria-label="Close add event modal"
                 title="Close"
@@ -1002,8 +1053,73 @@ export default function ReviewPage() {
                 ×
               </button>
             </div>
+
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200 px-4 sm:px-6">
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setAddEventTab("manual")}
+                  className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    addEventTab === "manual"
+                      ? "border-primary-600 text-primary-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Manual Entry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddEventTab("paste")}
+                  className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    addEventTab === "paste"
+                      ? "border-primary-600 text-primary-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Paste Text
+                </button>
+              </div>
+            </div>
+
             <div className="p-4 sm:p-6">
-              <form className="space-y-4" onSubmit={handleAddEvent}>
+              {addEventTab === "paste" ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Paste any text containing event details (email, message, etc.) and we'll extract the information automatically.
+                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Paste Event Details
+                    </label>
+                    <textarea
+                      value={pastedText}
+                      onChange={(e) => setPastedText(e.target.value)}
+                      placeholder="Paste email content, message, or any text with event details here..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[200px]"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleExtractFromPaste}
+                    disabled={isExtractingEvent || !pastedText.trim()}
+                    className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {isExtractingEvent ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Extracting...
+                      </span>
+                    ) : (
+                      "Extract Event Details"
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <form className="space-y-4" onSubmit={handleAddEvent}>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Event Title *
@@ -1157,6 +1273,7 @@ export default function ReviewPage() {
                   </button>
                 </div>
               </form>
+              )}
             </div>
           </div>
         </div>
