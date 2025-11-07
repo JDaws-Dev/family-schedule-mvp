@@ -81,12 +81,16 @@ export async function POST(request: NextRequest) {
     oauth2Client.setCredentials({ access_token: accessToken });
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-    // Find the Family Schedule calendar
-    const calendarId = await findFamilyCalendar(calendar);
+    // Get family to find selected calendar
+    const family = await convex.query(api.families.getFamilyById, {
+      familyId: event.familyId,
+    });
+
+    const calendarId = family?.googleCalendarId;
 
     if (!calendarId) {
       return NextResponse.json(
-        { error: "Family Schedule calendar not found in Google Calendar" },
+        { error: "No calendar selected. Please select a calendar in Settings." },
         { status: 404 }
       );
     }

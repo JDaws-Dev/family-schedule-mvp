@@ -70,6 +70,13 @@ export default function Settings() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
 
+  // Google Calendar state
+  const [availableCalendars, setAvailableCalendars] = useState<any[]>([]);
+  const [loadingCalendars, setLoadingCalendars] = useState(false);
+  const [showCreateCalendar, setShowCreateCalendar] = useState(false);
+  const [newCalendarName, setNewCalendarName] = useState("");
+  const [creatingCalendar, setCreatingCalendar] = useState(false);
+
   // Validate phone number (E.164 format)
   const validatePhoneNumber = (phone: string): boolean => {
     if (!phone) return true; // Optional field
@@ -103,6 +110,7 @@ export default function Settings() {
   const addToWhitelist = useMutation(api.emailProcessing.addToWhitelist);
   const addToBlacklist = useMutation(api.emailProcessing.addToBlacklist);
   const updateUserPhoneNumber = useMutation(api.users.updatePhoneNumber);
+  const updateSelectedCalendar = useMutation(api.families.updateSelectedCalendar);
 
   const handleDisconnectAccount = async (accountId: string, gmailEmail: string) => {
     if (!confirm(`Disconnect ${gmailEmail}? You can reconnect it anytime from this page.`)) {
@@ -377,6 +385,84 @@ export default function Settings() {
       setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);
+    }
+  };
+
+  const handleFetchCalendars = async () => {
+    if (!convexUser?.familyId) return;
+
+    setLoadingCalendars(true);
+    try {
+      const response = await fetch("/api/google-calendars", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ familyId: convexUser.familyId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAvailableCalendars(data.calendars || []);
+      } else {
+        showToast(data.error || "Failed to fetch calendars", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching calendars:", error);
+      showToast("Failed to fetch calendars. Please try again.", "error");
+    } finally {
+      setLoadingCalendars(false);
+    }
+  };
+
+  const handleSelectCalendar = async (calendarId: string, calendarName: string) => {
+    if (!convexUser?.familyId) return;
+
+    try {
+      await updateSelectedCalendar({
+        familyId: convexUser.familyId,
+        googleCalendarId: calendarId,
+        calendarName,
+      });
+      showToast(`Selected "${calendarName}" for syncing family events`, "success");
+    } catch (error) {
+      console.error("Error selecting calendar:", error);
+      showToast("Failed to save calendar selection. Please try again.", "error");
+    }
+  };
+
+  const handleCreateCalendar = async () => {
+    if (!convexUser?.familyId || !newCalendarName.trim()) {
+      showToast("Please enter a calendar name", "error");
+      return;
+    }
+
+    setCreatingCalendar(true);
+    try {
+      const response = await fetch("/api/create-google-calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          familyId: convexUser.familyId,
+          calendarName: newCalendarName.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast(`Created calendar "${newCalendarName}"`, "success");
+        setShowCreateCalendar(false);
+        setNewCalendarName("");
+        // Refresh the calendar list
+        handleFetchCalendars();
+      } else {
+        showToast(data.error || "Failed to create calendar", "error");
+      }
+    } catch (error) {
+      console.error("Error creating calendar:", error);
+      showToast("Failed to create calendar. Please try again.", "error");
+    } finally {
+      setCreatingCalendar(false);
     }
   };
 
@@ -952,9 +1038,126 @@ export default function Settings() {
         </div>
         )}
 
-        {/* Integrations Tab - Gmail & Email Scanning */}
+        {/* Integrations Tab - Gmail & Calendar */}
         {activeTab === 'integrations' && (
         <div>
+        {/* Google Calendar Selection */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900">Google Calendar</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Choose which Google Calendar to sync your family events to. You can use an existing calendar or create a new one.
+            </p>
+          </div>
+          <div className="p-6">
+            {/* Current Selection */}
+            {family?.googleCalendarId && family?.calendarName && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">✓</div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-green-900">Currently syncing to:</h3>
+                    <p className="text-green-800 text-sm mt-1">{family.calendarName}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Select or Create Calendar */}
+            {!gmailAccounts || gmailAccounts.length === 0 ? (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-900">
+                  Connect a Gmail account first to enable Google Calendar sync.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleFetchCalendars}
+                    disabled={loadingCalendars}
+                    className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingCalendars ? "Loading..." : "Show My Calendars"}
+                  </button>
+                  <button
+                    onClick={() => setShowCreateCalendar(!showCreateCalendar)}
+                    className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
+                  >
+                    {showCreateCalendar ? "Cancel" : "Create New Calendar"}
+                  </button>
+                </div>
+
+                {/* Create New Calendar Form */}
+                {showCreateCalendar && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-3">Create New Calendar</h3>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newCalendarName}
+                        onChange={(e) => setNewCalendarName(e.target.value)}
+                        placeholder="e.g., Johnson Family Schedule"
+                        className="flex-1 px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                      <button
+                        onClick={handleCreateCalendar}
+                        disabled={creatingCalendar || !newCalendarName.trim()}
+                        className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {creatingCalendar ? "Creating..." : "Create"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Available Calendars List */}
+                {availableCalendars.length > 0 && (
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-900 mb-3">Select a Calendar</h3>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {availableCalendars.map((cal) => (
+                        <div
+                          key={cal.id}
+                          className={`flex items-center justify-between p-3 border rounded-lg transition ${
+                            family?.googleCalendarId === cal.id
+                              ? 'border-primary-500 bg-primary-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">
+                              {cal.summary}
+                              {cal.primary && (
+                                <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  Primary
+                                </span>
+                              )}
+                            </div>
+                            {cal.description && (
+                              <div className="text-sm text-gray-600 mt-1">{cal.description}</div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleSelectCalendar(cal.id, cal.summary)}
+                            className={`ml-3 px-4 py-2 rounded-lg font-medium transition ${
+                              family?.googleCalendarId === cal.id
+                                ? 'bg-primary-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {family?.googleCalendarId === cal.id ? 'Selected' : 'Select'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Gmail Connections - Multiple Accounts */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">

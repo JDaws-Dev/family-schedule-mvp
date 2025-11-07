@@ -102,21 +102,26 @@ export async function POST(request: NextRequest) {
     oauth2Client.setCredentials({ access_token: accessToken });
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-    // Find or create "Family Schedule" calendar
-    console.log("Finding or creating Family Schedule calendar...");
-    const calendarId = await findOrCreateFamilyCalendar(calendar);
-    console.log("Calendar ID:", calendarId);
-
-    // Save calendar ID to family record if not already set
+    // Get family to check for selected calendar
     const family = await convex.query(api.families.getFamilyById, {
       familyId: event.familyId,
     });
 
-    if (!family?.googleCalendarId || family.googleCalendarId !== calendarId) {
+    let calendarId: string;
+
+    // Use selected calendar if available, otherwise create "Family Schedule"
+    if (family?.googleCalendarId) {
+      console.log("Using selected calendar:", family.calendarName);
+      calendarId = family.googleCalendarId;
+    } else {
+      console.log("No calendar selected, creating default Family Schedule calendar...");
+      calendarId = await findOrCreateFamilyCalendar(calendar);
+      console.log("Calendar ID:", calendarId);
+
+      // Save calendar ID to family record
       console.log("Saving Google Calendar ID to family record...");
-      await convex.mutation(api.googleCalendar.createFamilyCalendar, {
+      await convex.mutation(api.families.updateSelectedCalendar, {
         familyId: event.familyId,
-        userId: event.createdByUserId,
         googleCalendarId: calendarId,
         calendarName: "Family Schedule",
       });

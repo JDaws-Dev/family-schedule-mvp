@@ -267,3 +267,20 @@ export const updateLastCalendarSync = mutation({
     return { success: true };
   },
 });
+
+// Update selected Google Calendar
+export const updateSelectedCalendar = mutation({
+  args: {
+    familyId: v.id("families"),
+    googleCalendarId: v.string(),
+    calendarName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.familyId, {
+      googleCalendarId: args.googleCalendarId,
+      calendarName: args.calendarName,
+    });
+
+    return { success: true };
+  },
+});
