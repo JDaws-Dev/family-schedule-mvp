@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import MobileNav from "@/app/components/MobileNav";
 import { EventCardSkeleton } from "@/app/components/LoadingSkeleton";
+import { useToast } from "@/app/components/Toast";
 
 export default function ReviewPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function ReviewPage() {
   });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
+  const { showToast } = useToast();
 
   // Get user from Convex
   const convexUser = useQuery(
