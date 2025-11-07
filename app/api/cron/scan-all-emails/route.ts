@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
 // This endpoint will be called by Vercel cron daily
 // Vercel Cron docs: https://vercel.com/docs/cron-jobs
 export async function GET(request: NextRequest) {
@@ -12,6 +10,9 @@ export async function GET(request: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Initialize Convex client inside the handler to avoid build-time errors
+  const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
   try {
     // Get all families
