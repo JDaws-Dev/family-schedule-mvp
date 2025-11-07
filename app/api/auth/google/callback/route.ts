@@ -39,59 +39,94 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log("Exchanging code for tokens...");
+    console.log("[oauth-callback] Exchanging code for tokens...");
+    console.log("[oauth-callback] Has code:", !!code);
+    console.log("[oauth-callback] Has client ID:", !!process.env.GOOGLE_CLIENT_ID);
+    console.log("[oauth-callback] Client ID length:", process.env.GOOGLE_CLIENT_ID?.length || 0);
+    console.log("[oauth-callback] Has client secret:", !!process.env.GOOGLE_CLIENT_SECRET);
+    console.log("[oauth-callback] Client secret length:", process.env.GOOGLE_CLIENT_SECRET?.length || 0);
+    console.log("[oauth-callback] Redirect URI:", `${appUrl}/api/auth/google/callback`);
+
+    const requestBody = {
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID!.trim(),
+      client_secret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
+      redirect_uri: `${appUrl}/api/auth/google/callback`,
+      grant_type: "authorization_code",
+    };
+
+    console.log("[oauth-callback] Request body (censored):", {
+      hasCode: !!requestBody.code,
+      hasClientId: !!requestBody.client_id,
+      hasClientSecret: !!requestBody.client_secret,
+      redirectUri: requestBody.redirect_uri,
+      grantType: requestBody.grant_type,
+    });
+
     // Exchange authorization code for tokens
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        code,
-        client_id: process.env.GOOGLE_CLIENT_ID!.trim(),
-        client_secret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
-        redirect_uri: `${appUrl}/api/auth/google/callback`,
-        grant_type: "authorization_code",
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const tokens = await tokenResponse.json();
-    console.log("Token response:", {
+    console.log("[oauth-callback] Token response:", {
+      ok: tokenResponse.ok,
+      status: tokenResponse.status,
       hasAccessToken: !!tokens.access_token,
       hasRefreshToken: !!tokens.refresh_token,
-      error: tokens.error
+      error: tokens.error,
+      errorDescription: tokens.error_description,
     });
 
     if (!tokens.access_token) {
+      console.error("[oauth-callback] FULL ERROR RESPONSE:", JSON.stringify(tokens, null, 2));
       throw new Error(`Failed to obtain access token: ${JSON.stringify(tokens)}`);
     }
 
     if (!tokens.refresh_token) {
-      console.warn("No refresh token received - user may need to revoke access and reconnect");
+      console.warn("[oauth-callback] No refresh token received - user may need to revoke access and reconnect");
     }
 
     // Get user's Gmail email
-    console.log("Fetching user info...");
+    console.log("[oauth-callback] Fetching user info...");
     const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     });
 
     const userInfo = await userInfoResponse.json();
-    console.log("User info:", { email: userInfo.email, name: userInfo.name });
+    console.log("[oauth-callback] User info:", { email: userInfo.email, name: userInfo.name });
 
     // Get Clerk JWT token for authenticated Convex mutation
+    console.log("[oauth-callback] Getting Clerk JWT token...");
     const { getToken } = await auth();
     const clerkToken = await getToken({ template: "convex" });
 
+    console.log("[oauth-callback] Clerk token obtained:", !!clerkToken);
+    console.log("[oauth-callback] Clerk token length:", clerkToken?.length || 0);
+
     if (!clerkToken) {
-      console.error("No Clerk token available");
+      console.error("[oauth-callback] No Clerk token available");
       throw new Error("Authentication failed: No Clerk token available");
     }
 
     // Create authenticated Convex client
+    console.log("[oauth-callback] Creating authenticated Convex client...");
+    console.log("[oauth-callback] Convex URL:", process.env.NEXT_PUBLIC_CONVEX_URL);
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
     convex.setAuth(clerkToken);
 
     // Store tokens in Convex
-    console.log("Storing in Convex...");
+    console.log("[oauth-callback] Storing in Convex...");
+    console.log("[oauth-callback] Mutation params:", {
+      clerkId: userId,
+      gmailEmail: userInfo.email,
+      displayName: userInfo.name || userInfo.email,
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
+    });
+
     const result = await convex.mutation(api.gmailAccounts.connectGmailAccount, {
       clerkId: userId,
       gmailEmail: userInfo.email,
@@ -100,7 +135,7 @@ export async function GET(request: NextRequest) {
       refreshToken: tokens.refresh_token || "",
     });
 
-    console.log("Convex mutation result:", result);
+    console.log("[oauth-callback] Convex mutation result:", result);
 
     // Redirect to the appropriate page with success flag
     const redirectUrl = new URL(returnUrl, appUrl);

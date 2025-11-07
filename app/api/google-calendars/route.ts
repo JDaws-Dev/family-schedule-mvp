@@ -8,18 +8,30 @@ import { auth } from "@clerk/nextjs/server";
 async function refreshAccessToken(refreshToken: string) {
   console.log("[google-calendars] Refreshing access token...");
   console.log("[google-calendars] Has refresh token:", !!refreshToken);
+  console.log("[google-calendars] Refresh token length:", refreshToken?.length || 0);
   console.log("[google-calendars] Has client ID:", !!process.env.GOOGLE_CLIENT_ID);
+  console.log("[google-calendars] Client ID length:", process.env.GOOGLE_CLIENT_ID?.length || 0);
   console.log("[google-calendars] Has client secret:", !!process.env.GOOGLE_CLIENT_SECRET);
+  console.log("[google-calendars] Client secret length:", process.env.GOOGLE_CLIENT_SECRET?.length || 0);
+
+  const requestBody = {
+    client_id: process.env.GOOGLE_CLIENT_ID?.trim(),
+    client_secret: process.env.GOOGLE_CLIENT_SECRET?.trim(),
+    refresh_token: refreshToken,
+    grant_type: "refresh_token",
+  };
+
+  console.log("[google-calendars] Request body (censored):", {
+    hasClientId: !!requestBody.client_id,
+    hasClientSecret: !!requestBody.client_secret,
+    hasRefreshToken: !!requestBody.refresh_token,
+    grantType: requestBody.grant_type,
+  });
 
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      refresh_token: refreshToken,
-      grant_type: "refresh_token",
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   const data = await response.json();
@@ -32,6 +44,7 @@ async function refreshAccessToken(refreshToken: string) {
   });
 
   if (!data.access_token) {
+    console.error("[google-calendars] FULL ERROR RESPONSE:", JSON.stringify(data, null, 2));
     throw new Error(`Failed to refresh token: ${data.error} - ${data.error_description}`);
   }
 
