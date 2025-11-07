@@ -127,15 +127,24 @@ export async function GET(request: NextRequest) {
       hasRefreshToken: !!tokens.refresh_token,
     });
 
-    const result = await convex.mutation(api.gmailAccounts.connectGmailAccount, {
-      clerkId: userId,
-      gmailEmail: userInfo.email,
-      displayName: userInfo.name || userInfo.email,
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token || "",
-    });
-
-    console.log("[oauth-callback] Convex mutation result:", result);
+    let result;
+    try {
+      result = await convex.mutation(api.gmailAccounts.connectGmailAccount, {
+        clerkId: userId,
+        gmailEmail: userInfo.email,
+        displayName: userInfo.name || userInfo.email,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token || "",
+      });
+      console.log("[oauth-callback] Convex mutation result:", result);
+    } catch (convexError) {
+      console.error("[oauth-callback] Convex mutation failed:", convexError);
+      console.error("[oauth-callback] Convex error details:", {
+        message: convexError instanceof Error ? convexError.message : String(convexError),
+        stack: convexError instanceof Error ? convexError.stack : "No stack trace",
+      });
+      throw new Error(`Failed to save Gmail account to database: ${convexError instanceof Error ? convexError.message : String(convexError)}`);
+    }
 
     // Redirect to the appropriate page with success flag and tab parameter
     const redirectUrl = new URL(returnUrl, appUrl);
