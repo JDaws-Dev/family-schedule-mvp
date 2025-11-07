@@ -18,13 +18,31 @@ function SettingsContent() {
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     const success = searchParams.get('success');
+    const error = searchParams.get('error');
 
     if (tabParam === 'integrations' || tabParam === 'family') {
       setActiveTab(tabParam);
     } else if (success === 'gmail_connected') {
       setActiveTab('integrations');
     }
-  }, [searchParams]);
+
+    // Show feedback messages
+    if (success === 'gmail_connected') {
+      showToast('Gmail account connected successfully!', 'success');
+      // Clear URL parameters after showing message
+      window.history.replaceState({}, '', '/settings?tab=integrations');
+    }
+
+    if (error === 'oauth_failed') {
+      showToast('Failed to connect Gmail account. Please try again.', 'error');
+      window.history.replaceState({}, '', '/settings?tab=integrations');
+    }
+
+    if (error === 'missing_params' || error === 'missing_user') {
+      showToast('Authentication error. Please try connecting again.', 'error');
+      window.history.replaceState({}, '', '/settings?tab=integrations');
+    }
+  }, [searchParams, showToast]);
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const { showToast } = useToast();
