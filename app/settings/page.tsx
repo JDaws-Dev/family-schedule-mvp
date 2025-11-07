@@ -389,28 +389,46 @@ export default function Settings() {
   };
 
   const handleFetchCalendars = async () => {
-    if (!convexUser?.familyId) return;
+    if (!convexUser?.familyId) {
+      console.error("[handleFetchCalendars] No familyId available");
+      return;
+    }
 
+    console.log("[handleFetchCalendars] Starting calendar fetch for familyId:", convexUser.familyId);
     setLoadingCalendars(true);
     try {
+      console.log("[handleFetchCalendars] Making fetch request to /api/google-calendars");
       const response = await fetch("/api/google-calendars", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ familyId: convexUser.familyId }),
       });
 
+      console.log("[handleFetchCalendars] Response status:", response.status);
+      console.log("[handleFetchCalendars] Response ok:", response.ok);
+
       const data = await response.json();
+      console.log("[handleFetchCalendars] Response data:", data);
 
       if (response.ok) {
+        console.log("[handleFetchCalendars] Setting calendars:", data.calendars?.length || 0, "calendars");
         setAvailableCalendars(data.calendars || []);
+        if (data.calendars && data.calendars.length > 0) {
+          showToast(`Found ${data.calendars.length} calendars`, "success");
+        } else {
+          showToast("No calendars found", "info");
+        }
       } else {
+        console.error("[handleFetchCalendars] Error response:", data);
         showToast(data.error || "Failed to fetch calendars", "error");
       }
     } catch (error) {
-      console.error("Error fetching calendars:", error);
+      console.error("[handleFetchCalendars] Exception:", error);
+      console.error("[handleFetchCalendars] Error stack:", error instanceof Error ? error.stack : "No stack");
       showToast("Failed to fetch calendars. Please try again.", "error");
     } finally {
       setLoadingCalendars(false);
+      console.log("[handleFetchCalendars] Finished");
     }
   };
 
