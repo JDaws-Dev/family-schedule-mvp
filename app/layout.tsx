@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: "Never miss a kid's activity again with Our Daily Family",
 };
 
+// Force dynamic rendering to avoid build-time environment variable issues
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{
