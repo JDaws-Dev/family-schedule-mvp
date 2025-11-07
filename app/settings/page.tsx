@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -9,17 +9,22 @@ import MobileNav from "@/app/components/MobileNav";
 import { useToast } from "@/app/components/Toast";
 import { useSearchParams } from "next/navigation";
 
-export default function Settings() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>(() => {
-    // Check URL parameter for tab, default to 'integrations' if coming from OAuth
+  const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>('profile');
+
+  // Update tab based on URL parameters after mount
+  useEffect(() => {
     const tabParam = searchParams.get('tab');
     const success = searchParams.get('success');
-    if (tabParam === 'integrations' || tabParam === 'family') return tabParam;
-    if (success === 'gmail_connected') return 'integrations';
-    return 'profile';
-  });
+
+    if (tabParam === 'integrations' || tabParam === 'family') {
+      setActiveTab(tabParam);
+    } else if (success === 'gmail_connected') {
+      setActiveTab('integrations');
+    }
+  }, [searchParams]);
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const { showToast } = useToast();
@@ -1747,5 +1752,13 @@ export default function Settings() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Settings() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }
