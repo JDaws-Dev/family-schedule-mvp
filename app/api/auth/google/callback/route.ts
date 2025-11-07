@@ -137,9 +137,10 @@ export async function GET(request: NextRequest) {
 
     console.log("[oauth-callback] Convex mutation result:", result);
 
-    // Redirect to the appropriate page with success flag
+    // Redirect to the appropriate page with success flag and tab parameter
     const redirectUrl = new URL(returnUrl, appUrl);
     redirectUrl.searchParams.set("success", "gmail_connected");
+    redirectUrl.searchParams.set("tab", "integrations");
 
     return NextResponse.redirect(redirectUrl.toString());
   } catch (error) {

@@ -7,10 +7,19 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import MobileNav from "@/app/components/MobileNav";
 import { useToast } from "@/app/components/Toast";
+import { useSearchParams } from "next/navigation";
 
 export default function Settings() {
+  const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>(() => {
+    // Check URL parameter for tab, default to 'integrations' if coming from OAuth
+    const tabParam = searchParams.get('tab');
+    const success = searchParams.get('success');
+    if (tabParam === 'integrations' || tabParam === 'family') return tabParam;
+    if (success === 'gmail_connected') return 'integrations';
+    return 'profile';
+  });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const { showToast } = useToast();
@@ -1248,7 +1257,7 @@ export default function Settings() {
               )}
               <button
                 onClick={() => {
-                  window.location.href = "/api/auth/google";
+                  window.location.href = "/api/auth/google?returnUrl=/settings?tab=integrations";
                 }}
                 className="w-full px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition flex items-center justify-center gap-2"
               >
