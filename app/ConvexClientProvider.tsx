@@ -5,26 +5,29 @@ import { ConvexReactClient } from "convex/react";
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 
-// Use environment variables with fallbacks to prevent build errors
-// The real values must be set in production environment variables
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://placeholder.convex.cloud";
-const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_placeholder";
-
-if (typeof window !== 'undefined') {
-  if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
-    console.error('NEXT_PUBLIC_CONVEX_URL is not set. Please configure it in your environment variables.');
-  }
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    console.error('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set. Please configure it in your environment variables.');
-  }
+// Validate required environment variables
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error(
+    'Missing NEXT_PUBLIC_CONVEX_URL environment variable. ' +
+    'Please set it in your Vercel environment variables. ' +
+    'Get your URL from: https://dashboard.convex.dev'
+  );
 }
 
-const convex = new ConvexReactClient(convexUrl);
+if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  throw new Error(
+    'Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable. ' +
+    'Please set it in your Vercel environment variables. ' +
+    'Get your key from: https://dashboard.clerk.com/last-active?path=api-keys'
+  );
+}
+
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider
-      publishableKey={clerkPublishableKey}
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/dashboard"
     >
