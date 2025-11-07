@@ -5,7 +5,15 @@ import { ConvexReactClient } from "convex/react";
 import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// Use environment variable with fallback to prevent build errors
+// The real URL must be set in production environment variables
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://placeholder.convex.cloud";
+
+if (typeof window !== 'undefined' && !process.env.NEXT_PUBLIC_CONVEX_URL) {
+  console.error('NEXT_PUBLIC_CONVEX_URL is not set. Please configure it in your environment variables.');
+}
+
+const convex = new ConvexReactClient(convexUrl);
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
