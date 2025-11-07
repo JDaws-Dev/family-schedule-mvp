@@ -3,8 +3,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Resend } from "resend";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(request: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY);
@@ -14,6 +13,18 @@ export async function POST(request: NextRequest) {
     if (!userId || !userEmail) {
       return NextResponse.json({ error: "Missing userId or userEmail" }, { status: 400 });
     }
+
+    // Get Clerk JWT token for authenticated Convex queries
+    const { getToken } = await auth();
+    const token = await getToken({ template: "convex" });
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Create authenticated Convex client
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    convex.setAuth(token);
 
     // Get user preferences to check if email reminders are enabled
     const prefs = await convex.query(api.notifications.getUserPreferences, {

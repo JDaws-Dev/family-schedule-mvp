@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -77,6 +76,19 @@ export async function GET(request: NextRequest) {
 
     const userInfo = await userInfoResponse.json();
     console.log("User info:", { email: userInfo.email, name: userInfo.name });
+
+    // Get Clerk JWT token for authenticated Convex mutation
+    const { getToken } = await auth();
+    const clerkToken = await getToken({ template: "convex" });
+
+    if (!clerkToken) {
+      console.error("No Clerk token available");
+      throw new Error("Authentication failed: No Clerk token available");
+    }
+
+    // Create authenticated Convex client
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    convex.setAuth(clerkToken);
 
     // Store tokens in Convex
     console.log("Storing in Convex...");

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { google } from "googleapis";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { auth } from "@clerk/nextjs/server";
 
 
 async function refreshAccessToken(refreshToken: string) {
@@ -47,6 +46,19 @@ export async function POST(request: NextRequest) {
     if (!familyId) {
       return NextResponse.json({ error: "Missing familyId" }, { status: 400 });
     }
+
+    // Get Clerk JWT token for authenticated Convex queries
+    const { getToken } = await auth();
+    const token = await getToken({ template: "convex" });
+
+    if (!token) {
+      console.error("[google-calendars] No Clerk token available");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Create authenticated Convex client
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    convex.setAuth(token);
 
     // Get Gmail account for this family
     console.log("[google-calendars] Fetching Gmail accounts...");
