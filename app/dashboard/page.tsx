@@ -13,6 +13,7 @@ import { useSearchParams } from "next/navigation";
 import { useGuidedTour, GuidedTourButton } from "../components/GuidedTour";
 import WelcomePopup from "../components/WelcomePopup";
 import AddEventChoiceModal from "../components/AddEventChoiceModal";
+import BottomNav from "../components/BottomNav";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -512,7 +513,7 @@ function DashboardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -2639,6 +2640,9 @@ Example:
           </div>
         </div>
       )}
+
+      {/* Bottom Navigation for Mobile */}
+      <BottomNav />
     </div>
   );
 }

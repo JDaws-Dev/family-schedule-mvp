@@ -7,6 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import MobileNav from "@/app/components/MobileNav";
+import BottomNav from "@/app/components/BottomNav";
 import { EventCardSkeleton } from "@/app/components/LoadingSkeleton";
 import { useToast } from "@/app/components/Toast";
 import HelpTooltip from "@/app/components/HelpTooltip";
@@ -648,7 +649,7 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Celebration Toast */}
       {showCelebration && (
         <CelebrationToast
@@ -2081,6 +2082,9 @@ Example:
           </button>
         </div>
       )}
+
+      {/* Bottom Navigation for Mobile */}
+      <BottomNav />
     </div>
   );
 }

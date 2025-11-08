@@ -9,6 +9,7 @@ import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { useSearchParams } from "next/navigation";
 import MobileNav from "@/app/components/MobileNav";
+import BottomNav from "@/app/components/BottomNav";
 import { useToast } from "@/app/components/Toast";
 import { CalendarSkeleton } from "@/app/components/LoadingSkeleton";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -536,7 +537,7 @@ function CalendarContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -1514,6 +1515,9 @@ function CalendarContent() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </Link>
+
+      {/* Bottom Navigation for Mobile */}
+      <BottomNav />
     </div>
   );
 }
