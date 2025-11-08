@@ -76,6 +76,8 @@ export default function ReviewPage() {
   const [pastedText, setPastedText] = useState("");
   const [isExtractingEvent, setIsExtractingEvent] = useState(false);
   const [isEnhancingEvent, setIsEnhancingEvent] = useState(false);
+  const [conversationalInput, setConversationalInput] = useState("");
+  const [isParsingConversational, setIsParsingConversational] = useState(false);
   const [emailSearchQuery, setEmailSearchQuery] = useState("");
   const [emailSearchTimeframe, setEmailSearchTimeframe] = useState("3"); // months
   const [isSearchingEmails, setIsSearchingEmails] = useState(false);
@@ -691,6 +693,71 @@ export default function ReviewPage() {
       showToast("Failed to enhance event. Please try again.", "error");
     } finally {
       setIsEnhancingEvent(false);
+    }
+  };
+
+  // Handle conversational input parsing
+  const handleParseConversational = async () => {
+    if (!conversationalInput.trim()) {
+      showToast("Please describe your event first", "info");
+      return;
+    }
+
+    setIsParsingConversational(true);
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          smsText: conversationalInput,
+          familyMembers: familyMembers || [],
+          currentUserName: convexUser?.fullName || "Unknown"
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to parse event");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("Couldn't find event details in that description. Try being more specific!", "info");
+        return;
+      }
+
+      // Use the first event to fill the form
+      const event = data.events[0];
+
+      setNewEventForm({
+        ...newEventForm,
+        title: event.title || "",
+        eventDate: event.date || "",
+        eventTime: event.time || "",
+        endTime: event.endTime || "",
+        location: event.location || "",
+        category: event.category || "Other",
+        childName: event.childName || (event.attendees && event.attendees.length > 0 ? event.attendees.join(", ") : ""),
+        description: event.description || "",
+        requiresAction: event.requiresAction || false,
+        actionDescription: event.actionDescription || "",
+        actionDeadline: event.actionDeadline || "",
+        isRecurring: event.isRecurring || false,
+        recurrencePattern: event.recurrencePattern || "weekly",
+        recurrenceInterval: 1,
+        recurrenceDaysOfWeek: event.recurrenceDaysOfWeek || [],
+        recurrenceEndType: "never",
+        recurrenceEndDate: "",
+        recurrenceEndCount: 10,
+      });
+
+      showToast("✨ AI filled the form! Review and adjust as needed.", "success");
+      setConversationalInput(""); // Clear the input
+    } catch (error: any) {
+      console.error("Error parsing conversational input:", error);
+      showToast("Failed to parse your description. Please try again or fill manually.", "error");
+    } finally {
+      setIsParsingConversational(false);
     }
   };
 
@@ -2116,7 +2183,60 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
 
             {/* Manual Entry Form */}
             <form onSubmit={handleAddEvent}>
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-6">
+                {/* Conversational Input - Quick AI Fill */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
+                  <div className="flex items-start gap-2 mb-3">
+                    <span className="text-2xl">💬</span>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">Quick Add with AI</h3>
+                      <p className="text-sm text-gray-600">
+                        Describe your event naturally and let AI fill out the form for you!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={conversationalInput}
+                      onChange={(e) => setConversationalInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleParseConversational())}
+                      className="flex-1 px-4 py-3 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder='e.g., "Emma has soccer every Tuesday at 5pm" or "dentist tomorrow at 3"'
+                    />
+                    <button
+                      type="button"
+                      onClick={handleParseConversational}
+                      disabled={isParsingConversational || !conversationalInput.trim()}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                      {isParsingConversational ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Parsing...
+                        </>
+                      ) : (
+                        <>
+                          ✨ Auto-Fill
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-gray-500">or fill out manually</span>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Event Title <span className="text-red-500">*</span>
