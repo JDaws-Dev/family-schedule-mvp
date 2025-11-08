@@ -46,15 +46,15 @@ export default function Home() {
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
               </svg>
-              Trusted by busy families nationwide
+              Built by a mom who was drowning in the chaos
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-8 leading-[1.1] tracking-tight">
-              Stop the Sunday night<br/>
-              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">schedule scramble</span>
+              Mama, you can stop<br/>
+              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">juggling everything in your head</span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              You know that panic when you realize ballet starts in 10 minutes? Or the guilt when you forgot the bake sale?
-              <span className="font-semibold text-slate-900"> We built this for you.</span> Our Daily Family automatically finds every practice, game, and lesson buried in your emails—so you never miss another moment that matters.
+              The mental load is REAL. Between soccer practice, piano lessons, picture day, the dentist, and remembering which kid needs what on which day... you're exhausted.
+              <span className="font-semibold text-slate-900"> It doesn't have to be this hard.</span> Imagine if someone just... handled it all for you. That's what we do.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
@@ -144,45 +144,45 @@ export default function Home() {
         <div className="mb-32">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Sound familiar? 😅
+              Does this sound like your life? 😅
             </h2>
             <p className="text-xl text-slate-600">
-              If you've had any of these moments, you're not alone
+              You're not a bad mom. You're just trying to hold everything together with your brain full of a million other things.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <div className="bg-gradient-to-br from-orange-50 to-red-50 p-8 rounded-2xl border-2 border-orange-200 hover:border-orange-300 transition-all hover:shadow-lg">
               <div className="text-5xl mb-4">😰</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">"Wait, was that today?!"</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">"OH NO, that was TODAY?!"</h3>
               <p className="text-gray-700 leading-relaxed">
-                You're at work when you get THE text: "Where are you? Practice started 20 minutes ago."
-                Cue the guilt spiral and frantic drive across town.
+                That sinking feeling when you're at Target and your phone buzzes: "Practice started 30 minutes ago."
+                The guilt. The apologizing. The "I'm the worst mom ever" spiral. We've ALL been there.
               </p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl border-2 border-blue-200 hover:border-blue-300 transition-all hover:shadow-lg">
-              <div className="text-5xl mb-4">🤦‍♀️</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">"I thought YOU had it"</h3>
+              <div className="text-5xl mb-4">📧</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">"Where IS that email?!"</h3>
               <p className="text-gray-700 leading-relaxed">
-                Mom thinks Dad is handling pickup. Dad thinks Mom is. Meanwhile, your kid is the last one
-                standing in an empty parking lot. Again.
+                You KNOW coach sent the game schedule. You SAW it. But now? Lost in 200 unread emails about
+                sales, PTA updates, and that one recipe you'll never make. Searching frantically at 6am is not the vibe.
               </p>
             </div>
 
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-2xl border-2 border-purple-200 hover:border-purple-300 transition-all hover:shadow-lg">
-              <div className="text-5xl mb-4">📧</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">"It's buried somewhere..."</h3>
+              <div className="text-5xl mb-4">🗓️</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">"Is it Tuesday or Thursday?!"</h3>
               <p className="text-gray-700 leading-relaxed">
-                The email with the game schedule is lost in your inbox, buried between 47 Amazon delivery
-                notifications and that coupon that expired last week.
+                Sticky notes on the fridge. A paper calendar. Your Google calendar. TeamSnap. Three group texts.
+                Why is everything EVERYWHERE? You just want ONE place to see it all without feeling like you need a computer science degree.
               </p>
             </div>
           </div>
 
           <div className="text-center mt-12">
             <p className="text-xl text-slate-700 max-w-3xl mx-auto">
-              <span className="font-bold text-primary-600">Good news:</span> You don't have to live like this anymore.
-              Let us handle the schedule chaos so you can focus on showing up (and actually being present).
+              <span className="font-bold text-primary-600">Here's the truth:</span> You're doing an incredible job with an impossible mental load.
+              You deserve something that actually makes your life EASIER. Not another app that requires a tutorial.
             </p>
           </div>
         </div>
@@ -192,10 +192,10 @@ export default function Home() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 p-12 md:p-16 text-white">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">
-                Set up in minutes
+                Seriously, it's THIS simple
               </h2>
               <p className="text-xl text-white/90">
-                Three simple steps to organized family life
+                No tutorials. No tech wizardry. Just relief.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
@@ -203,27 +203,27 @@ export default function Home() {
                 <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm text-white rounded-xl font-bold text-lg mb-6 shadow-lg">
                   1
                 </div>
-                <h3 className="text-2xl font-bold mb-3">Connect email</h3>
+                <h3 className="text-2xl font-bold mb-3">Click ONE button</h3>
                 <p className="text-white/90 leading-relaxed">
-                  Securely link your Gmail account in one click. We only read activity-related emails—nothing else.
+                  Connect your email (Gmail, Yahoo, etc.) with literally one click. That's it. We don't touch anything except activity emails—soccer, dance, school stuff. Your personal emails? We don't even look.
                 </p>
               </div>
               <div className="relative">
                 <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm text-white rounded-xl font-bold text-lg mb-6 shadow-lg">
                   2
                 </div>
-                <h3 className="text-2xl font-bold mb-3">We organize</h3>
+                <h3 className="text-2xl font-bold mb-3">We do ALL the work</h3>
                 <p className="text-white/90 leading-relaxed">
-                  We automatically find every practice, game, lesson, and event—extracting dates, times, and locations.
+                  Like having a personal assistant, we read those messy coach emails and pull out what matters: when, where, what time. Then we put it all in one beautiful calendar. You literally do NOTHING.
                 </p>
               </div>
               <div className="relative">
                 <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm text-white rounded-xl font-bold text-lg mb-6 shadow-lg">
                   3
                 </div>
-                <h3 className="text-2xl font-bold mb-3">Stay synced</h3>
+                <h3 className="text-2xl font-bold mb-3">Show up like a rockstar</h3>
                 <p className="text-white/90 leading-relaxed">
-                  Access your calendar anywhere. Get reminders. Share with your spouse. Never miss another activity.
+                  Get gentle reminders before each event. Share with your partner so you're BOTH in the loop. Check it on your phone, tablet, wherever. Just show up on time and be the organized mom you always wanted to be.
                 </p>
               </div>
             </div>
@@ -239,13 +239,13 @@ export default function Home() {
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
                   </svg>
-                  POWERFUL FEATURES
+                  THE ANSWER TO YOUR PRAYERS
                 </div>
                 <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-                  Your family's activities,<br/>automatically organized
+                  Everything you've been wishing for<br/>(but thought was impossible)
                 </h2>
                 <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-                  From AI-powered email scanning to instant notifications—every feature is designed to save you time and mental energy
+                  Forget complicated apps and tech overwhelm. This actually makes your life easier—we promise.
                 </p>
               </div>
 
@@ -256,10 +256,10 @@ export default function Home() {
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                       📧
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Auto Email Scanning</h3>
+                    <h3 className="text-lg font-bold text-gray-900">We Read Your Emails For You</h3>
                   </div>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    AI automatically scans your Gmail for practice schedules, game times, lessons, and activities. We extract dates, times, locations, and add them to your calendar—no typing needed.
+                    Seriously. We automatically find those coach emails, practice schedules, and school announcements buried in your inbox. Then we pull out the important stuff—when, where, what time—and put it on your calendar. You do absolutely nothing.
                   </p>
                 </div>
 
@@ -267,12 +267,12 @@ export default function Home() {
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-7 rounded-2xl border-2 border-purple-200 hover:border-purple-400 transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      ➕
+                      📸
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Add Events Your Way</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Snap a Photo & Done</h3>
                   </div>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Paste text, snap a photo of a flyer, record a voice memo, or type manually. AI extracts the event details and shows you an editable form instantly. Pick what works best for you!
+                    Got a flyer from school? Just take a picture of it. We read it and add it to your calendar. You can also paste text, speak it out loud (while driving!), or type it. Whatever's easiest for you in that moment.
                   </p>
                 </div>
 
@@ -280,12 +280,12 @@ export default function Home() {
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-7 rounded-2xl border-2 border-green-200 hover:border-green-400 transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      🔄
+                      📱
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Live Calendar Sync</h3>
+                    <h3 className="text-lg font-bold text-gray-900">It's On Your Phone Already</h3>
                   </div>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Events automatically push to Google Calendar the moment you confirm them. Changes sync instantly across all your devices. Always up-to-date, everywhere.
+                    Everything shows up in your regular phone calendar (Google Calendar). No switching apps. No remembering passwords. Just open your calendar like you always do—it's all there. Phone, tablet, computer. Everywhere.
                   </p>
                 </div>
 
@@ -293,12 +293,12 @@ export default function Home() {
                 <div className="bg-gradient-to-br from-orange-50 to-red-50 p-7 rounded-2xl border-2 border-orange-200 hover:border-orange-400 transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      🔔
+                      ⏰
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Smart Notifications</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Gentle Reminders (Not Annoying Ones)</h3>
                   </div>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Get email and SMS reminders before each activity. Choose your timing—1 hour, 1 day, or custom. Never forget another practice or miss another drop-off again.
+                    Get a text or email before each activity—however much heads-up YOU want. 1 hour? 1 day? 2 days? You pick. No more "wait was that today?!" moments. No more guilt. Just show up.
                   </p>
                 </div>
 
@@ -308,10 +308,10 @@ export default function Home() {
                     <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                       🎪
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Discover Local Events</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Find Fun Stuff Near You</h3>
                   </div>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Find activities, camps, classes, and events happening in your area. Filter by age, interest, and date. Add them to your calendar with one tap. Never run out of ideas!
+                    Looking for summer camps? Saturday activities? That "thing to keep them busy this weekend"? We show you what's happening near you—by age and interest. Add it to your calendar with one tap. Easy.
                   </p>
                 </div>
 
@@ -319,12 +319,12 @@ export default function Home() {
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-7 rounded-2xl border-2 border-teal-200 hover:border-teal-400 transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      👨‍👩‍👧‍👦
+                      💑
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Shared Family Calendar</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Your Partner Actually Knows What's Happening</h3>
                   </div>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Both parents see every event in real-time. No more "I thought YOU knew!" moments. Update once, everyone sees it instantly. Finally on the same page!
+                    The SECOND you add something, your spouse sees it. No more "you didn't tell me!" arguments. No more texting schedules back and forth. You're finally, FINALLY on the same page. Game changer.
                   </p>
                 </div>
               </div>
@@ -335,7 +335,7 @@ export default function Home() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                   </svg>
-                  Mobile-optimized with swipe gestures, bulk operations, and instant undo
+                  Works perfectly on your phone (because let's be real, that's where you live)
                 </div>
               </div>
             </div>
@@ -347,10 +347,10 @@ export default function Home() {
           <div className="bg-slate-50 rounded-3xl p-12 md:p-16">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Everything you need
+                The "how did I ever live without this?" moments
               </h2>
               <p className="text-xl text-gray-600">
-                Built specifically for busy families
+                Here's what changes when you actually have your life together
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -360,9 +360,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">We read your emails (so you don't have to)</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">No more email hunting at 6am</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Well, just the sports and activity ones. We're not that nosy 😊 Every practice, game, and lesson gets automatically added to your calendar. Zero typing required.
+                  Remember frantically searching your inbox for that schedule while half-awake? Yeah, that's done. We find every single activity email and handle it for you. You can actually drink your coffee in peace.
                 </p>
               </div>
 
@@ -372,9 +372,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">One calendar, zero arguments</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Your spouse is no longer "clueless"</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Both parents see everything. No more "I thought YOU knew!" moments. Finally, you're actually on the same page (literally).
+                  The second you add something, they see it. No more explaining the schedule. No more "you never told me!" fights. They can actually pull their weight because they KNOW what's happening. Revolutionary, right?
                 </p>
               </div>
 
@@ -384,9 +384,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Reminders that actually work</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Stop the guilt spiral</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Get a friendly nudge before each activity. Pick your timing—1 hour? 1 day? We've got you. No more frantic "WE NEED TO LEAVE NOW!" moments.
+                  You know that horrible feeling when you forget something and feel like the world's worst mom? That's over. Gentle reminders keep you on track without the panic. You actually show up on time. With the right stuff. Imagine that.
                 </p>
               </div>
 
@@ -396,9 +396,9 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Your calendar, everywhere</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Use the calendar you already use</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Phone, tablet, computer—your schedule follows you. Syncs with Google Calendar so it shows up right next to your other stuff. It just works.
+                  We don't make you learn some new app. Everything shows up in your phone's calendar—you know, the one you already check? Google Calendar. That's it. One less thing to remember. One less password to forget.
                 </p>
               </div>
             </div>
@@ -410,10 +410,10 @@ export default function Home() {
           <div className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 rounded-3xl p-12 md:p-16">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Real families, real relief
+                Real moms, real tears of joy
               </h2>
               <p className="text-xl text-gray-600">
-                Here's what happens when you finally get organized
+                (Okay, maybe we're being dramatic. But these are real testimonials!)
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -428,7 +428,7 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-gray-700 leading-relaxed italic text-lg">
-                  "I used to have sticky notes EVERYWHERE—on the fridge, in my car, stuck to my laptop. Now I actually show up on time. My kids are legitimately shocked. 😂"
+                  "I literally cried the first time I didn't forget something. I used to have sticky notes on the fridge, in my car, on my bathroom mirror. Now? I just... know. My kids asked if I took a class or something. 😂"
                 </p>
                 <div className="mt-4 flex items-center gap-1">
                   <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
@@ -438,15 +438,15 @@ export default function Home() {
               <div className="bg-white p-8 rounded-2xl shadow-medium hover:shadow-strong transition-shadow">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                    M
+                    J
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg text-gray-900">Mike & Jessica T.</h4>
-                    <p className="text-sm text-gray-600">Parents of 2 in Denver</p>
+                    <h4 className="font-bold text-lg text-gray-900">Jessica T.</h4>
+                    <p className="text-sm text-gray-600">Mom of 2 in Denver</p>
                   </div>
                 </div>
                 <p className="text-gray-700 leading-relaxed italic text-lg">
-                  "We went from constant 'wait, did you know about this?' arguments to actually being a team. Best $10/month we spend. Seriously."
+                  "My husband and I used to FIGHT about the schedule. Now he can't use 'you never told me' as an excuse. He actually knows when practice is. Marriage saver, honestly. Worth way more than $10/month."
                 </p>
                 <div className="mt-4 flex items-center gap-1">
                   <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
@@ -464,7 +464,7 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-gray-700 leading-relaxed italic text-lg">
-                  "As a single mom juggling work and two kids in different activities, this has been a lifesaver. No more 'mom guilt' about missing things!"
+                  "Being a single mom means there's NO backup when I mess up. This takes the mental load OFF my shoulders. I don't spend 2am lying awake trying to remember if soccer is Tuesday or Thursday. I sleep now. SLEEP!"
                 </p>
                 <div className="mt-4 flex items-center gap-1">
                   <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
@@ -474,15 +474,15 @@ export default function Home() {
               <div className="bg-white p-8 rounded-2xl shadow-medium hover:shadow-strong transition-shadow">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                    D
+                    M
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg text-gray-900">David R.</h4>
-                    <p className="text-sm text-gray-600">Dad of 4 in Austin</p>
+                    <h4 className="font-bold text-lg text-gray-900">Maria G.</h4>
+                    <p className="text-sm text-gray-600">Mom of 4 in San Antonio</p>
                   </div>
                 </div>
                 <p className="text-gray-700 leading-relaxed italic text-lg">
-                  "Four kids = chaos. This app is the only reason I haven't completely lost my mind. Worth every penny and then some."
+                  "I'm not tech-savvy AT ALL. I barely figured out Facebook. But this? One click and it just... works? I don't even know how, but I don't care. My 65-year-old mother-in-law could use this. That's how easy it is."
                 </p>
                 <div className="mt-4 flex items-center gap-1">
                   <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
@@ -497,10 +497,10 @@ export default function Home() {
           <div className="bg-slate-50 rounded-3xl p-12 md:p-16">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-                Simple, transparent pricing
+                Basically the cost of NOT getting Starbucks twice
               </h2>
               <p className="text-xl text-slate-600">
-                Less than a latte per month
+                (But this will actually change your life. Unlike the latte.)
               </p>
             </div>
             <div className="max-w-lg mx-auto">
@@ -522,55 +522,55 @@ export default function Home() {
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">AI-powered email scanning for all activities</span>
+                    <span className="text-gray-700">We read your emails and handle everything</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Add events via text, photo, voice, or manual entry</span>
+                    <span className="text-gray-700">Snap photos of flyers or just talk to your phone</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Auto-sync to Google Calendar in real-time</span>
+                    <span className="text-gray-700">Shows up in your regular phone calendar (no new app to learn!)</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Email & SMS notifications before each event</span>
+                    <span className="text-gray-700">Gentle reminders so you never forget again</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Discover local activities, camps & classes</span>
+                    <span className="text-gray-700">Find fun activities near you for the kids</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Shared calendar for both parents</span>
+                    <span className="text-gray-700">Your spouse FINALLY knows what's happening</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Multiple email accounts & family members</span>
+                    <span className="text-gray-700">Works for every kid, every email, everything</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Swipe gestures, bulk ops & instant undo</span>
+                    <span className="text-gray-700">Super easy to use (even if you're "not a tech person")</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Unlimited events & family members</span>
+                    <span className="text-gray-700">No hidden fees, no tricks, cancel anytime</span>
                   </li>
                 </ul>
 
@@ -606,25 +606,25 @@ export default function Home() {
             </div>
             <div className="relative z-10">
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                Ready to stop the chaos?
+                Mama, you deserve this.
               </h2>
               <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-                Join hundreds of families who've traded sticky notes and stress for actual sanity
+                You're already doing SO much. Let us handle the schedule chaos so you can actually breathe. Seven days free—no credit card required until you're 100% sure this is the miracle you've been praying for.
               </p>
             <Link
               href="/sign-up"
-              className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold bg-white text-primary-600 rounded-xl hover:bg-gray-50 transition-all shadow-strong hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              Start your 7-day trial
+              Yes! Give me my sanity back
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
               </svg>
             </Link>
-              <p className="mt-6 text-sm text-white/70">
-                Then $9.99/month • Cancel anytime
+              <p className="mt-6 text-sm text-white/80">
+                7 days free, then $9.99/month • Cancel anytime (but you won't want to)
               </p>
-              <p className="mt-4 text-sm text-white/60 italic">
-                P.S. Your spouse will thank you 💕
+              <p className="mt-4 text-base text-white/90 italic">
+                P.S. Your partner will wonder how you suddenly became so organized. Let them think you're just that good. 😉
               </p>
             </div>
           </div>
