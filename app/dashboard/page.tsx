@@ -1036,11 +1036,18 @@ function DashboardContent() {
               <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">7 days</span>
             </div>
             <h3 className="text-white/90 font-medium mb-2 text-sm">This Week</h3>
-            <p className="text-4xl font-bold mb-1">
+            <div className="mb-1">
               {weekEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
-              ) : weekEvents.length}
-            </p>
+              ) : (
+                <>
+                  <span className="text-4xl font-bold">{weekEvents.length}</span>
+                  <span className="text-lg font-semibold ml-2 text-white/90">
+                    {weekEvents.length === 1 ? 'event' : 'events'}
+                  </span>
+                </>
+              )}
+            </div>
             <p className="text-sm text-white/80">Click to view calendar →</p>
           </Link>
 
@@ -1058,21 +1065,29 @@ function DashboardContent() {
               <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Action</span>
             </div>
             <h3 className="text-white/90 font-medium mb-2 text-sm">Needs Action</h3>
-            <p className="text-4xl font-bold mb-1">
+            <div className="mb-1">
               {weekEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
               ) : (() => {
                   // Filter for upcoming actions only (within next 2 weeks)
                   const twoWeeksFromNow = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-                  return weekEvents.filter((e) => {
+                  const count = weekEvents.filter((e) => {
                     if (!e.requiresAction || e.actionCompleted) return false;
                     // Check if action deadline or event date is in the future
                     const relevantDate = e.actionDeadline || e.eventDate;
                     return relevantDate >= today && relevantDate <= twoWeeksFromNow;
                   }).length;
+                  return (
+                    <>
+                      <span className="text-4xl font-bold">{count}</span>
+                      <span className="text-lg font-semibold ml-2 text-white/90">
+                        {count === 1 ? 'event' : 'events'}
+                      </span>
+                    </>
+                  );
                 })()
               }
-            </p>
+            </div>
             <p className="text-sm text-white/80">Click to view actions →</p>
           </div>
 
@@ -1093,11 +1108,18 @@ function DashboardContent() {
               )}
             </div>
             <h3 className="text-white/90 font-medium mb-2 text-sm">To Review</h3>
-            <p className="text-4xl font-bold mb-1">
+            <div className="mb-1">
               {unconfirmedEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
-              ) : unconfirmedEvents.length}
-            </p>
+              ) : (
+                <>
+                  <span className="text-4xl font-bold">{unconfirmedEvents.length}</span>
+                  <span className="text-lg font-semibold ml-2 text-white/90">
+                    {unconfirmedEvents.length === 1 ? 'event' : 'events'}
+                  </span>
+                </>
+              )}
+            </div>
             <p className="text-sm text-white/80">Click to review events →</p>
           </Link>
         </div>
