@@ -1,12 +1,12 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 /**
  * Generate instances of a recurring event
  * Creates individual event records for each occurrence based on recurrence rules
  */
-export const generateRecurringInstances = mutation({
+export const generateRecurringInstances = internalMutation({
   args: {
     parentEventId: v.id("events"),
     generateUntilDate: v.optional(v.string()), // Optional limit for how far ahead to generate
