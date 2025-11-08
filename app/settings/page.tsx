@@ -21,6 +21,7 @@ function SettingsContent() {
     billing: false,
     familyDetails: true,
     familyMembers: false,
+    trackedMembers: true,
     gmail: true,
     googleCalendar: false,
   });
@@ -591,7 +592,7 @@ function SettingsContent() {
     }
   };
 
-  const toggleSection = (section: 'yourInfo' | 'notifications' | 'billing' | 'familyDetails' | 'familyMembers' | 'gmail' | 'googleCalendar') => {
+  const toggleSection = (section: 'yourInfo' | 'notifications' | 'billing' | 'familyDetails' | 'familyMembers' | 'trackedMembers' | 'gmail' | 'googleCalendar') => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
@@ -1297,13 +1298,26 @@ function SettingsContent() {
 
         {/* Tracked Family Members */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Tracked Family Members</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Add family members whose calendars you want to track. This helps our AI identify and organize everyone's activities, appointments, and events.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('trackedMembers')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Tracked Family Members</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Add family members whose calendars you want to track. This helps our AI identify and organize everyone's activities, appointments, and events.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.trackedMembers ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.trackedMembers ? 'block' : 'hidden md:block'}`}>
             {/* Tracked Members List */}
             <div className="space-y-4 mb-6">
               {!trackedMembers || trackedMembers.length === 0 ? (
