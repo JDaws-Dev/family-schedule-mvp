@@ -234,80 +234,42 @@ export default function DiscoverPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Discover Local Activities
+            Find Activities
           </h1>
           <p className="text-gray-600">
-            Local events and activities handpicked for your family
+            We'll search local parks, libraries, museums, and event sites for you
           </p>
         </div>
 
-        {/* What is Discover? Explanation - Always visible but compact when they have results */}
-        {suggestedActivities.length === 0 ? (
-          // Full explanation for first-time users
-          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl shadow-strong p-8 mb-8 text-white">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="text-4xl">✨</div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold mb-3">What is Discover?</h2>
-                <p className="text-primary-50 leading-relaxed mb-4">
-                  Discover automatically finds local events, classes, camps, and activities near you —
-                  saving you hours of searching through multiple websites and calendars.
-                </p>
-                <div className="grid md:grid-cols-3 gap-4 mt-6">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                    <div className="text-2xl mb-2">🎯</div>
-                    <div className="font-semibold mb-1">Personalized</div>
-                    <div className="text-sm text-primary-100">Matched to your family's ages and interests</div>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                    <div className="text-2xl mb-2">📍</div>
-                    <div className="font-semibold mb-1">Local</div>
-                    <div className="text-sm text-primary-100">Activities within your chosen distance</div>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-                    <div className="text-2xl mb-2">⚡</div>
-                    <div className="font-semibold mb-1">One Click</div>
-                    <div className="text-sm text-primary-100">Add to your calendar instantly</div>
-                  </div>
-                </div>
-              </div>
+        {/* Discovery Form */}
+        <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-6 sm:p-8 mb-8">
+          <div className="space-y-6">
+            {/* Simple Location Input */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Your Location
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Enter city or ZIP code"
+                className="w-full px-4 py-4 text-lg rounded-lg border-2 border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+              />
             </div>
-          </div>
-        ) : (
-          // Compact reminder for returning users
-          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-8">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">💡</span>
-              <div className="flex-1">
-                <p className="text-sm text-primary-900">
-                  <span className="font-semibold">Discover</span> searches local parks & rec, libraries, museums, and event sites to find activities personalized for your family.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Discovery Banner */}
-        <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-4 sm:p-8 mb-8">
-          <div className="flex flex-col gap-6">
-            {/* Mobile: Collapsible Header */}
-            <div className="md:hidden">
+            {/* Advanced Options - Collapsible */}
+            <div className="border-t border-gray-200 pt-4">
               <button
+                type="button"
                 onClick={() => setFiltersExpanded(!filtersExpanded)}
-                className="w-full flex items-center justify-between py-3 px-4 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+                className="w-full flex items-center justify-between py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
               >
-                <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span className="font-bold text-gray-900">
-                    {suggestedActivities.length > 0 ? 'Search Filters' : 'Search for Activities'}
-                  </span>
-                </div>
+                <span>Advanced Options</span>
                 <svg
-                  className={`w-5 h-5 text-gray-500 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`}
+                  className={`w-5 h-5 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -315,174 +277,106 @@ export default function DiscoverPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              {!filtersExpanded && (
-                <p className="text-sm text-gray-600 mt-2 px-2">
-                  Tap to {location ? 'refine your search' : 'set your location and discover activities'}
-                </p>
+
+              {filtersExpanded && (
+                <div className="mt-4 space-y-4 pt-4 border-t border-gray-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Search Radius
+                      </label>
+                      <select
+                        value={distance}
+                        onChange={(e) => setDistance(Number(e.target.value))}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      >
+                        <option value={5}>5 miles</option>
+                        <option value={10}>10 miles</option>
+                        <option value={15}>15 miles</option>
+                        <option value={20}>20 miles</option>
+                        <option value={25}>25 miles</option>
+                        <option value={30}>30 miles</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Looking for something specific?
+                      </label>
+                      <input
+                        type="text"
+                        value={discoveryKeyword}
+                        onChange={(e) => setDiscoveryKeyword(e.target.value)}
+                        placeholder="e.g., Christmas lights, soccer..."
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
-            {/* Desktop: Always show header */}
-            <div className="hidden md:flex items-start justify-between">
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  {suggestedActivities.length > 0 ? 'Search for More Activities' : 'Start Discovering'}
-                </h2>
-                <p className="text-gray-600 text-base leading-relaxed mb-2">
-                  {suggestedActivities.length > 0
-                    ? 'Want to see more? Update your search criteria below to find additional activities.'
-                    : 'Set your location and date range to find events, classes, sports leagues, camps, and more.'}
-                </p>
-                <div className="flex items-center gap-4 text-sm text-gray-500 mt-3">
-                  <span className="flex items-center gap-1">
-                    <span>💡</span>
-                    <span>We search parks & rec, libraries, museums, and local event sites</span>
-                  </span>
-                </div>
-              </div>
-              <div className="text-5xl ml-6 hidden sm:block opacity-20">🎯</div>
-            </div>
-
-            {/* Location and Distance Controls - Collapsible on Mobile */}
-            <div className={`bg-gray-50 rounded-lg p-6 border border-gray-200 ${filtersExpanded ? 'block' : 'hidden md:block'}`}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="City, State or ZIP code"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Search Radius
-                  </label>
-                  <select
-                    value={distance}
-                    onChange={(e) => setDistance(Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                  >
-                    <option value={5}>5 miles</option>
-                    <option value={10}>10 miles</option>
-                    <option value={15}>15 miles</option>
-                    <option value={20}>20 miles</option>
-                    <option value={25}>25 miles</option>
-                    <option value={30}>30 miles</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">When to start looking</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">How far ahead to search</p>
-                </div>
-              </div>
-
-              {/* Discovery Keyword */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  What are you looking for? (Optional)
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={discoveryKeyword}
-                    onChange={(e) => setDiscoveryKeyword(e.target.value)}
-                    placeholder="e.g., Christmas lights, STEM activities, soccer leagues, art classes..."
-                    className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
-                  />
-                  <svg
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            {/* Find Activities Button */}
+            <button
+              onClick={handleDiscoverActivities}
+              disabled={isDiscovering || !location}
+              className="w-full px-6 py-4 text-lg bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDiscovering ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                </div>
-                <p className="text-xs text-gray-500 mt-1.5">
-                  💡 Help the AI find specific types of activities - leave blank for general search
-                </p>
-              </div>
-
-              <button
-                onClick={handleDiscoverActivities}
-                disabled={isDiscovering || !location}
-                className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDiscovering ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Discovering Activities...
-                  </span>
-                ) : !location ? (
-                  "⬆️ Enter Location to Start"
-                ) : (
-                  "🔍 Discover Activities"
-                )}
-              </button>
-              {!location && (
-                <p className="text-xs text-gray-500 text-center mt-2">
-                  💡 Tip: Enter your city or ZIP code above to get started
-                </p>
+                  Searching...
+                </span>
+              ) : (
+                "Find Activities"
               )}
+            </button>
 
-              {isDiscovering && discoveryMessage && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800 flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {discoveryMessage}
-                  </p>
-                </div>
-              )}
-
-              {!isDiscovering && discoveryMessage && (
-                <div className={`mt-4 p-4 rounded-lg border ${
+            {discoveryMessage && (
+              <div className={`mt-4 p-4 rounded-lg border ${
+                discoveryMessage.includes('Success')
+                  ? 'bg-green-50 border-green-200'
+                  : discoveryMessage.includes('Error')
+                  ? 'bg-red-50 border-red-200'
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <p className={`text-sm ${
                   discoveryMessage.includes('Success')
-                    ? 'bg-green-50 border-green-200'
+                    ? 'text-green-800'
                     : discoveryMessage.includes('Error')
-                    ? 'bg-red-50 border-red-200'
-                    : 'bg-blue-50 border-blue-200'
-                }`}>
-                  <p className={`text-sm font-medium ${
-                    discoveryMessage.includes('Success')
-                      ? 'text-green-800'
-                      : discoveryMessage.includes('Error')
-                      ? 'text-red-800'
-                      : 'text-blue-800'
-                  }`}>{discoveryMessage}</p>
-                </div>
-              )}
-            </div>
+                    ? 'text-red-800'
+                    : 'text-blue-800'
+                }`}>{discoveryMessage.replace(/🔍|✅|❌|💡/g, '').trim()}</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -555,21 +449,21 @@ export default function DiscoverPage() {
             // Show empty state if filter returns no results
             if (filteredActivities.length === 0) {
               return (
-                <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-12 text-center">
-                  <div className="text-6xl mb-4 opacity-40">🔍</div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">
+                <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 text-center">
+                  <div className="text-7xl mb-6">🤷‍♀️</div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-3">
                     No activities found
                     {searchKeyword && ` for "${searchKeyword}"`}
                     {filter !== "all" && ` in ${filter}`}
                   </h2>
-                  <p className="text-gray-600 mb-6">
-                    Try adjusting your search or category filters.
+                  <p className="text-lg text-gray-600 mb-8">
+                    Try removing some filters to see more activities.
                   </p>
-                  <div className="flex gap-3 justify-center">
+                  <div className="flex gap-4 justify-center flex-wrap">
                     {searchKeyword && (
                       <button
                         onClick={() => setSearchKeyword("")}
-                        className="px-6 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+                        className="px-8 py-4 bg-gray-600 text-white rounded-xl text-lg font-bold hover:bg-gray-700 transition-all shadow-md"
                       >
                         Clear Search
                       </button>
@@ -577,9 +471,9 @@ export default function DiscoverPage() {
                     {filter !== "all" && (
                       <button
                         onClick={() => setFilter("all")}
-                        className="px-6 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+                        className="px-8 py-4 bg-green-600 text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-all shadow-md"
                       >
-                        View All Categories
+                        Show All Categories
                       </button>
                     )}
                   </div>
@@ -590,83 +484,44 @@ export default function DiscoverPage() {
             return (
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredActivities.map((activity) => (
-                <div key={activity._id} className="bg-white rounded-2xl shadow-soft hover:shadow-medium transition-all border border-gray-200">
-                  <div className="p-6 space-y-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(activity.category)}`}>
-                            {activity.category}
-                          </span>
-                          {activity.ageRange && (
-                            <span className="text-sm text-gray-600">
-                              {activity.ageRange}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">
-                          {activity.title}
-                        </h3>
+                <div key={activity._id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-2 border-gray-100">
+                  <div className="p-6">
+                    {/* Header with Category Badge */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getCategoryColor(activity.category)}`}>
+                        {activity.category}
+                      </span>
+                      {activity.ageRange && (
+                        <span className="text-sm text-gray-600 font-medium">
+                          {activity.ageRange}
+                        </span>
+                      )}
+                    </div>
 
-                        {/* Source and Updated Info */}
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                          {(activity.website || activity.sourceUrl) && (
-                            <>
-                              <a
-                                href={activity.website || activity.sourceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary-600 hover:text-primary-700 hover:underline font-medium"
-                              >
-                                {activity.website ? 'View Event Details' : `From ${activity.sourceName || (() => {
-                                  try {
-                                    const hostname = new URL(activity.sourceUrl).hostname;
-                                    return hostname.replace('www.', '').split('.')[0];
-                                  } catch {
-                                    return 'web';
-                                  }
-                                })()}`}
-                              </a>
-                              {activity.sourceLocation && (
-                                <>
-                                  <span>in</span>
-                                  <span className="font-medium">{activity.sourceLocation}</span>
-                                </>
-                              )}
-                              <span>•</span>
-                            </>
-                          )}
-                          <span>Updated {(() => {
-                            const now = Date.now();
-                            const suggested = activity.suggestedAt;
-                            const diff = now - suggested;
-                            const hours = Math.floor(diff / (1000 * 60 * 60));
-                            const days = Math.floor(hours / 24);
+                    {/* Title */}
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                      {activity.title}
+                    </h3>
 
-                            if (days === 0) return 'today';
-                            if (days === 1) return 'yesterday';
-                            if (days < 7) return `${days} days ago`;
-                            if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
-                            return `${Math.floor(days / 30)} months ago`;
-                          })()}</span>
-                        </div>
-
-                        {/* Date and Time Row */}
-                        {(activity.date || activity.time) && (
-                          <div className="flex items-center gap-3 text-sm font-medium text-gray-900 mb-2">
+                    {/* Date, Time, and Location - Prominent Display */}
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
+                      {(activity.date || activity.time) && (
+                        <div className="flex items-center gap-2 text-base font-medium text-gray-900">
+                          <span className="text-xl">📅</span>
+                          <div>
                             {activity.date && (
-                              <span className="flex items-center gap-1">
-                                📅 {new Date(activity.date).toLocaleDateString('en-US', {
-                                  weekday: 'short',
-                                  month: 'short',
+                              <span>
+                                {new Date(activity.date).toLocaleDateString('en-US', {
+                                  weekday: 'long',
+                                  month: 'long',
                                   day: 'numeric',
                                   year: new Date(activity.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
                                 })}
                               </span>
                             )}
                             {activity.time && (
-                              <span className="flex items-center gap-1">
-                                🕐 {(() => {
+                              <span className="ml-2">
+                                at {(() => {
                                   const [hours, minutes] = activity.time.split(':');
                                   const hour = parseInt(hours);
                                   const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -683,44 +538,44 @@ export default function DiscoverPage() {
                               </span>
                             )}
                           </div>
-                        )}
-
-                        <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
+                        </div>
+                      )}
+                      {activity.location && (
+                        <div className="flex items-start gap-2 text-base text-gray-700">
+                          <span className="text-xl">📍</span>
+                          <span className="font-medium">{activity.location}</span>
                           {activity.distance && (
-                            <span className="flex items-center gap-1">
-                              📍 {activity.distance} mi away
-                            </span>
-                          )}
-                          {activity.rating && (
-                            <span className="flex items-center gap-1">
-                              ⭐ {activity.rating}
-                            </span>
-                          )}
-                          {activity.priceRange && (
-                            <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded text-xs font-semibold">
-                              {getPriceLabel(activity.priceRange)}
-                            </span>
+                            <span className="text-gray-500 text-sm">({activity.distance} mi away)</span>
                           )}
                         </div>
-                      </div>
+                      )}
+                      {activity.priceRange && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">💰</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                            {getPriceLabel(activity.priceRange)}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
+                    {/* Description */}
                     {activity.description && (
-                      <p className="text-gray-700 mb-4">
+                      <p className="text-gray-700 mb-4 leading-relaxed">
                         {activity.description}
                       </p>
                     )}
 
                     {/* Why We Recommend This */}
                     {activity.aiSummary && (
-                      <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 mb-4">
-                        <div className="flex items-start gap-2">
-                          <span className="text-lg">💡</span>
+                      <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">💡</span>
                           <div>
-                            <div className="text-xs font-semibold text-primary-900 mb-1 uppercase tracking-wide">
-                              Why We Recommend This
+                            <div className="text-xs font-bold text-blue-900 mb-1 uppercase tracking-wide">
+                              Why This is Perfect for Your Family
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">
+                            <p className="text-sm text-gray-800 leading-relaxed">
                               {activity.aiSummary}
                             </p>
                           </div>
@@ -728,46 +583,39 @@ export default function DiscoverPage() {
                       </div>
                     )}
 
-                    {/* Location & Contact */}
-                    <div className="space-y-1 text-sm text-gray-600 mb-4">
-                      {activity.location && (
-                        <div className="flex items-start gap-2">
-                          <span>📍</span>
-                          <div>
-                            <div className="font-medium text-gray-900">{activity.location}</div>
-                            {activity.address && <div>{activity.address}</div>}
-                          </div>
-                        </div>
-                      )}
+                    {/* Contact Info - Simplified */}
+                    <div className="flex flex-wrap gap-3 mb-5 text-sm">
                       {activity.website && (
-                        <div className="flex items-center gap-2">
-                          <span>🌐</span>
-                          <a href={activity.website.startsWith('http') ? activity.website : `https://${activity.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                            {activity.website.replace(/^https?:\/\//, '')}
-                          </a>
-                        </div>
+                        <a
+                          href={activity.website.startsWith('http') ? activity.website : `https://${activity.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        >
+                          🌐 View Website
+                        </a>
                       )}
                       {activity.phoneNumber && (
-                        <div className="flex items-center gap-2">
-                          <span>📞</span>
-                          <a href={`tel:${activity.phoneNumber}`} className="text-blue-600 hover:underline">{activity.phoneNumber}</a>
-                        </div>
+                        <a href={`tel:${activity.phoneNumber}`} className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline">
+                          📞 {activity.phoneNumber}
+                        </a>
                       )}
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-2">
+                    {/* Action Buttons - BIGGER and CLEARER */}
+                    <div className="flex gap-3 pt-4 border-t-2 border-gray-100">
                       <button
                         onClick={() => handleAddToCalendar(activity._id)}
-                        className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-soft"
+                        className="flex-1 px-6 py-4 bg-green-600 text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                       >
-                        📅 Add to Calendar
+                        <span className="text-2xl">📅</span>
+                        Add to Calendar
                       </button>
                       <button
                         onClick={() => handleDismiss(activity._id)}
-                        className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                        className="px-5 py-4 bg-gray-200 text-gray-700 rounded-xl text-base font-semibold hover:bg-gray-300 transition-all"
                       >
-                        ✕
+                        Not Interested
                       </button>
                     </div>
                   </div>
@@ -778,51 +626,39 @@ export default function DiscoverPage() {
           })()
         ) : (
           /* Empty State - Show Examples */
-          <div className="bg-white rounded-2xl shadow-soft border border-gray-200 overflow-hidden">
-            <div className="p-12 text-center border-b border-gray-200">
-              <div className="text-7xl mb-6 opacity-40">🔍</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                Ready to Discover Activities?
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
+            <div className="p-12 text-center">
+              <div className="text-8xl mb-6">🎉</div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Find Fun Activities Near You!
               </h2>
-              <p className="text-gray-600 mb-6 max-w-xl mx-auto leading-relaxed">
-                Enter your location above and we'll search local sources to find events and activities for your family.
+              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+                Enter your city or ZIP code above and we'll find local activities, events, and classes perfect for your family.
               </p>
-            </div>
 
-            {/* Example Activities Preview */}
-            <div className="bg-gray-50 p-8">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 text-center uppercase tracking-wide">
-                Example Activities We Find:
-              </h3>
-              <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">⚽</span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded">Sports</span>
-                  </div>
-                  <div className="font-semibold text-gray-900 text-sm">Youth Soccer League</div>
-                  <div className="text-xs text-gray-500 mt-1">Parks & Rec • Spring Season</div>
+              {/* What We Find - Simplified Icons */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mb-8">
+                <div className="text-center">
+                  <div className="text-5xl mb-2">⚽</div>
+                  <div className="font-semibold text-gray-900">Sports & Leagues</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">🎨</span>
-                    <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-semibold rounded">Arts</span>
-                  </div>
-                  <div className="font-semibold text-gray-900 text-sm">Kids Art Workshop</div>
-                  <div className="text-xs text-gray-500 mt-1">Local Museum • Saturdays</div>
+                <div className="text-center">
+                  <div className="text-5xl mb-2">🎨</div>
+                  <div className="font-semibold text-gray-900">Arts & Crafts</div>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">🏕️</span>
-                    <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded">Camps</span>
-                  </div>
-                  <div className="font-semibold text-gray-900 text-sm">Summer STEM Camp</div>
-                  <div className="text-xs text-gray-500 mt-1">Community Center • June-Aug</div>
+                <div className="text-center">
+                  <div className="text-5xl mb-2">🏕️</div>
+                  <div className="font-semibold text-gray-900">Summer Camps</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-5xl mb-2">🎭</div>
+                  <div className="font-semibold text-gray-900">Classes & Lessons</div>
                 </div>
               </div>
-              <div className="text-center mt-6">
-                <p className="text-xs text-gray-500 italic">
-                  Plus music lessons, story times, festivals, field trips, and more!
+
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 max-w-2xl mx-auto">
+                <p className="text-base text-gray-800 font-medium">
+                  We search local parks, libraries, museums, community centers, and event sites to find the best activities for your family!
                 </p>
               </div>
             </div>
