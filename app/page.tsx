@@ -230,6 +230,78 @@ export default function Home() {
           </div>
         </div>
 
+        {/* What's New - Featured Updates */}
+        <div className="mb-20">
+          <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 rounded-3xl p-1 shadow-lifted">
+            <div className="bg-white rounded-[22px] p-8 md:p-12">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-sm font-bold text-purple-700 mb-4">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
+                  </svg>
+                  NEW & IMPROVED
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+                  Now Even Better on Mobile
+                </h2>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  We've added powerful new features to make managing your family's schedule faster, smoother, and more delightful
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl border-2 border-purple-200 hover:border-purple-400 transition-all hover:shadow-lg group">
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">👆</div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Swipe to Delete</h3>
+                  <p className="text-sm text-gray-700">
+                    Swipe left on any event to delete it, or swipe right to mark actions complete. Lightning fast on mobile!
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-200 hover:border-blue-400 transition-all hover:shadow-lg group">
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">✅</div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Bulk Operations</h3>
+                  <p className="text-sm text-gray-700">
+                    Select multiple events and delete them all at once. Perfect for clearing out old activities!
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-2xl border-2 border-green-200 hover:border-green-400 transition-all hover:shadow-lg group">
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">↩️</div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Undo Deletes</h3>
+                  <p className="text-sm text-gray-700">
+                    Deleted something by mistake? No problem! You get 10 seconds to undo any deletion with one tap.
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-2xl border-2 border-orange-200 hover:border-orange-400 transition-all hover:shadow-lg group">
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🤖</div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">AI Instant Preview</h3>
+                  <p className="text-sm text-gray-700">
+                    Upload a photo or use your voice—AI extracts the details and shows you an editable form instantly!
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-6 rounded-2xl border-2 border-yellow-200 hover:border-yellow-400 transition-all hover:shadow-lg group">
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">📅</div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Date Filtering</h3>
+                  <p className="text-sm text-gray-700">
+                    View just today's events, this week, or this month. Find what you need in seconds, not minutes.
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-pink-50 to-rose-50 p-6 rounded-2xl border-2 border-pink-200 hover:border-pink-400 transition-all hover:shadow-lg group">
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">✨</div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Beautiful Animations</h3>
+                  <p className="text-sm text-gray-700">
+                    Smooth micro-animations, enhanced shadows, and delightful interactions make every tap feel great!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Features */}
         <div id="features" className="mb-32 scroll-mt-20">
           <div className="bg-slate-50 rounded-3xl p-12 md:p-16">
@@ -410,25 +482,35 @@ export default function Home() {
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Automatic email scanning</span>
+                    <span className="text-gray-700">Automatic email scanning with AI</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Shared family calendar</span>
+                    <span className="text-gray-700">
+                      <span className="font-semibold text-purple-600">NEW:</span> Photo & voice AI extraction
+                    </span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Both parents included</span>
+                    <span className="text-gray-700">
+                      <span className="font-semibold text-purple-600">NEW:</span> Swipe gestures & bulk operations
+                    </span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Multiple email accounts</span>
+                    <span className="text-gray-700">Shared family calendar for both parents</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span className="text-gray-700">Multiple email accounts supported</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -447,6 +529,14 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
                     <span className="text-gray-700">Unlimited events</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span className="text-gray-700">
+                      <span className="font-semibold text-purple-600">NEW:</span> Mobile-optimized with swipe & touch
+                    </span>
                   </li>
                 </ul>
 
