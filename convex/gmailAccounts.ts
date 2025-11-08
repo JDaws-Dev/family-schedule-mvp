@@ -34,8 +34,11 @@ export const connectGmailAccount = mutation({
 
     if (existing) {
       console.log("Updating existing account:", existing._id);
-      // Update existing account
+      console.log("Old familyId:", existing.familyId, "New familyId:", user.familyId);
+      // Update existing account (including familyId in case user switched families)
       await ctx.db.patch(existing._id, {
+        familyId: user.familyId, // Update to current user's family
+        connectedByUserId: user._id, // Update who connected it
         accessToken: args.accessToken,
         refreshToken: args.refreshToken,
         connectedAt: Date.now(),
@@ -76,10 +79,26 @@ export const getFamilyGmailAccounts = query({
     familyId: v.id("families"),
   },
   handler: async (ctx, args) => {
+    console.log("[getFamilyGmailAccounts] Called with familyId:", args.familyId);
+
+    // First, let's see ALL accounts in the database for debugging
+    const allAccounts = await ctx.db.query("gmailAccounts").collect();
+    console.log("[getFamilyGmailAccounts] ALL accounts in DB:", allAccounts.length);
+    allAccounts.forEach(acc => {
+      console.log("  - Account:", {
+        id: acc._id,
+        email: acc.gmailEmail,
+        familyId: acc.familyId,
+        isActive: acc.isActive
+      });
+    });
+
     const accounts = await ctx.db
       .query("gmailAccounts")
       .withIndex("by_family", (q) => q.eq("familyId", args.familyId))
       .collect();
+
+    console.log("[getFamilyGmailAccounts] Found accounts for this family:", accounts.length);
 
     // Get user info for each account
     const accountsWithUsers = await Promise.all(
@@ -92,6 +111,7 @@ export const getFamilyGmailAccounts = query({
       })
     );
 
+    console.log("[getFamilyGmailAccounts] Returning accounts with users:", accountsWithUsers.length);
     return accountsWithUsers;
   },
 });

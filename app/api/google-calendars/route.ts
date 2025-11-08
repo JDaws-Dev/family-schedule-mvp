@@ -88,34 +88,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const account = gmailAccounts[0];
-    console.log("[google-calendars] Using account:", account.gmailEmail);
-    console.log("[google-calendars] Account has refresh token:", !!account.refreshToken);
+    // Fetch calendars from ALL Gmail accounts
+    const allCalendars: any[] = [];
 
-    // Refresh access token
-    const accessToken = await refreshAccessToken(account.refreshToken);
-    console.log("[google-calendars] Got access token, initializing Calendar API...");
+    for (const account of gmailAccounts) {
+      try {
+        console.log("[google-calendars] Fetching calendars for account:", account.gmailEmail);
+        console.log("[google-calendars] Account has refresh token:", !!account.refreshToken);
 
-    // Initialize Google Calendar API
-    const oauth2Client = new google.auth.OAuth2();
-    oauth2Client.setCredentials({ access_token: accessToken });
-    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+        // Refresh access token for this account
+        const accessToken = await refreshAccessToken(account.refreshToken);
+        console.log("[google-calendars] Got access token for", account.gmailEmail);
 
-    // List all calendars
-    console.log("[google-calendars] Listing calendars...");
-    const calendarList = await calendar.calendarList.list();
-    console.log("[google-calendars] Found calendars:", calendarList.data.items?.length || 0);
+        // Initialize Google Calendar API
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.setCredentials({ access_token: accessToken });
+        const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-    const calendars = calendarList.data.items?.map((cal: any) => ({
-      id: cal.id,
-      summary: cal.summary,
-      description: cal.description,
-      primary: cal.primary || false,
-      backgroundColor: cal.backgroundColor,
-      accessRole: cal.accessRole,
-    })) || [];
+        // List calendars for this account
+        console.log("[google-calendars] Listing calendars for", account.gmailEmail);
+        const calendarList = await calendar.calendarList.list();
+        console.log("[google-calendars] Found", calendarList.data.items?.length || 0, "calendars for", account.gmailEmail);
 
-    return NextResponse.json({ calendars });
+        // Add calendars with account info
+        const calendarsForAccount = calendarList.data.items?.map((cal: any) => ({
+          id: cal.id,
+          summary: cal.summary,
+          description: cal.description,
+          primary: cal.primary || false,
+          backgroundColor: cal.backgroundColor,
+          accessRole: cal.accessRole,
+          accountEmail: account.gmailEmail, // Add which account this calendar belongs to
+          accountDisplayName: account.displayName,
+        })) || [];
+
+        allCalendars.push(...calendarsForAccount);
+      } catch (error: any) {
+        console.error("[google-calendars] Error fetching calendars for", account.gmailEmail, ":", error.message);
+        // Continue with other accounts even if one fails
+      }
+    }
+
+    console.log("[google-calendars] Total calendars from all accounts:", allCalendars.length);
+    return NextResponse.json({ calendars: allCalendars });
   } catch (error: any) {
     console.error("[google-calendars] Error fetching Google Calendars:", error);
     console.error("[google-calendars] Error stack:", error.stack);
