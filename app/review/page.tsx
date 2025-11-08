@@ -70,7 +70,7 @@ export default function ReviewPage() {
   const eventsPerPage = 10;
   const [recentlyDismissed, setRecentlyDismissed] = useState<{eventId: string, event: any, timeout: NodeJS.Timeout} | null>(null);
   const [recentlyApproved, setRecentlyApproved] = useState<{eventId: string, timeout: NodeJS.Timeout} | null>(null);
-  const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
+  const [showPasteTextModal, setShowPasteTextModal] = useState(false);
   const [pastedText, setPastedText] = useState("");
   const [isExtractingEvent, setIsExtractingEvent] = useState(false);
   const [emailSearchQuery, setEmailSearchQuery] = useState("");
@@ -92,6 +92,13 @@ export default function ReviewPage() {
     requiresAction: false,
     actionDescription: "",
     actionDeadline: "",
+    isRecurring: false,
+    recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+    recurrenceInterval: 1,
+    recurrenceDaysOfWeek: [] as string[],
+    recurrenceEndType: "never" as "never" | "date" | "count",
+    recurrenceEndDate: "",
+    recurrenceEndCount: 10,
   });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
@@ -1559,6 +1566,193 @@ export default function ReviewPage() {
                   </div>
                 </div>
 
+                {/* Recurring Event Settings */}
+                <div className="border-t border-gray-200 pt-4">
+                  <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition">
+                    <input
+                      type="checkbox"
+                      name="isRecurring"
+                      defaultChecked={editingEvent.isRecurring || false}
+                      onChange={(e) => {
+                        const recurringFields = document.getElementById('edit-recurring-fields');
+                        if (recurringFields) {
+                          recurringFields.style.display = e.target.checked ? 'block' : 'none';
+                        }
+                      }}
+                      className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                    />
+                    <div>
+                      <span className="font-medium text-gray-900">This is a recurring event</span>
+                      <p className="text-sm text-gray-600">Repeats weekly, monthly, or on a custom schedule</p>
+                    </div>
+                  </label>
+
+                  <div
+                    id="edit-recurring-fields"
+                    style={{ display: editingEvent.isRecurring ? 'block' : 'none' }}
+                    className="ml-8 mt-3 space-y-4"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Repeats
+                        </label>
+                        <select
+                          name="recurrencePattern"
+                          defaultValue={editingEvent.recurrencePattern || "weekly"}
+                          onChange={(e) => {
+                            const weeklyDays = document.getElementById('edit-weekly-days');
+                            if (weeklyDays) {
+                              weeklyDays.style.display = e.target.value === 'weekly' ? 'block' : 'none';
+                            }
+                          }}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="yearly">Yearly</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Every
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            name="recurrenceInterval"
+                            min="1"
+                            max="99"
+                            defaultValue={editingEvent.recurrenceInterval || 1}
+                            className="w-20 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          <span className="text-sm text-gray-600">
+                            {editingEvent.recurrencePattern === 'daily' ? 'day(s)' :
+                             editingEvent.recurrencePattern === 'weekly' ? 'week(s)' :
+                             editingEvent.recurrencePattern === 'monthly' ? 'month(s)' :
+                             editingEvent.recurrencePattern === 'yearly' ? 'year(s)' : 'week(s)'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      id="edit-weekly-days"
+                      style={{ display: (editingEvent.recurrencePattern === 'weekly' || !editingEvent.recurrencePattern) ? 'block' : 'none' }}
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Repeat on
+                      </label>
+                      <div className="grid grid-cols-7 gap-2">
+                        {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => {
+                          const isChecked = editingEvent.recurrenceDaysOfWeek?.includes(day) || false;
+                          return (
+                            <label key={day} className="flex flex-col items-center">
+                              <input
+                                type="checkbox"
+                                name="recurrenceDaysOfWeek"
+                                value={day}
+                                defaultChecked={isChecked}
+                                className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500 mb-1"
+                              />
+                              <span className="text-xs text-gray-600">{day.slice(0, 3)}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ends
+                      </label>
+                      <div className="space-y-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recurrenceEndType"
+                            value="never"
+                            defaultChecked={editingEvent.recurrenceEndType === 'never' || !editingEvent.recurrenceEndType}
+                            onChange={() => {
+                              const endDateField = document.getElementById('edit-recurrence-end-date');
+                              const endCountField = document.getElementById('edit-recurrence-end-count');
+                              if (endDateField) endDateField.style.display = 'none';
+                              if (endCountField) endCountField.style.display = 'none';
+                            }}
+                            className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                          />
+                          <span className="text-sm text-gray-700">Never</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recurrenceEndType"
+                            value="date"
+                            defaultChecked={editingEvent.recurrenceEndType === 'date'}
+                            onChange={() => {
+                              const endDateField = document.getElementById('edit-recurrence-end-date');
+                              const endCountField = document.getElementById('edit-recurrence-end-count');
+                              if (endDateField) endDateField.style.display = 'block';
+                              if (endCountField) endCountField.style.display = 'none';
+                            }}
+                            className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                          />
+                          <span className="text-sm text-gray-700">On date</span>
+                        </label>
+
+                        <div
+                          id="edit-recurrence-end-date"
+                          style={{ display: editingEvent.recurrenceEndType === 'date' ? 'block' : 'none' }}
+                          className="ml-6"
+                        >
+                          <input
+                            type="date"
+                            name="recurrenceEndDate"
+                            defaultValue={editingEvent.recurrenceEndDate || ""}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recurrenceEndType"
+                            value="count"
+                            defaultChecked={editingEvent.recurrenceEndType === 'count'}
+                            onChange={() => {
+                              const endDateField = document.getElementById('edit-recurrence-end-date');
+                              const endCountField = document.getElementById('edit-recurrence-end-count');
+                              if (endDateField) endDateField.style.display = 'none';
+                              if (endCountField) endCountField.style.display = 'block';
+                            }}
+                            className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                          />
+                          <span className="text-sm text-gray-700">After</span>
+                        </label>
+
+                        <div
+                          id="edit-recurrence-end-count"
+                          style={{ display: editingEvent.recurrenceEndType === 'count' ? 'block' : 'none' }}
+                          className="ml-6 flex items-center gap-2"
+                        >
+                          <input
+                            type="number"
+                            name="recurrenceEndCount"
+                            min="1"
+                            max="365"
+                            defaultValue={editingEvent.recurrenceEndCount || 10}
+                            className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          <span className="text-sm text-gray-600">occurrences</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
@@ -1590,8 +1784,7 @@ export default function ReviewPage() {
           onCheckEmails={handleScanEmail}
           onTypeManually={() => setShowAddEventModal(true)}
           onPasteText={() => {
-            setAddEventTab("paste");
-            setShowAddEventModal(true);
+            setShowPasteTextModal(true);
           }}
           onUploadPhoto={() => {
             setShowPhotoUploadModal(true);
@@ -1620,6 +1813,114 @@ export default function ReviewPage() {
         />
       )}
 
+      {/* Paste Text Modal */}
+      {showPasteTextModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => {
+            setShowPasteTextModal(false);
+            setPastedText("");
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Paste Text</h2>
+                  <p className="text-white/90 text-sm">Paste an email, text message, or any text with event details</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPasteTextModal(false);
+                    setPastedText("");
+                  }}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close paste text modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-primary-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-primary-800 mb-1">How it works</h4>
+                    <p className="text-sm text-primary-700">
+                      Our AI will automatically extract event details including dates, times, locations, and even which family members are attending!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Paste your text here
+                </label>
+                <textarea
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  rows={12}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Example:
+Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara. Please bring water and shin guards!"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExtractFromPaste();
+                    setShowPasteTextModal(false);
+                  }}
+                  disabled={isExtractingEvent || !pastedText.trim()}
+                  className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center justify-center gap-2"
+                >
+                  {isExtractingEvent ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Extracting...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Extract Event
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasteTextModal(false);
+                    setPastedText("");
+                  }}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Event Modal */}
       {showAddEventModal && (
         <div
@@ -1635,12 +1936,11 @@ export default function ReviewPage() {
           >
             {/* Header with Gradient */}
             <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start">
                 <h2 className="text-2xl font-bold text-white">Add New Event</h2>
                 <button
                   onClick={() => {
                     setShowAddEventModal(false);
-                    setAddEventTab("manual");
                   }}
                   className="text-white hover:bg-white/20 rounded-lg p-2 transition"
                   aria-label="Close add event modal"
@@ -1651,112 +1951,10 @@ export default function ReviewPage() {
                   </svg>
                 </button>
               </div>
-
-              {/* Tabs */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAddEventTab("manual")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
-                    addEventTab === "manual"
-                      ? "bg-white text-primary-600 shadow-soft"
-                      : "bg-white/20 text-white hover:bg-white/30"
-                  }`}
-                >
-                  Type It In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAddEventTab("paste")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
-                    addEventTab === "paste"
-                      ? "bg-white text-primary-600 shadow-soft"
-                      : "bg-white/20 text-white hover:bg-white/30"
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Paste Text
-                </button>
-              </div>
             </div>
 
-            {/* Paste Text Tab */}
-            {addEventTab === "paste" && (
-              <div className="p-6 space-y-4">
-                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-primary-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-primary-800 mb-1">How it works</h4>
-                      <p className="text-sm text-primary-700">
-                        Paste an email, text message, or any text containing event information. Our AI will automatically extract the event details for you!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Paste Email or Text Message
-                  </label>
-                  <textarea
-                    value={pastedText}
-                    onChange={(e) => setPastedText(e.target.value)}
-                    rows={10}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Paste your email or text message here...
-
-Example:
-'Soccer practice this Saturday at 9am at Memorial Park. Please bring water and shin guards!'"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={handleExtractFromPaste}
-                    disabled={isExtractingEvent || !pastedText.trim()}
-                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center justify-center gap-2"
-                  >
-                    {isExtractingEvent ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Extracting...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        Extract Event
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddEventModal(false);
-                      setAddEventTab("manual");
-                      setPastedText("");
-                    }}
-                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Type It In Tab */}
-            {addEventTab === "manual" && (
-              <form onSubmit={handleAddEvent}>
+            {/* Manual Entry Form */}
+            <form onSubmit={handleAddEvent}>
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1962,6 +2160,184 @@ Example:
                     </div>
                   )}
                 </div>
+
+                {/* Recurring Event Settings */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-start gap-3 mb-4">
+                    <input
+                      type="checkbox"
+                      id="isRecurring"
+                      checked={newEventForm.isRecurring}
+                      onChange={(e) => setNewEventForm({
+                        ...newEventForm,
+                        isRecurring: e.target.checked
+                      })}
+                      className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500 mt-0.5"
+                    />
+                    <label htmlFor="isRecurring" className="flex-1 cursor-pointer">
+                      <span className="block text-sm font-semibold text-gray-900">
+                        This is a recurring event
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">
+                        Repeats weekly, monthly, or on a custom schedule
+                      </span>
+                    </label>
+                  </div>
+
+                  {newEventForm.isRecurring && (
+                    <div className="space-y-4 pl-8">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Repeats</label>
+                          <select
+                            value={newEventForm.recurrencePattern}
+                            onChange={(e) => setNewEventForm({
+                              ...newEventForm,
+                              recurrencePattern: e.target.value as any
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          >
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              max="99"
+                              value={newEventForm.recurrenceInterval}
+                              onChange={(e) => setNewEventForm({
+                                ...newEventForm,
+                                recurrenceInterval: parseInt(e.target.value) || 1
+                              })}
+                              className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            />
+                            <span className="text-sm text-gray-600">
+                              {newEventForm.recurrencePattern === 'daily' ? 'day(s)' :
+                               newEventForm.recurrencePattern === 'weekly' ? 'week(s)' :
+                               newEventForm.recurrencePattern === 'monthly' ? 'month(s)' :
+                               'year(s)'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {newEventForm.recurrencePattern === 'weekly' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Repeat on</label>
+                          <div className="grid grid-cols-7 gap-2">
+                            {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => (
+                              <label key={day} className="flex flex-col items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={newEventForm.recurrenceDaysOfWeek.includes(day)}
+                                  onChange={(e) => {
+                                    const days = e.target.checked
+                                      ? [...newEventForm.recurrenceDaysOfWeek, day]
+                                      : newEventForm.recurrenceDaysOfWeek.filter(d => d !== day);
+                                    setNewEventForm({
+                                      ...newEventForm,
+                                      recurrenceDaysOfWeek: days
+                                    });
+                                  }}
+                                  className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500 mb-1"
+                                />
+                                <span className="text-xs text-gray-600">{day.slice(0, 3)}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ends</label>
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="recurrenceEndType"
+                              value="never"
+                              checked={newEventForm.recurrenceEndType === 'never'}
+                              onChange={(e) => setNewEventForm({
+                                ...newEventForm,
+                                recurrenceEndType: 'never'
+                              })}
+                              className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-gray-700">Never</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="recurrenceEndType"
+                              value="date"
+                              checked={newEventForm.recurrenceEndType === 'date'}
+                              onChange={(e) => setNewEventForm({
+                                ...newEventForm,
+                                recurrenceEndType: 'date'
+                              })}
+                              className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-gray-700">On date</span>
+                          </label>
+
+                          {newEventForm.recurrenceEndType === 'date' && (
+                            <div className="ml-6">
+                              <input
+                                type="date"
+                                value={newEventForm.recurrenceEndDate}
+                                onChange={(e) => setNewEventForm({
+                                  ...newEventForm,
+                                  recurrenceEndDate: e.target.value
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              />
+                            </div>
+                          )}
+
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="recurrenceEndType"
+                              value="count"
+                              checked={newEventForm.recurrenceEndType === 'count'}
+                              onChange={(e) => setNewEventForm({
+                                ...newEventForm,
+                                recurrenceEndType: 'count'
+                              })}
+                              className="w-4 h-4 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-gray-700">After</span>
+                          </label>
+
+                          {newEventForm.recurrenceEndType === 'count' && (
+                            <div className="ml-6 flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="1"
+                                max="365"
+                                value={newEventForm.recurrenceEndCount}
+                                onChange={(e) => setNewEventForm({
+                                  ...newEventForm,
+                                  recurrenceEndCount: parseInt(e.target.value) || 10
+                                })}
+                                className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              />
+                              <span className="text-sm text-gray-600">occurrences</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -1983,8 +2359,7 @@ Example:
                   Cancel
                 </button>
               </div>
-              </form>
-            )}
+            </form>
           </div>
         </div>
       )}
