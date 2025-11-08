@@ -1377,11 +1377,11 @@ function CalendarContent() {
       {/* Enhanced Event Detail Modal */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
@@ -1631,14 +1631,14 @@ function CalendarContent() {
       {/* Edit Event Modal */}
       {editingEvent && selectedEvent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => {
             setEditingEvent(false);
             setEditFormData(null);
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

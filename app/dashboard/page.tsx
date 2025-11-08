@@ -2160,7 +2160,7 @@ function DashboardContent() {
       {/* Event Detail Modal */}
       {selectedEvent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => {
             setSelectedEvent(null);
             setIsEditingEvent(false);
@@ -2168,7 +2168,7 @@ function DashboardContent() {
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {isEditingEvent ? (
@@ -3014,14 +3014,14 @@ function DashboardContent() {
       {/* Add Event Modal */}
       {showAddEventModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => {
             setShowAddEventModal(false);
             setAddEventTab("manual");
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
@@ -3567,11 +3567,11 @@ Example:
       {/* Actions Modal */}
       {showActionsModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => setShowActionsModal(false)}
         >
           <div
-            className="bg-white rounded-2xl max-w-3xl w-full shadow-strong my-8"
+            className="bg-white rounded-2xl max-w-3xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
