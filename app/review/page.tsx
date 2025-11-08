@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -54,6 +55,7 @@ function formatMomFriendlyDate(dateString: string): string {
 }
 
 export default function ReviewPage() {
+  const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
@@ -179,6 +181,28 @@ export default function ReviewPage() {
   const createEvent = useMutation(api.events.createEvent);
   const createUnconfirmedEvent = useMutation(api.events.createUnconfirmedEvent);
   const addCustomCategory = useMutation(api.families.addCustomCategory);
+
+  // Handle query parameters for adding event from calendar
+  useEffect(() => {
+    const addEvent = searchParams?.get('addEvent');
+    const date = searchParams?.get('date');
+
+    if (addEvent === 'true' && date) {
+      // Pre-fill the date in the new event form
+      setNewEventForm(prev => ({
+        ...prev,
+        eventDate: date
+      }));
+
+      // Open the manual add event modal
+      setShowAddEventModal(true);
+
+      // Clear the query parameters from the URL without reloading
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/review');
+      }
+    }
+  }, [searchParams]);
 
   // Check for time conflicts with existing events
   const checkForConflicts = (newEvent: any) => {
