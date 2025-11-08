@@ -661,6 +661,7 @@ export default function ReviewPage() {
           location: newEventForm.location,
           time: newEventForm.eventTime,
           childName: newEventForm.childName,
+          familyMembers: familyMembers || [],
         }),
       });
 
@@ -670,14 +671,21 @@ export default function ReviewPage() {
         throw new Error(data.error || "Failed to enhance event");
       }
 
-      // Update form with enhanced details
+      // Update form with all enhanced details
       setNewEventForm({
         ...newEventForm,
         title: data.enhancedTitle || newEventForm.title,
         description: data.description || newEventForm.description,
+        category: data.category || newEventForm.category,
+        childName: data.attendees && data.attendees.length > 0 ? data.attendees.join(", ") : newEventForm.childName,
+        isRecurring: data.isRecurring !== undefined ? data.isRecurring : newEventForm.isRecurring,
+        recurrencePattern: data.recurrencePattern || newEventForm.recurrencePattern,
+        recurrenceDaysOfWeek: data.recurrenceDaysOfWeek || newEventForm.recurrenceDaysOfWeek,
+        requiresAction: data.requiresAction !== undefined ? data.requiresAction : newEventForm.requiresAction,
+        actionDescription: data.actionDescription || newEventForm.actionDescription,
       });
 
-      showToast("✨ Event enhanced! Review the updated title and description.", "success");
+      showToast("✨ Event enhanced! AI filled in smart suggestions - review and adjust as needed.", "success");
     } catch (error: any) {
       console.error("Error enhancing event:", error);
       showToast("Failed to enhance event. Please try again.", "error");
@@ -704,6 +712,7 @@ export default function ReviewPage() {
           location: editingEvent.location,
           time: editingEvent.eventTime,
           childName: editingEvent.childName,
+          familyMembers: familyMembers || [],
         }),
       });
 
@@ -713,14 +722,21 @@ export default function ReviewPage() {
         throw new Error(data.error || "Failed to enhance event");
       }
 
-      // Update editing event with enhanced details
+      // Update editing event with all enhanced details
       setEditingEvent({
         ...editingEvent,
         title: data.enhancedTitle || editingEvent.title,
         description: data.description || editingEvent.description,
+        category: data.category || editingEvent.category,
+        childName: data.attendees && data.attendees.length > 0 ? data.attendees.join(", ") : editingEvent.childName,
+        isRecurring: data.isRecurring !== undefined ? data.isRecurring : editingEvent.isRecurring,
+        recurrencePattern: data.recurrencePattern || editingEvent.recurrencePattern,
+        recurrenceDaysOfWeek: data.recurrenceDaysOfWeek || editingEvent.recurrenceDaysOfWeek,
+        requiresAction: data.requiresAction !== undefined ? data.requiresAction : editingEvent.requiresAction,
+        actionDescription: data.actionDescription || editingEvent.actionDescription,
       });
 
-      showToast("✨ Event enhanced! Review the updated title and description.", "success");
+      showToast("✨ Event enhanced! AI filled in smart suggestions - review and adjust as needed.", "success");
     } catch (error: any) {
       console.error("Error enhancing event:", error);
       showToast("Failed to enhance event. Please try again.", "error");

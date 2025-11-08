@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { title, category, location, time, childName } = await request.json();
+    const { title, category, location, time, childName, familyMembers } = await request.json();
 
     if (!title || title.trim().length === 0) {
       return NextResponse.json(
@@ -17,62 +17,92 @@ export async function POST(request: NextRequest) {
 
     // Build context for AI
     const contextParts = [];
-    if (category) contextParts.push(`Category: ${category}`);
+    if (category) contextParts.push(`Current Category: ${category}`);
     if (location) contextParts.push(`Location: ${location}`);
     if (time) contextParts.push(`Time: ${time}`);
-    if (childName) contextParts.push(`For: ${childName}`);
+    if (childName) contextParts.push(`Currently marked for: ${childName}`);
+    if (familyMembers && familyMembers.length > 0) {
+      contextParts.push(`Family Members: ${familyMembers.map((m: any) => m.name).join(', ')}`);
+    }
     const context = contextParts.length > 0 ? `\n\nContext:\n${contextParts.join('\n')}` : '';
 
-    const systemPrompt = `You are a helpful assistant that enhances event details for busy families.
+    const systemPrompt = `You are a helpful assistant that creates personal family calendar reminders.
+
+IMPORTANT: These are reminders for the FAMILY THEMSELVES about what they're doing. Think of it as notes to your future self, NOT formal invitations or instructions to others.
 
 Given a basic event title and optional context, you should:
 
 1. **Enhanced Title**: Create a clear, descriptive title if the original is vague or too short. If the original title is already good, keep it or make minor improvements.
 
-2. **Description**: Generate a helpful, practical description that includes:
-   - What to expect at the event
-   - What to bring (if applicable based on category)
-   - Dress code or attire suggestions (if applicable)
-   - Any typical preparation needed
-   - Helpful tips or reminders
+2. **Description**: Generate a casual, helpful reminder note that includes:
+   - Quick context about what this is
+   - What to remember to bring (if applicable)
+   - What to wear or prepare (if applicable)
+   - Any helpful notes for future reference
 
-Keep descriptions concise (2-4 sentences) and practical. Focus on actionable information that helps families prepare.
+Keep descriptions concise (2-4 sentences), casual, and personal. Write like you're leaving a note for yourself or your family.
 
 Examples:
 
 Input: "soccer"
 Output:
 {
-  "enhancedTitle": "Youth Soccer Practice",
-  "description": "Bring cleats, shin guards, and water bottle. Wear athletic clothing and arrive 10 minutes early for warm-ups."
+  "enhancedTitle": "Soccer Practice",
+  "description": "Remember to bring cleats, shin guards, and water. Kids should wear athletic clothes. Try to arrive 10 minutes early for warm-ups."
 }
 
 Input: "dentist"
 Output:
 {
-  "enhancedTitle": "Dental Checkup",
-  "description": "Regular dental cleaning and examination. Arrive 10 minutes early to fill out any updated forms. Brush teeth before appointment."
+  "enhancedTitle": "Dentist Appointment",
+  "description": "Regular cleaning and checkup. Get there a few minutes early for paperwork. Good idea to brush teeth beforehand."
 }
 
 Input: "Emma's birthday party"
 Output:
 {
   "enhancedTitle": "Emma's Birthday Party",
-  "description": "Don't forget to bring a wrapped gift! Check if there's a theme for dress-up. RSVP if you haven't already."
+  "description": "Need to bring a wrapped gift. Check if there's a dress-up theme. Remember to RSVP if we haven't already."
 }
 
 Input: "dance class"
 Output:
 {
   "enhancedTitle": "Dance Class",
-  "description": "Wear comfortable dance attire and bring ballet/tap shoes. Hair should be pulled back. Arrive 5 minutes early to get ready."
+  "description": "Wear dance clothes and bring ballet/tap shoes. Hair should be pulled back. Arrive a few minutes early to get settled."
 }
 
 Return a JSON object with this structure:
 {
   "enhancedTitle": "Improved title",
-  "description": "Practical, helpful description with preparation tips"
+  "description": "Practical, helpful reminder note",
+  "category": "Best matching category from this list: Soccer, Basketball, Football, Baseball, Swimming, Dance, Gymnastics, Martial Arts, Music Lessons, Art, Theater, Tutoring, School Event, Playdate, Birthday Party, Doctor Appointment, Religious, Social, Family Event, Other",
+  "attendees": ["Array of family member names who would typically attend this type of event based on context"],
+  "isRecurring": true/false,
+  "recurrencePattern": "weekly" | "daily" | "monthly" (if recurring),
+  "recurrenceDaysOfWeek": ["Monday", "Tuesday", etc.] (if weekly recurring),
+  "requiresAction": true/false,
+  "actionDescription": "What action might be needed (e.g., 'Remember to RSVP', 'Payment due')"
 }
+
+CATEGORY SELECTION:
+- Choose the MOST SPECIFIC category that matches
+- Soccer practice → "Soccer" (not "Sports")
+- Piano lessons → "Music Lessons" (not "Other")
+- Dentist → "Doctor Appointment"
+- Only use "Other" if truly doesn't fit
+
+ATTENDEE DETECTION:
+- If title mentions a child's name and it matches a family member, include them
+- For activities like "soccer practice", "dance class" - likely the child
+- For "dentist", "doctor" - could be anyone, use context
+- For "family dinner" - include all family members
+- For "parent-teacher conference" - likely just parents
+
+RECURRING DETECTION:
+- Look for words like "practice", "class", "lesson" which are typically weekly
+- "Monthly" events → recurrencePattern: "monthly"
+- "Every Tuesday" → isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Tuesday"]
 
 IMPORTANT:
 - DO NOT mention the category name or family member names in the description as they are already shown separately
