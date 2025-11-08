@@ -661,7 +661,7 @@ function SettingsContent() {
         {activeTab === 'account' && (
         <div>
         {/* Your Info */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Your Info</h2>
             <p className="text-sm text-gray-600 mt-1">Your personal information and contact details</p>
@@ -739,7 +739,7 @@ function SettingsContent() {
         </div>
 
         {/* Reminders & Notifications */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Reminders & Notifications</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -948,7 +948,7 @@ function SettingsContent() {
         </div>
 
         {/* Subscription & Payment */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Subscription & Payment</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -993,7 +993,7 @@ function SettingsContent() {
 
         {/* Account Management */}
         {convexUser?.role === "primary" && (
-          <div className="bg-white rounded-lg shadow border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-soft border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900">Account Management</h2>
             </div>
@@ -1025,7 +1025,7 @@ function SettingsContent() {
         {activeTab === 'family' && (
         <div>
         {/* Family Details */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Family Details</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -1104,7 +1104,7 @@ function SettingsContent() {
         </div>
 
         {/* Family Members */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Family Members</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -1194,7 +1194,7 @@ function SettingsContent() {
         </div>
 
         {/* Tracked Family Members */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Tracked Family Members</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -1317,7 +1317,7 @@ function SettingsContent() {
         {activeTab === 'apps' && (
         <div>
         {/* Google Calendar */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Google Calendar</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -1439,7 +1439,7 @@ function SettingsContent() {
         </div>
 
         {/* Gmail Connections - Multiple Accounts */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Gmail</h2>
             <p className="text-sm text-gray-600 mt-1">
@@ -1808,7 +1808,7 @@ function SettingsContent() {
       {/* Add/Edit Member Modal */}
       {(showAddMemberModal || editingMember) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-strong max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">
                 {editingMember ? "Edit Family Member" : "Add Family Member"}

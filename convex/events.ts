@@ -188,6 +188,17 @@ export const getEventsByFamily = query({
   },
 });
 
+// Get all events for a family (alias for getEventsByFamily)
+export const getAllEvents = query({
+  args: { familyId: v.id("families") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("events")
+      .withIndex("by_family", (q) => q.eq("familyId", args.familyId))
+      .collect();
+  },
+});
+
 // Get events for a specific date range (family-based)
 export const getEventsByDateRange = query({
   args: {

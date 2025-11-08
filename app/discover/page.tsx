@@ -13,6 +13,8 @@ export default function DiscoverPage() {
   const { showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [discoveryKeyword, setDiscoveryKeyword] = useState(""); // Keyword for AI discovery
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoveryMessage, setDiscoveryMessage] = useState("");
   const [discoveryProgress, setDiscoveryProgress] = useState("");
@@ -76,13 +78,14 @@ export default function DiscoverPage() {
     setDiscoveryMessage("🔍 Discovering activities in your area...");
 
     try {
-      console.log("[Discover] Starting discovery for:", location, "within", distance, "miles", "from", startDate, "to", endDate);
+      console.log("[Discover] Starting discovery for:", location, "within", distance, "miles", "from", startDate, "to", endDate, discoveryKeyword ? `searching for: ${discoveryKeyword}` : "");
       const result = await discoverActivities({
         familyId: convexUser.familyId,
         userLocation: location,
         distance: distance,
         startDate: startDate,
         endDate: endDate,
+        searchKeyword: discoveryKeyword || undefined,
         apiBaseUrl: window.location.origin, // Pass current site URL to Convex action
       });
 
@@ -178,7 +181,14 @@ export default function DiscoverPage() {
     return labels[priceRange] || priceRange;
   };
 
-  const categories = ["all", "sports", "arts", "education", "entertainment", "community"];
+  // Get unique categories from actual activities
+  const uniqueCategories = Array.from(
+    new Set(
+      suggestedActivities
+        .map(activity => activity.category)
+        .filter(Boolean)
+    )
+  ).sort();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -234,12 +244,12 @@ export default function DiscoverPage() {
         {/* What is Discover? Explanation - Always visible but compact when they have results */}
         {suggestedActivities.length === 0 ? (
           // Full explanation for first-time users
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg p-8 mb-8 text-white">
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl shadow-strong p-8 mb-8 text-white">
             <div className="flex items-start gap-4 mb-6">
               <div className="text-4xl">✨</div>
               <div className="flex-1">
                 <h2 className="text-2xl font-bold mb-3">What is Discover?</h2>
-                <p className="text-blue-50 leading-relaxed mb-4">
+                <p className="text-primary-50 leading-relaxed mb-4">
                   Discover automatically finds local events, classes, camps, and activities near you —
                   saving you hours of searching through multiple websites and calendars.
                 </p>
@@ -247,17 +257,17 @@ export default function DiscoverPage() {
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                     <div className="text-2xl mb-2">🎯</div>
                     <div className="font-semibold mb-1">Personalized</div>
-                    <div className="text-sm text-blue-100">Matched to your family's ages and interests</div>
+                    <div className="text-sm text-primary-100">Matched to your family's ages and interests</div>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                     <div className="text-2xl mb-2">📍</div>
                     <div className="font-semibold mb-1">Local</div>
-                    <div className="text-sm text-blue-100">Activities within your chosen distance</div>
+                    <div className="text-sm text-primary-100">Activities within your chosen distance</div>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                     <div className="text-2xl mb-2">⚡</div>
                     <div className="font-semibold mb-1">One Click</div>
-                    <div className="text-sm text-blue-100">Add to your calendar instantly</div>
+                    <div className="text-sm text-primary-100">Add to your calendar instantly</div>
                   </div>
                 </div>
               </div>
@@ -265,11 +275,11 @@ export default function DiscoverPage() {
           </div>
         ) : (
           // Compact reminder for returning users
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-8">
             <div className="flex items-center gap-3">
               <span className="text-2xl">💡</span>
               <div className="flex-1">
-                <p className="text-sm text-blue-900">
+                <p className="text-sm text-primary-900">
                   <span className="font-semibold">Discover</span> searches local parks & rec, libraries, museums, and event sites to find activities personalized for your family.
                 </p>
               </div>
@@ -278,7 +288,7 @@ export default function DiscoverPage() {
         )}
 
         {/* Discovery Banner */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+        <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-8 mb-8">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -358,6 +368,33 @@ export default function DiscoverPage() {
                 </div>
               </div>
 
+              {/* Discovery Keyword */}
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  What are you looking for? (Optional)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={discoveryKeyword}
+                    onChange={(e) => setDiscoveryKeyword(e.target.value)}
+                    placeholder="e.g., Christmas lights, STEM activities, soccer leagues, art classes..."
+                    className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition"
+                  />
+                  <svg
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-gray-500 mt-1.5">
+                  💡 Help the AI find specific types of activities - leave blank for general search
+                </p>
+              </div>
+
               <button
                 onClick={handleDiscoverActivities}
                 disabled={isDiscovering || !location}
@@ -416,48 +453,103 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className={`px-5 py-2.5 rounded-lg font-semibold transition-all whitespace-nowrap border ${
-                filter === cat
-                  ? "bg-primary-600 text-white border-primary-600 shadow-sm"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:bg-primary-50"
-              }`}
+        {/* Filter Controls */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          {/* Search Bar */}
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Filter results... (e.g., Christmas, STEM, soccer)"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+              />
+              <svg
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {searchKeyword && (
+                <button
+                  onClick={() => setSearchKeyword("")}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Category Dropdown */}
+          <div className="sm:w-64">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white"
             >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              {cat === "all" && ` (${suggestedActivities.length})`}
-            </button>
-          ))}
+              <option value="all">All Categories ({suggestedActivities.length})</option>
+              {uniqueCategories.map((cat) => (
+                <option key={cat} value={cat?.toLowerCase()}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Activity Cards */}
         {suggestedActivities.length > 0 ? (
           (() => {
-            const filteredActivities = suggestedActivities.filter(
-              activity => filter === "all" || activity.category?.toLowerCase() === filter
-            );
+            const filteredActivities = suggestedActivities.filter(activity => {
+              // Filter by category
+              const matchesCategory = filter === "all" || activity.category?.toLowerCase() === filter;
+
+              // Filter by search keyword
+              const matchesSearch = !searchKeyword ||
+                activity.title?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                activity.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                activity.category?.toLowerCase().includes(searchKeyword.toLowerCase());
+
+              return matchesCategory && matchesSearch;
+            });
 
             // Show empty state if filter returns no results
             if (filteredActivities.length === 0) {
               return (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-12 text-center">
                   <div className="text-6xl mb-4 opacity-40">🔍</div>
                   <h2 className="text-xl font-bold text-gray-900 mb-2">
-                    No {filter} activities found
+                    No activities found
+                    {searchKeyword && ` for "${searchKeyword}"`}
+                    {filter !== "all" && ` in ${filter}`}
                   </h2>
                   <p className="text-gray-600 mb-6">
-                    Try selecting a different category or search for more activities in your area.
+                    Try adjusting your search or category filters.
                   </p>
-                  <button
-                    onClick={() => setFilter("all")}
-                    className="px-6 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
-                  >
-                    View All Activities
-                  </button>
+                  <div className="flex gap-3 justify-center">
+                    {searchKeyword && (
+                      <button
+                        onClick={() => setSearchKeyword("")}
+                        className="px-6 py-2.5 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+                      >
+                        Clear Search
+                      </button>
+                    )}
+                    {filter !== "all" && (
+                      <button
+                        onClick={() => setFilter("all")}
+                        className="px-6 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+                      >
+                        View All Categories
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             }
@@ -465,7 +557,7 @@ export default function DiscoverPage() {
             return (
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredActivities.map((activity) => (
-                <div key={activity._id} className="bg-white rounded-xl shadow-soft hover:shadow-medium transition-all border border-gray-200">
+                <div key={activity._id} className="bg-white rounded-2xl shadow-soft hover:shadow-medium transition-all border border-gray-200">
                   <div className="p-6 space-y-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -653,7 +745,7 @@ export default function DiscoverPage() {
           })()
         ) : (
           /* Empty State - Show Examples */
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-soft border border-gray-200 overflow-hidden">
             <div className="p-12 text-center border-b border-gray-200">
               <div className="text-7xl mb-6 opacity-40">🔍</div>
               <h2 className="text-2xl font-bold text-gray-900 mb-3">

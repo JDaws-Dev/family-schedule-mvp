@@ -447,7 +447,7 @@ export default function Onboarding() {
 
               <div className="space-y-6">
                 {familyMembers.map((member, index) => (
-                  <div key={index} className="border-2 border-purple-200 bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
+                  <div key={index} className="border-2 border-purple-200 bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-soft hover:shadow-medium transition-all">
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-gradient-to-br from-secondary-400 to-secondary-600 rounded-full flex items-center justify-center shadow-md">
@@ -564,7 +564,7 @@ export default function Onboarding() {
 
               <div className="space-y-6">
                 {familyMembers.filter(m => m.name.trim()).map((member, index) => (
-                  <div key={index} className="border-3 border-amber-300 bg-gradient-to-br from-white to-amber-50 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all">
+                  <div key={index} className="border-3 border-amber-300 bg-gradient-to-br from-white to-amber-50 rounded-2xl p-8 shadow-soft hover:shadow-medium transition-all">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
                         <span className="text-3xl">
@@ -1047,15 +1047,7 @@ export default function Onboarding() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex items-center justify-between pt-8 border-t border-gray-200 mt-8">
-            <button
-              onClick={handleSkip}
-              disabled={isCompleting}
-              className="text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed underline"
-            >
-              I'll do this later
-            </button>
-
+          <div className="flex items-center justify-end pt-8 border-t border-gray-200 mt-8">
             <div className="flex gap-3">
               {currentStep > 1 && !isCompleting && (
                 <button
@@ -1068,7 +1060,7 @@ export default function Onboarding() {
               {currentStep < totalSteps ? (
                 <button
                   onClick={handleNext}
-                  className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg transform hover:scale-105"
+                  className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-soft hover:shadow-medium transform hover:scale-105"
                 >
                   {currentStep === 1 ? "Let's Go! →" : currentStep === 2 ? "Share Your Interests! →" : currentStep === 3 ? "Connect My Emails! →" : currentStep === 4 ? "Choose My Calendar! →" : currentStep === 5 ? "Set Up Notifications! →" : "Continue →"}
                 </button>
@@ -1076,7 +1068,7 @@ export default function Onboarding() {
                 <button
                   onClick={handleFinalComplete}
                   disabled={isCompleting}
-                  className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
+                  className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-soft hover:shadow-medium transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
                 >
                   {isCompleting ? (
                     <>
@@ -1101,7 +1093,7 @@ export default function Onboarding() {
         {/* Celebration Modal */}
         {showCelebration && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl animate-scaleIn">
+            <div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-strong animate-scaleIn">
               <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-5xl">🎊</span>
               </div>
