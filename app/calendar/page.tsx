@@ -636,7 +636,7 @@ function CalendarContent() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-700 mr-2">View:</span>
                   <div className="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-1">
-                    {(['month', 'week', 'day', 'list', 'agenda'] as ExtendedView[]).map((v) => (
+                    {(['month', 'week', 'day', 'list'] as ExtendedView[]).map((v) => (
                       <button
                         key={v}
                         onClick={() => setView(v)}
@@ -697,7 +697,6 @@ function CalendarContent() {
                     {view === 'month' && format(date, 'MMMM yyyy')}
                     {view === 'week' && `Week of ${format(date, 'MMM d, yyyy')}`}
                     {view === 'day' && format(date, 'MMMM d, yyyy')}
-                    {view === 'agenda' && 'Upcoming Events'}
                   </span>
                 </div>
               </div>
@@ -939,7 +938,7 @@ function CalendarContent() {
                 onView={(newView) => setView(newView)}
                 date={date}
                 onNavigate={(newDate) => setDate(newDate)}
-                views={["month", "week", "day", "agenda"]}
+                views={["month", "week", "day"]}
                 popup
                 min={new Date(2025, 0, 1, 6, 0, 0)} // Show from 6am
                 max={new Date(2025, 0, 1, 23, 59, 59)} // Show until 11:59pm
