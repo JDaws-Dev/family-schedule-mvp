@@ -565,8 +565,8 @@ export default function ReviewPage() {
 
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
-      case "high": return "bg-green-100 text-green-800 border-green-300";
-      case "medium": return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      case "high": return "bg-primary-100 text-primary-800 border-primary-300";
+      case "medium": return "bg-secondary-100 text-secondary-800 border-secondary-300";
       case "low": return "bg-red-100 text-red-800 border-red-300";
       default: return "bg-gray-100 text-gray-800 border-gray-300";
     }
@@ -632,7 +632,7 @@ export default function ReviewPage() {
 
         {/* Undo Dismiss Banner */}
         {recentlyDismissed && (
-          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
+          <div className="mb-6 bg-secondary-50 border border-secondary-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
               <span className="text-2xl">↩️</span>
               <div>
@@ -644,7 +644,7 @@ export default function ReviewPage() {
             </div>
             <button
               onClick={handleUndoDismiss}
-              className="px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+              className="px-4 py-2 bg-secondary-600 text-white rounded-lg font-semibold hover:bg-secondary-700 transition"
             >
               Undo
             </button>
@@ -653,17 +653,17 @@ export default function ReviewPage() {
 
         {/* Scanning Progress Indicator */}
         {isScanning && (
-          <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+          <div className="mb-6 p-4 bg-primary-50 border-2 border-primary-300 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-primary-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-blue-900">Scanning your inbox...</p>
-                <p className="text-sm text-blue-700 mt-0.5">Looking for events in your recent emails. This may take a moment.</p>
+                <p className="font-semibold text-primary-900">Scanning your inbox...</p>
+                <p className="text-sm text-primary-700 mt-0.5">Looking for events in your recent emails. This may take a moment.</p>
               </div>
             </div>
           </div>
@@ -673,7 +673,7 @@ export default function ReviewPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <button
             onClick={() => setShowAddEventModal(true)}
-            className="text-left px-4 py-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
+            className="text-left px-4 py-4 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -697,7 +697,7 @@ export default function ReviewPage() {
               setShowAddEventModal(true);
               setAddEventTab("paste");
             }}
-            className="text-left px-4 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
+            className="text-left px-4 py-4 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -719,7 +719,7 @@ export default function ReviewPage() {
           <button
             onClick={handleScanEmail}
             disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
-            className="text-left px-4 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
+            className="text-left px-4 py-4 bg-gradient-to-r from-accent-400 to-accent-500 hover:from-accent-500 hover:to-accent-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -748,7 +748,7 @@ export default function ReviewPage() {
           <button
             onClick={() => setShowSearchEmailsModal(true)}
             disabled={!gmailAccounts || gmailAccounts.length === 0}
-            className="text-left px-4 py-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
+            className="text-left px-4 py-4 bg-gradient-to-r from-accent-400 to-accent-500 hover:from-accent-500 hover:to-accent-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -770,24 +770,24 @@ export default function ReviewPage() {
 
         {/* Scan Completion Message */}
         {scanMessage && !isScanning && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
+          <div className="mb-6 p-4 bg-primary-50 border border-primary-200 rounded-lg text-primary-800">
             {scanMessage}
           </div>
         )}
 
         {/* Approval Success Message with Undo */}
         {approvedEventId && recentlyApproved && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
+          <div className="mb-6 bg-primary-50 border border-primary-200 rounded-lg p-4 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
               <span className="text-2xl">✓</span>
               <div>
-                <p className="font-semibold text-green-900">Event approved and synced to Google Calendar</p>
-                <p className="text-sm text-green-700">The event has been added to your calendar</p>
+                <p className="font-semibold text-primary-900">Event approved and synced to Google Calendar</p>
+                <p className="text-sm text-primary-700">The event has been added to your calendar</p>
               </div>
             </div>
             <button
               onClick={handleUndoApprove}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
             >
               Undo
             </button>
@@ -823,7 +823,7 @@ export default function ReviewPage() {
                           }
                           setSelectedEvents(new Set());
                         }}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
                       >
                         Approve Selected ({selectedEvents.size})
                       </button>
@@ -862,7 +862,7 @@ export default function ReviewPage() {
                             await handleApprove(event._id);
                           }
                         }}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
                       >
                         Approve All
                       </button>
@@ -907,8 +907,8 @@ export default function ReviewPage() {
               <h3 className="font-semibold text-gray-900 mb-4 text-center">How events get here:</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
                     </svg>
                   </div>
@@ -918,7 +918,7 @@ export default function ReviewPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                     <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
@@ -943,7 +943,7 @@ export default function ReviewPage() {
               </Link>
               <button
                 onClick={() => setShowAddEventModal(true)}
-                className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-lg font-semibold transition inline-flex items-center justify-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 text-white rounded-lg font-semibold transition inline-flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1023,8 +1023,8 @@ export default function ReviewPage() {
 
                   {/* Event Description */}
                   {event.description && (
-                    <div className="bg-blue-50 rounded-lg p-3 mb-4 text-sm">
-                      <div className="font-medium text-blue-900 mb-1">Details:</div>
+                    <div className="bg-primary-50 rounded-lg p-3 mb-4 text-sm">
+                      <div className="font-medium text-primary-900 mb-1">Details:</div>
                       <div className="text-gray-700">{event.description}</div>
                     </div>
                   )}
@@ -1046,7 +1046,7 @@ export default function ReviewPage() {
                             href={`https://mail.google.com/mail/#search/${encodeURIComponent(`subject:"${event.sourceEmailSubject}" in:${gmailAccounts.find(a => a._id === event.sourceGmailAccountId)?.gmailEmail || 'anywhere'}`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition font-medium whitespace-nowrap self-start"
+                            className="flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 transition font-medium whitespace-nowrap self-start"
                             title={`Search for this email in ${gmailAccounts.find(a => a._id === event.sourceGmailAccountId)?.gmailEmail || 'Gmail'}. Make sure you're signed into ${gmailAccounts.find(a => a._id === event.sourceGmailAccountId)?.gmailEmail || 'the correct account'} in Gmail first.`}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1063,7 +1063,7 @@ export default function ReviewPage() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={() => handleApprove(event._id)}
-                      className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition flex items-center justify-center gap-2"
                     >
                       Approve & Add to Calendar
                     </button>
@@ -1420,12 +1420,12 @@ export default function ReviewPage() {
             <div className="p-4 sm:p-6">
               {addEventTab === "paste" ? (
                 <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 mb-6">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-primary-200 rounded-xl p-6 mb-6">
                     <div className="flex items-start gap-4">
                       <div className="text-4xl">✨</div>
                       <div>
-                        <h3 className="font-bold text-green-900 mb-2 text-lg">Smart Event Extraction</h3>
-                        <p className="text-green-800 text-sm leading-relaxed">
+                        <h3 className="font-bold text-primary-900 mb-2 text-lg">Smart Event Extraction</h3>
+                        <p className="text-primary-800 text-sm leading-relaxed">
                           Simply paste any text containing event details and we'll automatically extract the information for you.
                         </p>
                       </div>
@@ -1441,7 +1441,7 @@ export default function ReviewPage() {
                       onChange={(e) => setPastedText(e.target.value)}
                       placeholder="Paste any text here... For example:&#10;&#10;Soccer practice this Saturday at 9am at City Park&#10;&#10;Piano recital - Dec 15th at 7pm, Community Center&#10;&#10;Birthday party for Emma next Sunday 2pm at Chuck E Cheese"
                       rows={10}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition font-mono text-sm resize-none"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-primary-500 transition font-mono text-sm resize-none"
                     />
                   </div>
 
@@ -1450,7 +1450,7 @@ export default function ReviewPage() {
                       type="button"
                       onClick={handleExtractFromPaste}
                       disabled={isExtractingEvent || !pastedText.trim()}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-500/30"
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/30"
                     >
                       {isExtractingEvent ? (
                         <span className="flex items-center justify-center gap-2">
