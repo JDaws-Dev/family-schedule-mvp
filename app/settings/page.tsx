@@ -408,7 +408,7 @@ function SettingsContent() {
     }
 
     setIsScanning(true);
-    setScanMessage("Checking all accounts...");
+    setScanMessage("Checking all your emails for schedules...");
 
     let totalEventsFound = 0;
     let totalMessagesScanned = 0;
@@ -435,7 +435,7 @@ function SettingsContent() {
       }
 
       setScanMessage(
-        `Done! Found ${totalEventsFound} event(s) from ${totalMessagesScanned} messages across ${gmailAccounts.length} account(s).`
+        `✓ Done! Found ${totalEventsFound} event(s) from ${totalMessagesScanned} emails across ${gmailAccounts.length} account(s).`
       );
       setTimeout(() => setScanMessage(""), 8000);
     } catch (error) {

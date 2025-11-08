@@ -954,7 +954,7 @@ function DashboardContent() {
 
                     <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
                       <p className="text-sm text-gray-700 text-center">
-                        👉 Use <strong>Quick Actions</strong> on the right to get started!
+                        👉 Use the buttons on the right to add your first event!
                       </p>
                     </div>
                   </div>
@@ -1015,11 +1015,11 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Add Event Options */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-soft p-6 mb-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Quick Actions
+                Add an Event
               </h2>
               <div className="space-y-3">
                 <button
