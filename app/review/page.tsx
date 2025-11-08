@@ -681,9 +681,15 @@ export default function ReviewPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Review Events
-          </h1>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Review Events
+            </h1>
+            <HelpTooltip
+              content="We found these events in your emails! Review them to make sure they're correct before adding them to your calendar. You can approve, edit, or dismiss each one."
+              position="right"
+            />
+          </div>
           <p className="text-gray-600">
             Approve, edit, or dismiss events found in your emails
           </p>
