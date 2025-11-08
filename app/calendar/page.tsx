@@ -7,7 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import MobileNav from "@/app/components/MobileNav";
 import BottomNav from "@/app/components/BottomNav";
 import { useToast } from "@/app/components/Toast";
@@ -107,6 +107,7 @@ type ExtendedView = View | "list";
 
 function CalendarContent() {
   const { showToast } = useToast();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [view, setView] = useState<ExtendedView>("list");
   const [date, setDate] = useState(new Date());
@@ -536,6 +537,19 @@ function CalendarContent() {
     setSelectedEvent(event.resource);
   };
 
+  // Handle clicking on empty calendar slot to add new event
+  const handleSelectSlot = (slotInfo: any) => {
+    // Format the selected date as YYYY-MM-DD
+    const selectedDate = new Date(slotInfo.start);
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    // Navigate to review page with the date pre-filled
+    router.push(`/review?addEvent=true&date=${formattedDate}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
@@ -808,25 +822,36 @@ function CalendarContent() {
               </div>
             ) : (
               <>
-                {/* Filter Toggle */}
+                {/* Filter Toggle and Add Event Button */}
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                        showUpcomingOnly ? 'bg-primary-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <span className="sr-only">Toggle upcoming only</span>
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          showUpcomingOnly ? 'translate-x-6' : 'translate-x-1'
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                          showUpcomingOnly ? 'bg-primary-600' : 'bg-gray-300'
                         }`}
-                      />
-                    </button>
-                    <span className="text-sm font-medium text-gray-700">
-                      {showUpcomingOnly ? 'Showing upcoming events only' : 'Showing all events'}
-                    </span>
+                      >
+                        <span className="sr-only">Toggle upcoming only</span>
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            showUpcomingOnly ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <span className="text-sm font-medium text-gray-700">
+                        {showUpcomingOnly ? 'Showing upcoming events only' : 'Showing all events'}
+                      </span>
+                    </div>
+                    <Link
+                      href="/review"
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span>Add Event</span>
+                    </Link>
                   </div>
                 </div>
 
@@ -933,6 +958,8 @@ function CalendarContent() {
                 endAccessor="end"
                 style={{ height: "100%" }}
                 onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                selectable
                 eventPropGetter={eventStyleGetter}
                 view={view as View}
                 onView={(newView) => setView(newView)}
