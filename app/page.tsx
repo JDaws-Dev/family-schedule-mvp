@@ -230,72 +230,112 @@ export default function Home() {
           </div>
         </div>
 
-        {/* What's New - Featured Updates */}
+        {/* Powerful Features Showcase */}
         <div className="mb-20">
-          <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600 rounded-3xl p-1 shadow-lifted">
+          <div className="bg-gradient-to-br from-primary-600 via-secondary-500 to-primary-700 rounded-3xl p-1 shadow-lifted">
             <div className="bg-white rounded-[22px] p-8 md:p-12">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-sm font-bold text-purple-700 mb-4">
+              <div className="text-center mb-10">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-full text-sm font-bold text-primary-700 mb-4">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"/>
                   </svg>
-                  NEW & IMPROVED
+                  POWERFUL FEATURES
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                  Now Even Better on Mobile
+                <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
+                  Your family's activities,<br/>automatically organized
                 </h2>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  We've added powerful new features to make managing your family's schedule faster, smoother, and more delightful
+                <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+                  From AI-powered email scanning to instant notifications—every feature is designed to save you time and mental energy
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl border-2 border-purple-200 hover:border-purple-400 transition-all hover:shadow-lg group">
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">👆</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Swipe to Delete</h3>
-                  <p className="text-sm text-gray-700">
-                    Swipe left on any event to delete it, or swipe right to mark actions complete. Lightning fast on mobile!
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                {/* Email Scanning */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-7 rounded-2xl border-2 border-blue-200 hover:border-blue-400 transition-all hover:shadow-lg group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      📧
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Auto Email Scanning</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    AI automatically scans your Gmail for practice schedules, game times, lessons, and activities. We extract dates, times, locations, and add them to your calendar—no typing needed.
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-200 hover:border-blue-400 transition-all hover:shadow-lg group">
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">✅</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Bulk Operations</h3>
-                  <p className="text-sm text-gray-700">
-                    Select multiple events and delete them all at once. Perfect for clearing out old activities!
+                {/* Add Events Multiple Ways */}
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-7 rounded-2xl border-2 border-purple-200 hover:border-purple-400 transition-all hover:shadow-lg group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      ➕
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Add Events Your Way</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    Paste text, snap a photo of a flyer, record a voice memo, or type manually. AI extracts the event details and shows you an editable form instantly. Pick what works best for you!
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-2xl border-2 border-green-200 hover:border-green-400 transition-all hover:shadow-lg group">
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">↩️</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Undo Deletes</h3>
-                  <p className="text-sm text-gray-700">
-                    Deleted something by mistake? No problem! You get 10 seconds to undo any deletion with one tap.
+                {/* Live Calendar Sync */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-7 rounded-2xl border-2 border-green-200 hover:border-green-400 transition-all hover:shadow-lg group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      🔄
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Live Calendar Sync</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    Events automatically push to Google Calendar the moment you confirm them. Changes sync instantly across all your devices. Always up-to-date, everywhere.
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-50 to-red-50 p-6 rounded-2xl border-2 border-orange-200 hover:border-orange-400 transition-all hover:shadow-lg group">
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🤖</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">AI Instant Preview</h3>
-                  <p className="text-sm text-gray-700">
-                    Upload a photo or use your voice—AI extracts the details and shows you an editable form instantly!
+                {/* Smart Notifications */}
+                <div className="bg-gradient-to-br from-orange-50 to-red-50 p-7 rounded-2xl border-2 border-orange-200 hover:border-orange-400 transition-all hover:shadow-lg group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      🔔
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Smart Notifications</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    Get email and SMS reminders before each activity. Choose your timing—1 hour, 1 day, or custom. Never forget another practice or miss another drop-off again.
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-6 rounded-2xl border-2 border-yellow-200 hover:border-yellow-400 transition-all hover:shadow-lg group">
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">📅</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Date Filtering</h3>
-                  <p className="text-sm text-gray-700">
-                    View just today's events, this week, or this month. Find what you need in seconds, not minutes.
+                {/* Local Event Discovery */}
+                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-7 rounded-2xl border-2 border-yellow-200 hover:border-yellow-400 transition-all hover:shadow-lg group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      🎪
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Discover Local Events</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    Find activities, camps, classes, and events happening in your area. Filter by age, interest, and date. Add them to your calendar with one tap. Never run out of ideas!
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-pink-50 to-rose-50 p-6 rounded-2xl border-2 border-pink-200 hover:border-pink-400 transition-all hover:shadow-lg group">
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">✨</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Beautiful Animations</h3>
-                  <p className="text-sm text-gray-700">
-                    Smooth micro-animations, enhanced shadows, and delightful interactions make every tap feel great!
+                {/* Family Sharing */}
+                <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-7 rounded-2xl border-2 border-teal-200 hover:border-teal-400 transition-all hover:shadow-lg group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                      👨‍👩‍👧‍👦
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Shared Family Calendar</h3>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    Both parents see every event in real-time. No more "I thought YOU knew!" moments. Update once, everyone sees it instantly. Finally on the same page!
                   </p>
+                </div>
+              </div>
+
+              {/* Mobile Optimized Badge */}
+              <div className="mt-8 text-center">
+                <div className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-sm font-semibold text-purple-700">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                  Mobile-optimized with swipe gestures, bulk operations, and instant undo
                 </div>
               </div>
             </div>
@@ -482,61 +522,55 @@ export default function Home() {
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Automatic email scanning with AI</span>
+                    <span className="text-gray-700">AI-powered email scanning for all activities</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">
-                      <span className="font-semibold text-purple-600">NEW:</span> Photo & voice AI extraction
-                    </span>
+                    <span className="text-gray-700">Add events via text, photo, voice, or manual entry</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">
-                      <span className="font-semibold text-purple-600">NEW:</span> Swipe gestures & bulk operations
-                    </span>
+                    <span className="text-gray-700">Auto-sync to Google Calendar in real-time</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Shared family calendar for both parents</span>
+                    <span className="text-gray-700">Email & SMS notifications before each event</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Multiple email accounts supported</span>
+                    <span className="text-gray-700">Discover local activities, camps & classes</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Email & text reminders</span>
+                    <span className="text-gray-700">Shared calendar for both parents</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Google Calendar sync</span>
+                    <span className="text-gray-700">Multiple email accounts & family members</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">Unlimited events</span>
+                    <span className="text-gray-700">Swipe gestures, bulk ops & instant undo</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                     </svg>
-                    <span className="text-gray-700">
-                      <span className="font-semibold text-purple-600">NEW:</span> Mobile-optimized with swipe & touch
-                    </span>
+                    <span className="text-gray-700">Unlimited events & family members</span>
                   </li>
                 </ul>
 
