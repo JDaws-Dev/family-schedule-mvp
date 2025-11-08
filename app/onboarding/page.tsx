@@ -425,6 +425,31 @@ export default function Onboarding() {
                       </ul>
                     </div>
 
+                    <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
+                      <div className="flex gap-3">
+                        <span className="text-2xl">📅</span>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-sm mb-2">What happens to your calendar?</h4>
+                          <div className="text-sm text-gray-700 space-y-2">
+                            <p className="font-medium text-blue-900">After connecting your email, you'll choose:</p>
+                            <div className="ml-4 space-y-1.5">
+                              <p className="flex items-start gap-2">
+                                <span className="text-blue-600">1.</span>
+                                <span><strong>Use an existing calendar</strong> - Select any calendar you already have. We'll add events to it (we won't delete or modify anything already there!)</span>
+                              </p>
+                              <p className="flex items-start gap-2">
+                                <span className="text-blue-600">2.</span>
+                                <span><strong>Create a new calendar</strong> - We'll make a fresh "Family Activities" calendar just for these events. Your existing calendars stay exactly as they are.</span>
+                              </p>
+                            </div>
+                            <p className="mt-3 text-blue-900 font-medium">
+                              Either way, your existing calendars and events are 100% safe. You're in complete control! ✨
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                       <div className="flex gap-3">
                         <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
