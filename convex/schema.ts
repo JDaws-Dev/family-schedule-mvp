@@ -100,6 +100,33 @@ export default defineSchema({
     actionDescription: v.optional(v.string()),
     actionCompleted: v.optional(v.boolean()),
     isConfirmed: v.boolean(), // User has confirmed the extracted event
+    // Recurring events
+    isRecurring: v.optional(v.boolean()), // Whether this event repeats
+    recurrencePattern: v.optional(v.union(
+      v.literal("daily"),
+      v.literal("weekly"),
+      v.literal("monthly"),
+      v.literal("yearly")
+    )), // How it repeats
+    recurrenceInterval: v.optional(v.number()), // e.g., 1 for weekly, 2 for biweekly
+    recurrenceDaysOfWeek: v.optional(v.array(v.union(
+      v.literal("Sunday"),
+      v.literal("Monday"),
+      v.literal("Tuesday"),
+      v.literal("Wednesday"),
+      v.literal("Thursday"),
+      v.literal("Friday"),
+      v.literal("Saturday")
+    ))), // For weekly recurrence
+    recurrenceEndType: v.optional(v.union(
+      v.literal("date"), // Ends on specific date
+      v.literal("count"), // Ends after N occurrences
+      v.literal("never") // Never ends (or ends far in future)
+    )),
+    recurrenceEndDate: v.optional(v.string()), // YYYY-MM-DD when recurrence stops
+    recurrenceEndCount: v.optional(v.number()), // How many occurrences total
+    parentRecurringEventId: v.optional(v.id("events")), // Link to parent recurring event for instances
+    isRecurringInstance: v.optional(v.boolean()), // True if this is an instance of a recurring event
     // Google Calendar sync
     googleCalendarEventId: v.optional(v.string()), // For two-way sync
     lastSyncedAt: v.optional(v.number()),
@@ -107,7 +134,8 @@ export default defineSchema({
     .index("by_family", ["familyId"])
     .index("by_family_and_date", ["familyId", "eventDate"])
     .index("by_confirmed", ["isConfirmed"])
-    .index("by_google_event_id", ["googleCalendarEventId"]),
+    .index("by_google_event_id", ["googleCalendarEventId"])
+    .index("by_parent_recurring_event", ["parentRecurringEventId"]),
 
   emailProcessingLog: defineTable({
     gmailAccountId: v.id("gmailAccounts"), // Which Gmail account this email came from
