@@ -11,7 +11,6 @@ import MobileNav from "@/app/components/MobileNav";
 import BottomNav from "@/app/components/BottomNav";
 import { EventCardSkeleton } from "@/app/components/LoadingSkeleton";
 import { useToast } from "@/app/components/Toast";
-import HelpTooltip from "@/app/components/HelpTooltip";
 import CelebrationToast from "@/app/components/CelebrationToast";
 import PhotoUploadModal from "@/app/components/PhotoUploadModal";
 import VoiceRecordModal from "@/app/components/VoiceRecordModal";
@@ -1059,17 +1058,11 @@ export default function ReviewPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Review Events
-            </h1>
-            <HelpTooltip
-              content="We found these events in your emails! Review them to make sure they're correct before adding them to your calendar. You can approve, edit, or dismiss each one."
-              position="right"
-            />
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Events
+          </h1>
           <p className="text-gray-600">
-            Approve, edit, or dismiss events found in your emails
+            Add new events or review events found in your emails
           </p>
         </div>
 
@@ -1159,7 +1152,7 @@ export default function ReviewPage() {
             {/* Inline Option Buttons */}
             <div className="border-t-2 border-purple-200 pt-4">
               <p className="text-sm font-semibold text-gray-700 mb-3">Or add events using:</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 <button
                   onClick={() => setShowVoiceRecordModal(true)}
                   className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all shadow-sm hover:shadow-md group"
@@ -1207,26 +1200,6 @@ export default function ReviewPage() {
                     </svg>
                   </div>
                   <span className="text-sm font-semibold text-gray-700">Manual</span>
-                </button>
-
-                <button
-                  onClick={handleScanEmail}
-                  disabled={isScanning}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-pink-400 hover:bg-pink-50 transition-all shadow-sm hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-pink-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    {isScanning ? (
-                      <svg className="w-6 h-6 text-pink-600 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">Scan Emails</span>
                 </button>
 
                 <button

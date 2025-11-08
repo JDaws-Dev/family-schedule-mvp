@@ -186,3 +186,16 @@ export const getGmailAccountById = query({
     return await ctx.db.get(args.accountId);
   },
 });
+
+// Get Gmail account by email address (for push notifications)
+export const getByEmail = query({
+  args: {
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("gmailAccounts")
+      .withIndex("by_gmail_email", (q) => q.eq("gmailEmail", args.email))
+      .first();
+  },
+});
