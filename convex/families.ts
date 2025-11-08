@@ -29,6 +29,16 @@ export const getFamilyById = query({
   },
 });
 
+// Alias for getFamilyById (used by sync endpoints)
+export const getFamily = query({
+  args: {
+    familyId: v.id("families"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.familyId);
+  },
+});
+
 // Get all users in a family
 export const getFamilyMembers = query({
   args: {
@@ -50,6 +60,10 @@ export const updateFamilyDetails = mutation({
     familyId: v.id("families"),
     name: v.optional(v.string()),
     primaryEmail: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    enableSmsNotifications: v.optional(v.boolean()),
+    emailDigestFrequency: v.optional(v.union(v.literal("none"), v.literal("daily"), v.literal("weekly"))),
+    location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { familyId, ...updates } = args;
@@ -58,6 +72,10 @@ export const updateFamilyDetails = mutation({
     const filteredUpdates: any = {};
     if (updates.name !== undefined) filteredUpdates.name = updates.name;
     if (updates.primaryEmail !== undefined) filteredUpdates.primaryEmail = updates.primaryEmail;
+    if (updates.phoneNumber !== undefined) filteredUpdates.phoneNumber = updates.phoneNumber;
+    if (updates.enableSmsNotifications !== undefined) filteredUpdates.enableSmsNotifications = updates.enableSmsNotifications;
+    if (updates.emailDigestFrequency !== undefined) filteredUpdates.emailDigestFrequency = updates.emailDigestFrequency;
+    if (updates.location !== undefined) filteredUpdates.location = updates.location;
 
     await ctx.db.patch(familyId, filteredUpdates);
 
@@ -282,5 +300,58 @@ export const updateSelectedCalendar = mutation({
     });
 
     return { success: true };
+  },
+});
+
+// Add custom category to family
+export const addCustomCategory = mutation({
+  args: {
+    familyId: v.id("families"),
+    category: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const family = await ctx.db.get(args.familyId);
+    if (!family) {
+      throw new Error("Family not found");
+    }
+
+    const existingCategories = family.customCategories || [];
+
+    // Check if category already exists (case-insensitive)
+    const categoryExists = existingCategories.some(
+      (c) => c.toLowerCase() === args.category.toLowerCase()
+    );
+
+    if (categoryExists) {
+      return { success: true, message: "Category already exists" };
+    }
+
+    // Add new category
+    await ctx.db.patch(args.familyId, {
+      customCategories: [...existingCategories, args.category],
+    });
+
+    return { success: true, message: "Category added" };
+  },
+});
+
+// Get all categories (default + custom) for a family
+export const getAllCategories = query({
+  args: {
+    familyId: v.id("families"),
+  },
+  handler: async (ctx, args) => {
+    const family = await ctx.db.get(args.familyId);
+    if (!family) {
+      return {
+        defaultCategories: ["Sports", "Lessons", "School", "Appointments", "Other"],
+        customCategories: [],
+      };
+    }
+
+    return {
+      defaultCategories: ["Sports", "Lessons", "School", "Appointments", "Other"],
+      customCategories: family.customCategories || [],
+    };
   },
 });

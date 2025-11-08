@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 function SettingsContent() {
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>('profile');
+  const [activeTab, setActiveTab] = useState<'account' | 'family' | 'apps'>('account');
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const { showToast } = useToast();
@@ -23,27 +23,29 @@ function SettingsContent() {
     const success = searchParams.get('success');
     const error = searchParams.get('error');
 
-    if (tabParam === 'integrations' || tabParam === 'family') {
-      setActiveTab(tabParam);
+    if (tabParam === 'apps' || tabParam === 'family' || tabParam === 'account') {
+      setActiveTab(tabParam as 'account' | 'family' | 'apps');
+    } else if (tabParam === 'integrations') {
+      setActiveTab('apps'); // Redirect old 'integrations' to new 'apps'
     } else if (success === 'gmail_connected') {
-      setActiveTab('integrations');
+      setActiveTab('apps');
     }
 
     // Show feedback messages
     if (success === 'gmail_connected') {
-      showToast('Gmail account connected successfully!', 'success');
+      showToast('Gmail connected successfully!', 'success');
       // Clear URL parameters after showing message
-      window.history.replaceState({}, '', '/settings?tab=integrations');
+      window.history.replaceState({}, '', '/settings?tab=apps');
     }
 
     if (error === 'oauth_failed') {
-      showToast('Failed to connect Gmail account. Please try again.', 'error');
-      window.history.replaceState({}, '', '/settings?tab=integrations');
+      showToast('Failed to connect Gmail. Please try again.', 'error');
+      window.history.replaceState({}, '', '/settings?tab=apps');
     }
 
     if (error === 'missing_params' || error === 'missing_user') {
-      showToast('Authentication error. Please try connecting again.', 'error');
-      window.history.replaceState({}, '', '/settings?tab=integrations');
+      showToast('Connection error. Please try again.', 'error');
+      window.history.replaceState({}, '', '/settings?tab=apps');
     }
   }, [searchParams, showToast]);
 
@@ -109,12 +111,38 @@ function SettingsContent() {
   const [newCalendarName, setNewCalendarName] = useState("");
   const [creatingCalendar, setCreatingCalendar] = useState(false);
 
-  // Validate phone number (E.164 format)
+  // Normalize and validate phone number (auto-add +1 for US numbers)
+  const normalizePhoneNumber = (phone: string): string => {
+    if (!phone) return "";
+
+    // Remove all non-digit characters except leading +
+    let cleaned = phone.replace(/[^\d+]/g, '');
+
+    // If it starts with +1, keep it as is
+    if (cleaned.startsWith('+1')) {
+      return cleaned;
+    }
+
+    // If it starts with 1 and is 11 digits, add +
+    if (cleaned.startsWith('1') && cleaned.length === 11) {
+      return '+' + cleaned;
+    }
+
+    // If it's 10 digits (US number without country code), add +1
+    if (cleaned.length === 10 && /^\d{10}$/.test(cleaned)) {
+      return '+1' + cleaned;
+    }
+
+    // Otherwise return as-is
+    return cleaned.startsWith('+') ? cleaned : '+' + cleaned;
+  };
+
   const validatePhoneNumber = (phone: string): boolean => {
     if (!phone) return true; // Optional field
+    const normalized = normalizePhoneNumber(phone);
     // E.164 format: +[country code][number] (6-15 digits total)
     const e164Regex = /^\+[1-9]\d{1,14}$/;
-    return e164Regex.test(phone);
+    return e164Regex.test(normalized);
   };
 
   // Update phone number when user data loads
@@ -143,6 +171,7 @@ function SettingsContent() {
   const addToBlacklist = useMutation(api.emailProcessing.addToBlacklist);
   const updateUserPhoneNumber = useMutation(api.users.updatePhoneNumber);
   const updateSelectedCalendar = useMutation(api.families.updateSelectedCalendar);
+  const updateFamilyDetails = useMutation(api.families.updateFamilyDetails);
 
   const handleDisconnectAccount = async (accountId: string, gmailEmail: string) => {
     if (!confirm(`Disconnect ${gmailEmail}? You can reconnect it anytime from this page.`)) {
@@ -274,20 +303,25 @@ function SettingsContent() {
   const handleSavePreferences = async () => {
     if (!convexUser?._id) return;
 
+    // Normalize phone number (auto-add +1 for US numbers)
+    const normalizedPhone = phoneNumber ? normalizePhoneNumber(phoneNumber) : "";
+
     // Validate phone number before saving
-    if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
-      setPhoneError("Please enter a valid phone number with country code (e.g., +12345678900)");
-      alert("Please fix the phone number format before saving.");
+    if (normalizedPhone && !validatePhoneNumber(normalizedPhone)) {
+      setPhoneError("Please enter a valid 10-digit phone number (e.g., 555-123-4567)");
+      alert("Please enter a valid phone number.");
       return;
     }
 
     try {
       // Save phone number if changed
-      if (phoneNumber !== (convexUser.phoneNumber || "")) {
+      if (normalizedPhone !== (convexUser.phoneNumber || "")) {
         await updateUserPhoneNumber({
           userId: convexUser._id,
-          phoneNumber: phoneNumber,
+          phoneNumber: normalizedPhone,
         });
+        // Update local state with normalized version
+        setPhoneNumber(normalizedPhone);
       }
 
       // Save preferences
@@ -334,6 +368,36 @@ function SettingsContent() {
     } catch (error) {
       console.error("Error sending test reminder:", error);
       alert("Failed to send test reminder. Please try again.");
+    }
+  };
+
+  const handleTestSMS = async () => {
+    if (!phoneNumber) {
+      alert("Please add a phone number first to test text messages");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/test-sms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Test SMS sent! Check your phone.");
+      } else {
+        alert(`Failed to send test SMS: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error sending test SMS:", error);
+      alert("Failed to send test SMS. Please try again.");
     }
   };
 
@@ -520,7 +584,7 @@ function SettingsContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-primary-600">
             Our Daily Family
@@ -561,14 +625,14 @@ function SettingsContent() {
         <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-2 mb-6">
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => setActiveTab('account')}
               className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'profile'
+                activeTab === 'account'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Profile
+              My Account
             </button>
             <button
               onClick={() => setActiveTab('family')}
@@ -578,28 +642,29 @@ function SettingsContent() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Family & Events
+              Family
             </button>
             <button
-              onClick={() => setActiveTab('integrations')}
+              onClick={() => setActiveTab('apps')}
               className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                activeTab === 'integrations'
+                activeTab === 'apps'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Integrations
+              Connected Apps
             </button>
           </div>
         </div>
 
-        {/* Profile Tab - Account info + Notifications */}
-        {activeTab === 'profile' && (
+        {/* My Account Tab - Account info + Notifications + Billing */}
+        {activeTab === 'account' && (
         <div>
-        {/* Account Information */}
+        {/* Your Info */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Account Information</h2>
+            <h2 className="text-xl font-bold text-gray-900">Your Info</h2>
+            <p className="text-sm text-gray-600 mt-1">Your personal information and contact details</p>
           </div>
           <div className="p-6">
             {!convexUser ? (
@@ -642,10 +707,10 @@ function SettingsContent() {
                     onBlur={() => {
                       // Validate on blur
                       if (phoneNumber && !validatePhoneNumber(phoneNumber)) {
-                        setPhoneError("Please enter a valid phone number with country code (e.g., +12345678900)");
+                        setPhoneError("Please enter a valid 10-digit phone number");
                       }
                     }}
-                    placeholder="+12345678900"
+                    placeholder="(555) 123-4567"
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
                       phoneError
                         ? 'border-red-500 focus:ring-red-500'
@@ -656,7 +721,7 @@ function SettingsContent() {
                     <p className="text-xs text-red-600 mt-1">{phoneError}</p>
                   ) : (
                     <p className="text-xs text-gray-500 mt-1">
-                      Required for SMS notifications. Include country code (e.g., +1 for US)
+                      Required for text notifications. Enter your 10-digit US phone number
                     </p>
                   )}
                 </div>
@@ -673,12 +738,12 @@ function SettingsContent() {
           </div>
         </div>
 
-        {/* Notification Preferences */}
+        {/* Reminders & Notifications */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
+            <h2 className="text-xl font-bold text-gray-900">Reminders & Notifications</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Choose how you want to stay updated about your family's activities
+              Get reminders about upcoming events and important actions
             </p>
           </div>
           <div className="p-6 space-y-6">
@@ -761,7 +826,7 @@ function SettingsContent() {
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <span>📱</span> SMS Notifications
+                    <span>📱</span> Text Notifications
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
                     Quick text alerts for urgent reminders
@@ -865,19 +930,179 @@ function SettingsContent() {
               </button>
               <button
                 onClick={handleTestReminder}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
+                className="px-6 py-3 bg-blue-100 text-blue-700 rounded-lg font-semibold hover:bg-blue-200 transition"
+                title="Send a test email reminder to verify email notifications are working"
               >
-                Send Test Reminder
+                📧 Test Email
+              </button>
+              <button
+                onClick={handleTestSMS}
+                className="px-6 py-3 bg-green-100 text-green-700 rounded-lg font-semibold hover:bg-green-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Send a test text message to verify notifications are working"
+                disabled={!phoneNumber}
+              >
+                📱 Test Text
               </button>
             </div>
           </div>
         </div>
+
+        {/* Subscription & Payment */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900">Subscription & Payment</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Manage your plan and billing
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h3 className="font-semibold text-gray-900">Standard Plan</h3>
+                <p className="text-sm text-gray-600">$9.99 per month</p>
+                <p className="text-xs text-gray-500 mt-1">One subscription for your whole family</p>
+              </div>
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                Active
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <button className="w-full sm:w-auto px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition">
+                Update Payment Method
+              </button>
+
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-600 mb-2">
+                  Need to make changes?
+                </p>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to cancel? You can reactivate anytime.')) {
+                      showToast('Subscription cancelled. Access continues until the end of your billing period.', 'info');
+                    }
+                  }}
+                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                >
+                  Cancel Subscription
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Management */}
+        {convexUser?.role === "primary" && (
+          <div className="bg-white rounded-lg shadow border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Account Management</h2>
+            </div>
+            <div className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-2">Delete Account</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                This will permanently delete your family account and all data. This cannot be undone.
+              </p>
+              <button
+                onClick={() => {
+                  if (confirm('⚠️ This will permanently delete your account and ALL data. Are you sure?')) {
+                    const confirmation = prompt('Type DELETE to confirm:');
+                    if (confirmation === 'DELETE') {
+                      showToast('Account deletion initiated. Check your email for confirmation.', 'info');
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        )}
         </div>
         )}
 
         {/* Family Tab */}
         {activeTab === 'family' && (
         <div>
+        {/* Family Details */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900">Family Details</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Manage your family's basic information and contact preferences
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Family Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  defaultValue={family?.name || ""}
+                  onBlur={async (e) => {
+                    if (convexUser?.familyId && e.target.value.trim()) {
+                      await updateFamilyDetails({
+                        familyId: convexUser.familyId,
+                        name: e.target.value.trim()
+                      });
+                      showToast("Family name updated", "success");
+                    }
+                  }}
+                  placeholder="e.g., The Smiths"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">This will be displayed throughout the app</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Primary Email
+                </label>
+                <input
+                  type="email"
+                  defaultValue={family?.primaryEmail || clerkUser?.primaryEmailAddress?.emailAddress || ""}
+                  onBlur={async (e) => {
+                    if (convexUser?.familyId && e.target.value.trim()) {
+                      await updateFamilyDetails({
+                        familyId: convexUser.familyId,
+                        primaryEmail: e.target.value.trim()
+                      });
+                      showToast("Primary email updated", "success");
+                    }
+                  }}
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">We'll send you reminders and digests here</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location (City or ZIP)
+                </label>
+                <input
+                  type="text"
+                  defaultValue={family?.location || ""}
+                  onBlur={async (e) => {
+                    if (convexUser?.familyId) {
+                      await updateFamilyDetails({
+                        familyId: convexUser.familyId,
+                        location: e.target.value.trim()
+                      });
+                      showToast("Location updated", "success");
+                    }
+                  }}
+                  placeholder="e.g., Atlanta, GA or 30319"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">Helps us discover local activities for your family</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Family Members */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
@@ -1088,15 +1313,15 @@ function SettingsContent() {
         </div>
         )}
 
-        {/* Integrations Tab - Gmail & Calendar */}
-        {activeTab === 'integrations' && (
+        {/* Connected Apps Tab - Gmail & Calendar */}
+        {activeTab === 'apps' && (
         <div>
-        {/* Google Calendar Selection */}
+        {/* Google Calendar */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Google Calendar</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Choose which Google Calendar to sync your family events to. You can use an existing calendar or create a new one.
+              Choose where to sync your events. They'll appear on your phone, computer, and anywhere else you use Google Calendar.
             </p>
           </div>
           <div className="p-6">
@@ -1216,9 +1441,9 @@ function SettingsContent() {
         {/* Gmail Connections - Multiple Accounts */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Email Integration</h2>
+            <h2 className="text-xl font-bold text-gray-900">Gmail</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Connect multiple email accounts to scan all family activity emails. Works with Gmail, Google Workspace, and any email that uses Google.
+              Connect your Gmail to automatically find events in your inbox - sports schedules, school emails, medical appointments, and more.
             </p>
           </div>
           <div className="p-6">

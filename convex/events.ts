@@ -17,6 +17,8 @@ export const createEvent = mutation({
     sourceEmailSubject: v.optional(v.string()),
     requiresAction: v.optional(v.boolean()),
     actionDeadline: v.optional(v.string()),
+    actionDescription: v.optional(v.string()),
+    actionCompleted: v.optional(v.boolean()),
     isConfirmed: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -41,6 +43,8 @@ export const createEvent = mutation({
       sourceEmailSubject: args.sourceEmailSubject,
       requiresAction: args.requiresAction,
       actionDeadline: args.actionDeadline,
+      actionDescription: args.actionDescription,
+      actionCompleted: args.actionCompleted ?? false,
       isConfirmed: args.isConfirmed ?? false,
     });
   },
@@ -62,6 +66,8 @@ export const createUnconfirmedEvent = mutation({
     childName: v.optional(v.string()),
     requiresAction: v.optional(v.boolean()),
     actionDeadline: v.optional(v.string()),
+    actionDescription: v.optional(v.string()),
+    actionCompleted: v.optional(v.boolean()),
     sourceEmailId: v.optional(v.string()),
     sourceEmailSubject: v.optional(v.string()),
   },
@@ -162,6 +168,8 @@ export const createUnconfirmedEvent = mutation({
       childName: args.childName,
       requiresAction: args.requiresAction,
       actionDeadline: args.actionDeadline,
+      actionDescription: args.actionDescription,
+      actionCompleted: args.actionCompleted ?? false,
       sourceEmailId: args.sourceEmailId,
       sourceEmailSubject: args.sourceEmailSubject,
       isConfirmed: false,
@@ -226,6 +234,8 @@ export const updateEvent = mutation({
     childName: v.optional(v.string()),
     requiresAction: v.optional(v.boolean()),
     actionDeadline: v.optional(v.string()),
+    actionDescription: v.optional(v.string()),
+    actionCompleted: v.optional(v.boolean()),
     isConfirmed: v.optional(v.boolean()),
     googleCalendarEventId: v.optional(v.string()),
   },
@@ -289,5 +299,43 @@ export const getEventById = query({
   args: { eventId: v.id("events") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.eventId);
+  },
+});
+
+// Create a confirmed event from Google Calendar sync
+export const createConfirmedEventFromCalendar = mutation({
+  args: {
+    familyId: v.id("families"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    eventDate: v.string(),
+    eventTime: v.optional(v.string()),
+    endTime: v.optional(v.string()),
+    location: v.optional(v.string()),
+    googleCalendarEventId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get the first user in the family to use as creator
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_family", (q) => q.eq("familyId", args.familyId))
+      .first();
+
+    if (!users) {
+      throw new Error("No users found in family");
+    }
+
+    return await ctx.db.insert("events", {
+      familyId: args.familyId,
+      createdByUserId: users._id,
+      title: args.title,
+      description: args.description,
+      eventDate: args.eventDate,
+      eventTime: args.eventTime,
+      endTime: args.endTime,
+      location: args.location,
+      isConfirmed: true,
+      googleCalendarEventId: args.googleCalendarEventId,
+    });
   },
 });

@@ -10,6 +10,7 @@ import { useToast } from "../components/Toast";
 import { SyncStatus } from "../components/SyncStatus";
 import { EventCardSkeleton, StatCardSkeleton } from "../components/LoadingSkeleton";
 import { useSearchParams } from "next/navigation";
+import { useGuidedTour, GuidedTourButton } from "../components/GuidedTour";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -27,22 +28,64 @@ function formatTime12Hour(time24: string): string {
 }
 
 // Helper function to get category icon
-function getCategoryIcon(category: string): string {
-  const icons: Record<string, string> = {
-    "Sports": "⚽",
-    "School": "📚",
-    "Music": "🎵",
-    "Dance": "💃",
-    "Arts & Crafts": "🎨",
-    "Tutoring": "✏️",
-    "Medical": "🏥",
-    "Birthday Party": "🎂",
-    "Play Date": "🎭",
-    "Field Trip": "🚌",
-    "Club Meeting": "👥",
-    "Other": "📌"
+function getCategoryColor(category: string): string {
+  const colors: Record<string, string> = {
+    "Sports": "#10b981", // green
+    "School": "#3b82f6", // blue
+    "Music": "#8b5cf6", // purple
+    "Dance": "#ec4899", // pink
+    "Arts & Crafts": "#f59e0b", // amber
+    "Tutoring": "#06b6d4", // cyan
+    "Medical": "#ef4444", // red
+    "Birthday Party": "#f97316", // orange
+    "Play Date": "#14b8a6", // teal
+    "Field Trip": "#eab308", // yellow
+    "Club Meeting": "#6366f1", // indigo
+    "Other": "#6b7280" // gray
   };
-  return icons[category] || "📌";
+  return colors[category] || "#6b7280";
+}
+
+// Helper function to format date in mom-friendly format
+function formatMomFriendlyDate(dateString: string): string {
+  const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // Check if it's today or tomorrow
+  const isToday = date.toDateString() === today.toDateString();
+  const isTomorrow = date.toDateString() === tomorrow.toDateString();
+
+  if (isToday) return "Today";
+  if (isTomorrow) return "Tomorrow";
+
+  // Format as "Monday, November 12"
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+// Helper function to group events by date
+function groupEventsByDate(events: any[]) {
+  const grouped = events.reduce((acc: any, event: any) => {
+    const date = event.eventDate;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(event);
+    return acc;
+  }, {});
+
+  // Sort dates
+  return Object.keys(grouped)
+    .sort()
+    .map(date => ({
+      date,
+      events: grouped[date]
+    }));
 }
 
 function DashboardContent() {
@@ -62,6 +105,13 @@ function DashboardContent() {
   const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
   const [pastedText, setPastedText] = useState("");
   const [isExtractingEvent, setIsExtractingEvent] = useState(false);
+  const [showSearchEmailsModal, setShowSearchEmailsModal] = useState(false);
+  const [emailSearchQuery, setEmailSearchQuery] = useState("");
+  const [emailSearchTimeframe, setEmailSearchTimeframe] = useState("3"); // months
+  const [isSearchingEmails, setIsSearchingEmails] = useState(false);
+  const [emailSearchProgress, setEmailSearchProgress] = useState({ current: 0, total: 0 });
+  const [emailSearchResults, setEmailSearchResults] = useState<any[]>([]);
+  const [showActionsModal, setShowActionsModal] = useState(false);
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     eventDate: "",
@@ -71,19 +121,30 @@ function DashboardContent() {
     category: "Sports",
     childName: "",
     description: "",
+    requiresAction: false,
+    actionDescription: "",
+    actionDeadline: "",
   });
   const { user: clerkUser } = useUser();
   const { signOut} = useClerk();
+  const { startTour, hasSeenTour } = useGuidedTour();
 
   // Mutations
   const updateEvent = useMutation(api.events.updateEvent);
   const deleteEvent = useMutation(api.events.deleteEvent);
   const createEvent = useMutation(api.events.createEvent);
+  const createUnconfirmedEvent = useMutation(api.events.createUnconfirmedEvent);
 
   // Get user from Convex
   const convexUser = useQuery(
     api.users.getUserByClerkId,
     clerkUser?.id ? { clerkId: clerkUser.id } : "skip"
+  );
+
+  // Get family data
+  const family = useQuery(
+    api.families.getFamilyById,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
   // Get Gmail accounts to check if any are connected
@@ -142,8 +203,9 @@ function DashboardContent() {
     "Other"
   ];
 
-  // Get all events for this week
+  // Get all events for this week and today
   const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
   const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
@@ -152,6 +214,13 @@ function DashboardContent() {
     api.events.getEventsByDateRange,
     convexUser?.familyId
       ? { familyId: convexUser.familyId, startDate: today, endDate: weekFromNow }
+      : "skip"
+  );
+
+  const todayEvents = useQuery(
+    api.events.getEventsByDateRange,
+    convexUser?.familyId
+      ? { familyId: convexUser.familyId, startDate: today, endDate: today }
       : "skip"
   );
 
@@ -217,17 +286,32 @@ function DashboardContent() {
     setScanResults(null);
     setScanMessage("Connecting to Gmail...");
 
-    // Simulate progress updates (since we can't get real progress from the backend)
+    // Simulate progress updates with phase-based messages
+    let currentProgress = 0;
+    let phase = 0;
+    const phases = [
+      { message: "Connecting to Gmail...", maxProgress: 15 },
+      { message: "Searching for event-related emails...", maxProgress: 35 },
+      { message: "Analyzing email content...", maxProgress: 65 },
+      { message: "Extracting event details...", maxProgress: 85 },
+      { message: "Finalizing results...", maxProgress: 95 },
+    ];
+
     const progressInterval = setInterval(() => {
-      setScanProgress((prev) => {
-        if (prev >= 90) return 90; // Stop at 90% until we get real results
-        return prev + Math.random() * 15;
-      });
-    }, 800);
+      currentProgress += Math.random() * 2.5;
+
+      // Update phase based on progress
+      if (currentProgress >= phases[phase].maxProgress && phase < phases.length - 1) {
+        phase++;
+        setScanMessage(phases[phase].message);
+      }
+
+      // Cap at current phase max
+      const cappedProgress = Math.min(currentProgress, phases[phase].maxProgress);
+      setScanProgress(cappedProgress);
+    }, 600);
 
     try {
-      setScanMessage("Scanning your inbox for events...");
-
       const response = await fetch("/api/scan-emails", {
         method: "POST",
         headers: {
@@ -286,27 +370,65 @@ function DashboardContent() {
         throw new Error(data.error || "Failed to extract event");
       }
 
-      if (!data.hasEvent) {
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
         showToast("No event information found in the pasted text. " + (data.explanation || ""), "info", undefined, 7000);
         return;
       }
 
-      // Pre-fill the form with extracted data
-      setNewEventForm({
-        title: data.event.title || "",
-        eventDate: data.event.date || "",
-        eventTime: data.event.time || "",
-        endTime: data.event.endTime || "",
-        location: data.event.location || "",
-        category: data.event.category ? (data.event.category.charAt(0).toUpperCase() + data.event.category.slice(1)) : "Other",
-        childName: "",
-        description: data.event.description || pastedText,
-      });
+      // Map category from API format to our format
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
 
-      // Switch to manual tab so user can review/edit
-      setAddEventTab("manual");
-      showToast(`✓ Event extracted! Review and save below.`, "success", undefined, 5000);
-      setPastedText(""); // Clear the paste field
+      // If multiple events found, create them all as unconfirmed events for review
+      if (data.events.length > 1 && convexUser?.familyId) {
+        let createdCount = 0;
+        for (const event of data.events) {
+          try {
+            await createUnconfirmedEvent({
+              familyId: convexUser.familyId,
+              createdByUserId: convexUser._id,
+              title: event.title || "Untitled Event",
+              eventDate: event.date || "",
+              eventTime: event.time || undefined,
+              endTime: event.endTime || undefined,
+              location: event.location || undefined,
+              category: categoryMap[event.category] || "Other",
+              childName: "",
+              description: event.description || "",
+            });
+            createdCount++;
+          } catch (err) {
+            console.error("Error creating event:", err);
+          }
+        }
+        setShowAddEventModal(false);
+        setPastedText("");
+        showToast(`✓ Found ${data.events.length} events! Go to Review page to approve them.`, "success", undefined, 7000);
+      } else {
+        // Single event - populate the form for manual review/editing
+        const event = data.events[0];
+        setNewEventForm({
+          title: event.title || "",
+          eventDate: event.date || "",
+          eventTime: event.time || "",
+          endTime: event.endTime || "",
+          location: event.location || "",
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || pastedText,
+        });
+
+        // Switch to manual tab so user can review/edit
+        setAddEventTab("manual");
+        showToast(`✓ Event extracted! Review and save below.`, "success", undefined, 5000);
+        setPastedText(""); // Clear the paste field
+      }
     } catch (error: any) {
       console.error("Error extracting event:", error);
       showToast("Failed to extract event. Please try again or enter manually.", "error");
@@ -333,7 +455,7 @@ function DashboardContent() {
     }
 
     try {
-      await createEvent({
+      const eventId = await createEvent({
         createdByUserId: convexUser._id,
         title: newEventForm.title.trim(),
         eventDate: newEventForm.eventDate,
@@ -343,6 +465,9 @@ function DashboardContent() {
         category: newEventForm.category || undefined,
         childName: newEventForm.childName.trim() || undefined,
         description: newEventForm.description.trim() || undefined,
+        requiresAction: newEventForm.requiresAction || undefined,
+        actionDescription: newEventForm.requiresAction ? newEventForm.actionDescription.trim() || undefined : undefined,
+        actionDeadline: newEventForm.requiresAction ? newEventForm.actionDeadline || undefined : undefined,
         isConfirmed: true,
       });
 
@@ -355,10 +480,27 @@ function DashboardContent() {
         category: "Sports",
         childName: "",
         description: "",
+        requiresAction: false,
+        actionDescription: "",
+        actionDeadline: "",
       });
 
       setShowAddEventModal(false);
       showToast(`✓ Event "${newEventForm.title}" added successfully!`, "success", undefined, 7000);
+
+      // Automatically push to Google Calendar
+      if (eventId) {
+        try {
+          await fetch("/api/push-to-calendar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventId }),
+          });
+        } catch (error) {
+          console.error("Failed to auto-sync to Google Calendar:", error);
+          // Don't show error to user - the event was still created successfully
+        }
+      }
     } catch (error) {
       console.error("Error creating event:", error);
       showToast("Unable to create event. Please try again.", "error");
@@ -368,7 +510,7 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-indigo-600">
             Our Daily Family
@@ -383,12 +525,14 @@ function DashboardContent() {
               Dashboard
             </Link>
             <Link
+              id="calendar-link"
               href="/calendar"
               className="text-gray-600 hover:text-gray-900"
             >
               Calendar
             </Link>
             <Link
+              id="review-link"
               href="/review"
               className="text-gray-600 hover:text-gray-900"
             >
@@ -543,147 +687,74 @@ function DashboardContent() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back!
-          </h1>
-          <p className="text-gray-600">
-            Here's what's happening with your family schedule
-          </p>
-        </div>
-
         {/* Welcome Guide - Shows after onboarding */}
         {showWelcomeGuide && (
-          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-2xl shadow-strong p-8 mb-8 text-white relative overflow-hidden">
+          <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-4 mb-6 relative">
             <button
               onClick={() => setShowWelcomeGuide(false)}
-              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Close welcome guide"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Welcome to Our Daily Family! 🎉</h2>
-                <p className="text-white/90 text-lg">
-                  Your account is set up! Here's what to do next to get the most out of your family calendar:
-                </p>
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-bold text-lg mb-2">1. Scan Your Gmail</h3>
-                <p className="text-white/80 text-sm mb-4">
-                  We'll automatically find all your kids' activities, sports schedules, and school events from your email.
-                </p>
-                {isGmailConnected && (
-                  <button
-                    onClick={() => setShowWelcomeGuide(false)}
-                    className="text-sm font-medium text-white/90 hover:text-white underline"
-                  >
-                    Scroll down to scan →
-                  </button>
-                )}
-              </div>
-
-              <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <h3 className="font-bold text-lg mb-2">2. Review Events</h3>
-                <p className="text-white/80 text-sm mb-4">
-                  Check the events we found and confirm which ones you want to add to your calendar.
-                </p>
-                <Link
-                  href="/review"
-                  onClick={() => setShowWelcomeGuide(false)}
-                  className="text-sm font-medium text-white/90 hover:text-white underline"
-                >
-                  Go to Review page →
-                </Link>
-              </div>
-
-              <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-                <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="font-bold text-lg mb-2">3. Sync to Google Calendar</h3>
-                <p className="text-white/80 text-sm mb-4">
-                  Sync events to your Google Calendar so they appear on your phone, tablet, and everywhere else.
-                </p>
-                <Link
-                  href="/calendar"
-                  onClick={() => setShowWelcomeGuide(false)}
-                  className="text-sm font-medium text-white/90 hover:text-white underline"
-                >
-                  Go to Calendar →
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-white/20 flex items-center justify-between">
-              <p className="text-white/80 text-sm">
-                💡 <strong>Tip:</strong> Press <kbd className="px-2 py-1 bg-white/20 rounded text-xs font-mono">N</kbd> anytime to quickly add an event
+            <div className="pr-8">
+              <h3 className="text-sm font-bold text-gray-900 mb-1">Welcome! Get started in 3 steps:</h3>
+              <p className="text-xs text-gray-700">
+                1. <Link href="/settings" className="text-green-700 font-semibold hover:underline">Connect Gmail</Link> to find events  •
+                2. <Link href="/review" className="text-green-700 font-semibold hover:underline ml-1">Review events</Link>  •
+                3. <Link href="/calendar" className="text-green-700 font-semibold hover:underline ml-1">View calendar</Link>
               </p>
             </div>
           </div>
         )}
 
-        {/* Sync Status */}
-        {convexUser?.familyId && isGmailConnected && (
-          <SyncStatus
-            familyId={convexUser.familyId}
-            onScanNow={handleScanEmail}
-            isScanning={isScanning}
-          />
-        )}
+        {/* Personalized Greeting with Family Branding */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {clerkUser && (() => {
+                const hour = new Date().getHours();
+                const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+                const firstName = clerkUser.firstName || clerkUser.fullName?.split(' ')[0] || "there";
+                return `${greeting}, ${firstName}`;
+              })()}
+            </h1>
+            {family?.name && (
+              <div className="text-base sm:text-lg font-semibold text-primary-600">
+                {family.name} Family Hub
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Gmail Connection Banner */}
         {!isGmailConnected && (
-          <div className="bg-indigo-600 rounded-xl p-6 mb-8 text-white">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
-                <h2 className="text-xl sm:text-2xl font-bold mb-2">
-                  Connect Your Gmail
-                </h2>
-                <p className="mb-4 opacity-90 text-sm sm:text-base">
-                  Let's scan your email to find all your kids' activities automatically.
-                  It takes just 30 seconds!
+                <p className="text-sm font-medium text-gray-900">
+                  Connect Gmail to automatically find events in your inbox
                 </p>
-                <Link
-                  href="/settings"
-                  className="inline-block bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-                >
-                  Connect Gmail →
-                </Link>
               </div>
+              <Link
+                href="/settings"
+                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap"
+              >
+                Connect
+              </Link>
             </div>
           </div>
         )}
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Now Clickable! */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* This Week Card */}
-          <div className="bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1">
+          <Link
+            href="/calendar"
+            className="bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -698,15 +769,18 @@ function DashboardContent() {
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
               ) : weekEvents.length}
             </p>
-            <p className="text-sm text-white/80">Upcoming events</p>
-          </div>
+            <p className="text-sm text-white/80">Click to view calendar →</p>
+          </Link>
 
           {/* Needs Action Card */}
-          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1">
+          <div
+            onClick={() => setShowActionsModal(true)}
+            className="bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Action</span>
@@ -715,13 +789,26 @@ function DashboardContent() {
             <p className="text-4xl font-bold mb-1">
               {weekEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
-              ) : weekEvents.filter((e) => e.requiresAction).length}
+              ) : (() => {
+                  // Filter for upcoming actions only (within next 2 weeks)
+                  const twoWeeksFromNow = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+                  return weekEvents.filter((e) => {
+                    if (!e.requiresAction || e.actionCompleted) return false;
+                    // Check if action deadline or event date is in the future
+                    const relevantDate = e.actionDeadline || e.eventDate;
+                    return relevantDate >= today && relevantDate <= twoWeeksFromNow;
+                  }).length;
+                })()
+              }
             </p>
-            <p className="text-sm text-white/80">Forms & payments due</p>
+            <p className="text-sm text-white/80">Click to view actions →</p>
           </div>
 
           {/* To Review Card */}
-          <div className="bg-gradient-to-br from-amber-500 to-amber-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1">
+          <Link
+            href="/review"
+            className="bg-gradient-to-br from-amber-500 to-amber-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -729,7 +816,9 @@ function DashboardContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </div>
-              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">New</span>
+              {unconfirmedEvents && unconfirmedEvents.length > 0 && (
+                <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full animate-pulse">New!</span>
+              )}
             </div>
             <h3 className="text-white/90 font-medium mb-2 text-sm">To Review</h3>
             <p className="text-4xl font-bold mb-1">
@@ -737,24 +826,83 @@ function DashboardContent() {
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
               ) : unconfirmedEvents.length}
             </p>
-            <p className="text-sm text-white/80">New events found</p>
-          </div>
+            <p className="text-sm text-white/80">Click to review events →</p>
+          </Link>
         </div>
+
+        {/* Today's Events - Prominent Section */}
+        {todayEvents && todayEvents.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-8 border-2 border-blue-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Today's Events</h2>
+                  <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                </div>
+              </div>
+              <span className="text-3xl font-bold text-blue-600">{todayEvents.length}</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {todayEvents.map((event) => (
+                <div
+                  key={event._id}
+                  onClick={() => setSelectedEvent(event)}
+                  className="bg-white rounded-lg p-4 shadow-soft hover:shadow-medium transition-all cursor-pointer border-l-4"
+                  style={{ borderLeftColor: event.category ? getCategoryColor(event.category) : '#3b82f6' }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-gray-900">
+                      {event.title}
+                    </h3>
+                    {event.eventTime && (
+                      <span className="text-sm font-bold text-blue-600">{formatTime12Hour(event.eventTime)}</span>
+                    )}
+                  </div>
+                  {event.location && (
+                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {event.location}
+                    </p>
+                  )}
+                  {event.childName && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mt-2">
+                      {event.childName}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upcoming Events */}
-          <div className="lg:col-span-2">
+          <div id="upcoming-events" className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow">
               <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Upcoming Events
-                </h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Next 7 Days
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">All upcoming events this week</p>
+                </div>
                 <Link
                   href="/calendar"
-                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm flex items-center gap-1"
                 >
-                  View All →
+                  View Calendar
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </Link>
               </div>
               <div className="divide-y divide-gray-200">
@@ -813,83 +961,62 @@ function DashboardContent() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      {!isGmailConnected ? (
-                        <Link
-                          href="/settings"
-                          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-colors inline-flex items-center justify-center gap-2"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
-                          </svg>
-                          Connect Gmail
-                        </Link>
-                      ) : (
-                        <button
-                          onClick={handleScanEmail}
-                          disabled={isScanning}
-                          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-colors inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
-                          </svg>
-                          Scan Email
-                        </button>
-                      )}
-                      <button
-                        onClick={() => setShowAddEventModal(true)}
-                        className="px-6 py-3 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 rounded-lg font-semibold transition-colors inline-flex items-center justify-center gap-2"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Event
-                      </button>
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-gray-700 text-center">
+                        👉 Use <strong>Quick Actions</strong> on the right to get started!
+                      </p>
                     </div>
                   </div>
                 ) : (
-                  upcomingEvents.map((event) => (
-                    <div
-                      key={event._id}
-                      className="p-4 sm:p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => setSelectedEvent(event)}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                            {event.category && (
-                              <span title={event.category} aria-label={event.category}>
-                                {getCategoryIcon(event.category)}
-                              </span>
-                            )}
-                            {event.title}
-                          </h3>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
-                            <span>{event.eventDate}</span>
-                            {event.eventTime && (
-                              <span>{formatTime12Hour(event.eventTime)}</span>
-                            )}
-                            {event.location && (
-                              <span>{event.location}</span>
-                            )}
+                  groupEventsByDate(upcomingEvents).map(({ date, events }) => (
+                    <div key={date}>
+                      {/* Date Header */}
+                      <div className="px-6 py-3 bg-gray-50 border-y border-gray-200">
+                        <h3 className="font-semibold text-gray-900 text-sm">
+                          {formatMomFriendlyDate(date)}
+                        </h3>
+                      </div>
+                      {/* Events for this day */}
+                      {events.map((event: any) => (
+                        <div
+                          key={event._id}
+                          className="p-4 sm:p-6 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-b-0"
+                          onClick={() => setSelectedEvent(event)}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div className="flex-1 flex items-start gap-3">
+                              {event.category && (
+                                <div
+                                  className="w-1 h-full rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: getCategoryColor(event.category), minHeight: '60px' }}
+                                  title={event.category}
+                                  aria-label={event.category}
+                                />
+                              )}
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900 mb-2">
+                                  {event.title}
+                                </h3>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
+                                  {event.eventTime && (
+                                    <span className="font-medium">{formatTime12Hour(event.eventTime)}</span>
+                                  )}
+                                  {event.location && (
+                                    <span>{event.location}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="sm:ml-4 flex flex-col gap-2 items-end">
+                              {event.childName && (
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                  {event.childName}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="sm:ml-4 flex flex-col gap-2 items-end">
-                          {event.childName && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                              {event.childName}
-                            </span>
-                          )}
-                          {event.googleCalendarEventId && (
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800" title="Synced to Google Calendar">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              Synced
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   ))
                 )}
@@ -947,6 +1074,28 @@ function DashboardContent() {
                   </div>
                 </button>
 
+                <button
+                  onClick={() => setShowSearchEmailsModal(true)}
+                  disabled={!isGmailConnected}
+                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-white">
+                        🔍 Search Emails
+                      </div>
+                      <div className="text-xs text-white/80">
+                        Find ANY event in your inbox
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
                 <Link
                   href="/settings"
                   className="block w-full text-left px-4 py-4 bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
@@ -971,136 +1120,6 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* Help Card */}
-            <div className="bg-primary-50 rounded-lg p-6 border border-primary-200 mb-6">
-              <h3 className="font-bold text-gray-900 mb-2">Need Help?</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Check out our guides or contact support anytime.
-              </p>
-              <a href="mailto:support@familyschedule.com" className="text-primary-600 hover:text-primary-700 font-medium text-sm">
-                Contact Support →
-              </a>
-            </div>
-
-            {/* Recent Activity Timeline */}
-            <div className="bg-white rounded-lg shadow-soft p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Recent Activity
-              </h2>
-              <div className="space-y-4">
-                {/* Activity items - showing mock data for now */}
-                {isGmailConnected ? (
-                  <>
-                    <div className="flex gap-3">
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                        <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
-                      </div>
-                      <div className="flex-1 pb-4">
-                        <p className="text-sm font-medium text-gray-900">Email scan completed</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {gmailAccounts?.[0]?.lastSyncAt
-                            ? new Date(gmailAccounts[0].lastSyncAt).toLocaleDateString()
-                            : "Today"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {unconfirmedEvents && unconfirmedEvents.length > 0 && (
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <p className="text-sm font-medium text-gray-900">
-                            {unconfirmedEvents.length} new event{unconfirmedEvents.length !== 1 ? "s" : ""} found
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">Waiting for review</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {upcomingEvents && upcomingEvents.length > 0 && (
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <p className="text-sm font-medium text-gray-900">
-                            {upcomingEvents[0].title}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Upcoming: {upcomingEvents[0].eventDate}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {(!unconfirmedEvents || unconfirmedEvents.length === 0) &&
-                     (!upcomingEvents || upcomingEvents.length === 0) && (
-                      <div className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-200 mt-1"></div>
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <p className="text-sm font-medium text-gray-900">All caught up!</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            No pending events to review
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex gap-3">
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Gmail connected</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {gmailAccounts?.[0]?.gmailEmail}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-6">
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <p className="text-sm text-gray-600">No recent activity</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Connect Gmail to start tracking
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -1131,16 +1150,30 @@ function DashboardContent() {
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Scanning Your Emails</h3>
-                  <p className="text-gray-600 mb-6">{scanMessage}</p>
+                  <p className="text-gray-600 mb-4">{scanMessage}</p>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2 overflow-hidden">
                     <div
                       className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
                       style={{ width: `${scanProgress}%` }}
                     ></div>
                   </div>
-                  <p className="text-sm text-gray-500">{Math.round(scanProgress)}% complete</p>
+                  <p className="text-sm text-gray-500 mb-6">{Math.round(scanProgress)}% complete</p>
+
+                  {/* Info box */}
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div className="flex gap-3">
+                      <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-left">
+                        <p className="text-xs text-blue-800">
+                          We're scanning up to 50 recent emails to detect events. This typically takes 1-2 minutes.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
@@ -1459,6 +1492,60 @@ function DashboardContent() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     />
                   </div>
+
+                  {/* Action Items Section */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex items-start gap-3 mb-4">
+                      <input
+                        type="checkbox"
+                        id="editRequiresAction"
+                        checked={editFormData?.requiresAction || false}
+                        onChange={(e) => setEditFormData({
+                          ...editFormData,
+                          requiresAction: e.target.checked,
+                          actionDescription: e.target.checked ? editFormData?.actionDescription : "",
+                          actionDeadline: e.target.checked ? editFormData?.actionDeadline : ""
+                        })}
+                        className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500 mt-0.5"
+                      />
+                      <label htmlFor="editRequiresAction" className="flex-1 cursor-pointer">
+                        <span className="block text-sm font-semibold text-gray-900">
+                          This event requires action
+                        </span>
+                        <span className="block text-xs text-gray-600 mt-0.5">
+                          RSVP, payment, form submission, or other follow-up needed
+                        </span>
+                      </label>
+                    </div>
+
+                    {editFormData?.requiresAction && (
+                      <div className="space-y-3 pl-8">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            What action is needed?
+                          </label>
+                          <input
+                            type="text"
+                            value={editFormData?.actionDescription || ""}
+                            onChange={(e) => setEditFormData({ ...editFormData, actionDescription: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="e.g., RSVP by email, Pay $50, Sign permission slip"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Action deadline
+                          </label>
+                          <input
+                            type="date"
+                            value={editFormData?.actionDeadline || ""}
+                            onChange={(e) => setEditFormData({ ...editFormData, actionDeadline: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
@@ -1477,6 +1564,9 @@ function DashboardContent() {
                           childName: editFormData.childName || undefined,
                           category: editFormData.category || undefined,
                           description: editFormData.description || undefined,
+                          requiresAction: editFormData.requiresAction || undefined,
+                          actionDescription: editFormData.requiresAction ? editFormData.actionDescription || undefined : undefined,
+                          actionDeadline: editFormData.requiresAction ? editFormData.actionDeadline || undefined : undefined,
                         });
 
                         // Update in Google Calendar if it was synced
@@ -1558,9 +1648,12 @@ function DashboardContent() {
                           Category
                         </div>
                         <div className="text-gray-900 font-medium flex items-center gap-2">
-                          <span title={selectedEvent.category} aria-label={selectedEvent.category}>
-                            {getCategoryIcon(selectedEvent.category)}
-                          </span>
+                          <div
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: getCategoryColor(selectedEvent.category) }}
+                            title={selectedEvent.category}
+                            aria-label={selectedEvent.category}
+                          />
                           <span>{selectedEvent.category}</span>
                         </div>
                       </div>
@@ -1591,26 +1684,66 @@ function DashboardContent() {
                     )}
                   </div>
 
-                  {/* Action Required Badge */}
+                  {/* Action Required Section */}
                   {selectedEvent.requiresAction && (
-                    <div className="mb-6 bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+                    <div className={`mb-6 border-l-4 rounded-lg p-4 ${
+                      selectedEvent.actionCompleted
+                        ? 'bg-green-50 border-green-400'
+                        : 'bg-orange-50 border-orange-400'
+                    }`}>
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0">
-                          <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await updateEvent({
+                                eventId: selectedEvent._id,
+                                actionCompleted: !selectedEvent.actionCompleted,
+                              });
+                              showToast(
+                                selectedEvent.actionCompleted
+                                  ? "Action marked as incomplete"
+                                  : "✓ Action completed!",
+                                "success"
+                              );
+                            } catch (error) {
+                              console.error("Error updating action status:", error);
+                              showToast("Failed to update action status", "error");
+                            }
+                          }}
+                          className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition ${
+                            selectedEvent.actionCompleted
+                              ? 'bg-green-600 border-green-600'
+                              : 'bg-white border-orange-400 hover:border-orange-600'
+                          }`}
+                          title={selectedEvent.actionCompleted ? "Mark as incomplete" : "Mark as complete"}
+                        >
+                          {selectedEvent.actionCompleted && (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
                         <div className="flex-1">
-                          <h4 className="text-sm font-semibold text-red-900 mb-1">
-                            Action Required: RSVP
+                          <h4 className={`text-sm font-semibold mb-1 ${
+                            selectedEvent.actionCompleted ? 'text-green-900 line-through' : 'text-orange-900'
+                          }`}>
+                            {selectedEvent.actionCompleted ? '✓ ' : ''}
+                            Action: {selectedEvent.actionDescription || 'Action required'}
                           </h4>
                           {selectedEvent.actionDeadline && (
-                            <p className="text-sm text-red-700">
+                            <p className={`text-sm ${
+                              selectedEvent.actionCompleted ? 'text-green-700' : 'text-orange-700'
+                            }`}>
                               Deadline: {new Date(selectedEvent.actionDeadline).toLocaleDateString('en-US', {
                                 month: 'long',
                                 day: 'numeric',
                                 year: 'numeric'
                               })}
+                            </p>
+                          )}
+                          {selectedEvent.actionCompleted && (
+                            <p className="text-xs text-green-600 mt-1 font-medium">
+                              Completed
                             </p>
                           )}
                         </div>
@@ -1710,6 +1843,9 @@ function DashboardContent() {
                         childName: selectedEvent.childName || "",
                         category: selectedEvent.category || "",
                         description: selectedEvent.description || "",
+                        requiresAction: selectedEvent.requiresAction || false,
+                        actionDescription: selectedEvent.actionDescription || "",
+                        actionDeadline: selectedEvent.actionDeadline || "",
                       });
                       setIsEditingEvent(true);
                     }}
@@ -2011,6 +2147,60 @@ Example:
                     placeholder="Add any additional details..."
                   />
                 </div>
+
+                {/* Action Items Section */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-start gap-3 mb-4">
+                    <input
+                      type="checkbox"
+                      id="requiresAction"
+                      checked={newEventForm.requiresAction}
+                      onChange={(e) => setNewEventForm({
+                        ...newEventForm,
+                        requiresAction: e.target.checked,
+                        actionDescription: e.target.checked ? newEventForm.actionDescription : "",
+                        actionDeadline: e.target.checked ? newEventForm.actionDeadline : ""
+                      })}
+                      className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500 mt-0.5"
+                    />
+                    <label htmlFor="requiresAction" className="flex-1 cursor-pointer">
+                      <span className="block text-sm font-semibold text-gray-900">
+                        This event requires action
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">
+                        RSVP, payment, form submission, or other follow-up needed
+                      </span>
+                    </label>
+                  </div>
+
+                  {newEventForm.requiresAction && (
+                    <div className="space-y-3 pl-8">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          What action is needed?
+                        </label>
+                        <input
+                          type="text"
+                          value={newEventForm.actionDescription}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, actionDescription: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          placeholder="e.g., RSVP by email, Pay $50, Sign permission slip"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Action deadline
+                        </label>
+                        <input
+                          type="date"
+                          value={newEventForm.actionDeadline}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, actionDeadline: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -2034,6 +2224,411 @@ Example:
               </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Actions Modal */}
+      {showActionsModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => setShowActionsModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-3xl w-full shadow-strong my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">⚠️ Actions Needed</h2>
+                  <p className="text-white/90 text-sm">
+                    RSVPs, payments, forms, and other things that need your attention
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowActionsModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close actions modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Actions List */}
+            <div className="p-6">
+              {(() => {
+                // Get all events with upcoming actions (within next 2 weeks)
+                const twoWeeksFromNow = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+                const actionsNeeded = weekEvents?.filter((e) => {
+                  if (!e.requiresAction || e.actionCompleted) return false;
+                  const relevantDate = e.actionDeadline || e.eventDate;
+                  return relevantDate >= today && relevantDate <= twoWeeksFromNow;
+                }).sort((a, b) => {
+                  // Sort by deadline/event date (soonest first)
+                  const dateA = a.actionDeadline || a.eventDate;
+                  const dateB = b.actionDeadline || b.eventDate;
+                  return dateA.localeCompare(dateB);
+                }) || [];
+
+                if (actionsNeeded.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">All caught up!</h3>
+                      <p className="text-gray-600">
+                        You don't have any pending actions right now. Great job! 🎉
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600 mb-4">
+                      You have {actionsNeeded.length} {actionsNeeded.length === 1 ? 'action' : 'actions'} that need attention in the next 2 weeks:
+                    </p>
+                    {actionsNeeded.map((event) => {
+                      const deadline = event.actionDeadline || event.eventDate;
+                      const deadlineDate = new Date(deadline);
+                      const daysUntil = Math.ceil((deadlineDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                      const isUrgent = daysUntil <= 3;
+
+                      return (
+                        <div
+                          key={event._id}
+                          className={`border-2 rounded-xl p-5 ${
+                            isUrgent ? 'border-red-300 bg-red-50' : 'border-orange-200 bg-orange-50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                {isUrgent && (
+                                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded">
+                                    URGENT
+                                  </span>
+                                )}
+                                <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded">
+                                  {event.category || "Other"}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-gray-900 text-lg mb-1">{event.title}</h4>
+                              {event.childName && (
+                                <p className="text-sm text-gray-600 mb-2">For: {event.childName}</p>
+                              )}
+                              <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="font-semibold">
+                                  {event.actionDeadline ? 'Deadline:' : 'Event Date:'}
+                                </span>
+                                <span>
+                                  {new Date(deadline).toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                                <span className={`font-semibold ${isUrgent ? 'text-red-600' : 'text-orange-600'}`}>
+                                  ({daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow!' : `in ${daysUntil} days`})
+                                </span>
+                              </div>
+                              {event.actionDescription && (
+                                <div className="bg-white border border-orange-200 rounded-lg p-3 mb-3">
+                                  <p className="text-sm font-semibold text-gray-900 mb-1">Action Needed:</p>
+                                  <p className="text-sm text-gray-700">{event.actionDescription}</p>
+                                </div>
+                              )}
+                              {event.location && (
+                                <p className="text-sm text-gray-600 mb-2">
+                                  📍 {event.location}
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              onClick={async () => {
+                                await updateEvent({
+                                  eventId: event._id,
+                                  actionCompleted: true,
+                                });
+                                showToast("Action marked as complete!", "success");
+                              }}
+                              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors whitespace-nowrap"
+                            >
+                              ✓ Mark Done
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-2xl">
+              <button
+                onClick={() => setShowActionsModal(false)}
+                className="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Emails Modal */}
+      {showSearchEmailsModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => setShowSearchEmailsModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-4xl w-full shadow-strong my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">🔍 Search Your Emails</h2>
+                  <p className="text-white/90 text-sm">
+                    Find any event from your entire email history - schedules, registrations, you name it!
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowSearchEmailsModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close search modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Search Form */}
+            <div className="p-6">
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  What are you looking for?
+                </label>
+                <div className="flex gap-3 mb-3">
+                  <input
+                    type="text"
+                    value={emailSearchQuery}
+                    onChange={(e) => setEmailSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSearchingEmails && emailSearchQuery.trim()) {
+                        // Trigger search on Enter
+                        document.getElementById('search-emails-btn')?.click();
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="e.g., baseball schedule, soccer registration, piano recital..."
+                  />
+                </div>
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      How far back to search?
+                    </label>
+                    <select
+                      value={emailSearchTimeframe}
+                      onChange={(e) => setEmailSearchTimeframe(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value="1">Last month</option>
+                      <option value="3">Last 3 months (Recommended)</option>
+                      <option value="6">Last 6 months</option>
+                      <option value="12">Last year</option>
+                    </select>
+                  </div>
+                  <button
+                    id="search-emails-btn"
+                    onClick={async () => {
+                      if (!emailSearchQuery.trim() || isSearchingEmails) return;
+
+                      setIsSearchingEmails(true);
+                      setEmailSearchResults([]);
+                      setEmailSearchProgress({ current: 0, total: 0 });
+
+                      try {
+                        const response = await fetch("/api/search-emails", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            query: emailSearchQuery,
+                            familyId: convexUser?.familyId,
+                            timeframeMonths: parseInt(emailSearchTimeframe)
+                          }),
+                        });
+
+                        const data = await response.json();
+
+                        if (data.error) {
+                          showToast(data.error, "error");
+                        } else {
+                          setEmailSearchResults(data.results || []);
+                          if (data.results && data.results.length === 0) {
+                            showToast("No events found matching your search", "info");
+                          } else {
+                            showToast(`Found ${data.results.length} event(s)!`, "success");
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Search error:", error);
+                        showToast("Failed to search emails. Please try again.", "error");
+                      } finally {
+                        setIsSearchingEmails(false);
+                      }
+                    }}
+                    disabled={!emailSearchQuery.trim() || isSearchingEmails}
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center gap-2"
+                  >
+                    {isSearchingEmails ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Tip: Be specific! Try "baseball practice schedule" or "soccer team registration"
+                </p>
+              </div>
+
+              {/* Results */}
+              {emailSearchResults.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900 mb-3">
+                    Found {emailSearchResults.length} event(s):
+                  </h3>
+                  <div className="max-h-96 overflow-y-auto space-y-3">
+                    {emailSearchResults.map((event: any, idx: number) => (
+                      <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900">{event.title}</h4>
+                            <div className="text-sm text-gray-600 mt-1 space-y-1">
+                              <div>📅 {new Date(event.eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                              {event.eventTime && <div>🕐 {event.eventTime}</div>}
+                              {event.location && <div>📍 {event.location}</div>}
+                              {event.description && <div className="text-gray-500 mt-2">{event.description}</div>}
+                              {event.sourceEmailSubject && (
+                                <div className="text-xs text-blue-600 mt-2">
+                                  📧 From: {event.sourceEmailSubject}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await createEvent({
+                                  createdByUserId: convexUser!._id,
+                                  title: event.title,
+                                  eventDate: event.eventDate,
+                                  eventTime: event.eventTime || undefined,
+                                  endTime: event.endTime || undefined,
+                                  location: event.location || undefined,
+                                  category: event.category || undefined,
+                                  childName: event.childName || undefined,
+                                  description: event.description || undefined,
+                                  requiresAction: event.requiresAction || undefined,
+                                  actionDescription: event.actionDescription || undefined,
+                                  actionDeadline: event.actionDeadline || undefined,
+                                  isConfirmed: true,
+                                });
+                                showToast(`✓ Added "${event.title}" to your calendar!`, "success");
+                                // Remove from results
+                                setEmailSearchResults(prev => prev.filter((_, i) => i !== idx));
+                              } catch (error) {
+                                console.error("Error adding event:", error);
+                                showToast("Failed to add event", "error");
+                              }
+                            }}
+                            className="ml-4 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition text-sm whitespace-nowrap"
+                          >
+                            + Add to Calendar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {isSearchingEmails && (
+                <div className="text-center py-12">
+                  <svg className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-gray-900 font-semibold text-lg">Searching your emails...</p>
+                  <p className="text-gray-600 mt-2">
+                    Scanning {emailSearchTimeframe === "1" ? "last month" : emailSearchTimeframe === "3" ? "last 3 months" : emailSearchTimeframe === "6" ? "last 6 months" : "last year"} for "{emailSearchQuery}"
+                  </p>
+                  <div className="mt-4 inline-flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-lg">
+                    <svg className="animate-pulse w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                    <span className="text-sm text-purple-800 font-medium">
+                      Estimated time: {
+                        emailSearchTimeframe === "1" ? "30-60 seconds" :
+                        emailSearchTimeframe === "3" ? "1-2 minutes" :
+                        emailSearchTimeframe === "6" ? "2-3 minutes" :
+                        "3-5 minutes"
+                      }
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">Please wait while we find all your events...</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex justify-end">
+              <button
+                onClick={() => {
+                  setShowSearchEmailsModal(false);
+                  setEmailSearchQuery("");
+                  setEmailSearchTimeframe("3");
+                  setEmailSearchResults([]);
+                  setEmailSearchProgress({ current: 0, total: 0 });
+                }}
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

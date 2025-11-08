@@ -5,6 +5,10 @@ export default defineSchema({
   // Family Accounts - One subscription, shared calendar
   families: defineTable({
     name: v.optional(v.string()), // e.g., "The Smith Family"
+    primaryEmail: v.optional(v.string()), // Primary contact email for the family
+    phoneNumber: v.optional(v.string()), // Primary contact phone number
+    enableSmsNotifications: v.optional(v.boolean()), // Whether SMS notifications are enabled
+    emailDigestFrequency: v.optional(v.union(v.literal("none"), v.literal("daily"), v.literal("weekly"))), // Email digest frequency
     stripeCustomerId: v.optional(v.string()),
     subscriptionStatus: v.optional(
       v.union(
@@ -23,6 +27,8 @@ export default defineSchema({
     googleCalendarId: v.optional(v.string()), // The shared "Family Activities" calendar ID
     calendarName: v.optional(v.string()), // e.g., "Smith Family Activities"
     lastCalendarSyncAt: v.optional(v.number()), // Last time calendar was synced
+    // Custom event categories
+    customCategories: v.optional(v.array(v.string())), // User-created custom categories
   }).index("by_stripe_customer", ["stripeCustomerId"]),
 
   // Individual Users - Multiple users can belong to one family
@@ -91,6 +97,8 @@ export default defineSchema({
     sourceEmailSubject: v.optional(v.string()),
     requiresAction: v.optional(v.boolean()),
     actionDeadline: v.optional(v.string()),
+    actionDescription: v.optional(v.string()),
+    actionCompleted: v.optional(v.boolean()),
     isConfirmed: v.boolean(), // User has confirmed the extracted event
     // Google Calendar sync
     googleCalendarEventId: v.optional(v.string()), // For two-way sync

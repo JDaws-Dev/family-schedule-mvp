@@ -269,7 +269,7 @@ Extract ONLY events occurring between ${dateRangeStart} and ${dateRangeEnd} from
 - endTime (HH:MM, optional): End time if mentioned
 - location (string, optional): Venue or facility name
 - address (string, optional): Full street address if provided
-- website (string, optional): Event-specific URL or registration link
+- website (string, IMPORTANT): Event-specific URL or registration link. Extract the direct link to THIS SPECIFIC EVENT's detail page, not the general calendar page. Look for "More Info", "Details", "Register", "Learn More" links that are unique to this event.
 - phoneNumber (string, optional): Contact number
 - priceRange (string, optional): "Free", "$" (under $25), "$$" ($25-75), "$$$" ($75+)
 - ageRange (string, optional): e.g., "5-12 years", "All ages", "Adults only"

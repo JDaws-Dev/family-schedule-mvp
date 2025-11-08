@@ -106,14 +106,22 @@ async function extractEventsFromEmail(message: any, familyMembers: any[]): Promi
 
   // Build the system prompt with family member context - NOW SUPPORTS MULTIPLE EVENTS
   const systemPrompt = familyMembers.length > 0
-    ? `You are extracting event information from emails for a family calendar. Today's date is ${currentDate}. IMPORTANT: Only extract events that are clearly related to one or more of these specific family members: ${familyMemberList}.
+    ? `You are extracting event information from emails for a family calendar. Today's date is ${currentDate}. The family is tracking these members: ${familyMemberList}. Extract events that are relevant to family activities and the tracked members.
 
-STRICT RULES:
-1. The email MUST mention at least one of the tracked family members by name (including their nicknames)
-2. The event MUST be relevant to that family member (their activity, appointment, event they're attending, etc.)
-3. Do NOT extract general promotional emails, newsletters, or events that don't involve the tracked family members
-4. Do NOT extract events just because they're family-friendly - they must be FOR one of the tracked members
-5. IMPORTANT: If the email contains MULTIPLE events (e.g., a schedule of games, multiple practice sessions, recurring appointments), extract ALL of them as separate events
+EXTRACTION RULES:
+1. PREFERRED: Extract events that explicitly mention one of the tracked family members by name (including nicknames) - assign high confidence (0.8+)
+2. ALSO EXTRACT: Events likely relevant based on context even if no name mentioned:
+   - Emails from schools, coaches, teachers, or activity coordinators
+   - Practice/game schedules, class schedules, lesson schedules
+   - School events, recitals, performances, field trips
+   - Birthday party invitations, playdate invitations
+   - Doctor/dentist appointments or other family appointments
+   - Assign medium confidence (0.6-0.7) when contextually relevant but no explicit name
+3. DO NOT extract:
+   - Generic promotional emails or advertisements
+   - Adult-only work events (unless clearly family-related)
+   - Receipts or order confirmations (unless for event tickets)
+4. IMPORTANT: If the email contains MULTIPLE events (e.g., a schedule of games, multiple practice sessions, recurring appointments), extract ALL of them as separate events
 
 Extract ALL relevant details from the email. Return JSON with this structure:
 {
@@ -125,22 +133,26 @@ Extract ALL relevant details from the email. Return JSON with this structure:
       "endTime": "HH:MM in 24-hour format (optional)",
       "location": "Full address or venue name (optional)",
       "description": "Important details (optional)",
-      "familyMemberName": "EXACTLY one of these names: ${familyMemberList.split(';').map(m => m.split('(')[0].trim()).join(', ')} (REQUIRED)",
+      "familyMemberName": "EXACTLY one of these names: ${familyMemberList.split(';').map(m => m.split('(')[0].trim()).join(', ')} (OPTIONAL - include only if explicitly mentioned or strongly implied)",
       "category": "sports/lessons/school/appointment/party/etc (optional)",
       "requiresRSVP": true/false (optional),
       "rsvpDeadline": "YYYY-MM-DD (optional)",
-      "confidence": 0.0-1.0 (0.8+ for clear events, 0.5-0.7 for ambiguous)
+      "confidence": 0.0-1.0 (0.8+ for events with explicit names, 0.6-0.7 for contextually relevant, 0.5 for uncertain)
     }
   ]
 }
 
-Date parsing rules:
+Date parsing rules (VERY IMPORTANT - today is ${currentDate}):
   * "October 14" or "Oct 14" with no year mentioned -> ${currentYear}-10-14
-  * "Friday at 3pm" -> find the NEXT Friday's date after ${currentDate} in YYYY-MM-DD format
-  * "tomorrow" -> calculate from today (${currentDate})
-  * "next Monday" -> calculate next Monday from today
-  * If a year is mentioned (e.g., "October 14, 2025"), use that year
-  * Relative dates like "this Friday" should use the NEXT occurrence from today
+  * "tomorrow" -> calculate from ${currentDate}
+  * Days of the week (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday):
+    - "Friday at 3pm" or "Friday night" or "on Friday" -> find the NEXT occurrence of Friday after ${currentDate}
+    - "Sunday night" -> find the NEXT Sunday after ${currentDate}
+    - "this Friday" -> NEXT Friday after ${currentDate}
+    - "next Monday" -> the Monday in the following week (8+ days from ${currentDate})
+  * CRITICAL: When parsing day names, always find the NEXT occurrence of that day AFTER ${currentDate}
+  * If a specific date with year is mentioned (e.g., "October 14, 2025"), use exactly that date
+  * Never use dates in the past unless explicitly stated (e.g., "last Tuesday")
 
 Time parsing rules:
   * "3pm" or "3:00pm" -> "15:00"
@@ -149,7 +161,7 @@ Time parsing rules:
   * "noon" or "12pm" -> "12:00"
   * If no time is mentioned, leave empty (don't guess)
 
-If the email doesn't mention any tracked family members or isn't a relevant event for them, return {"events": []}.`
+If the email is clearly not a relevant family/children's event (just promotions, receipts, newsletters), return {"events": []}.`
     : `Extract event information from emails about family activities and events. Today's date is ${currentDate}. This includes: children's activities (sports, lessons, school events), family gatherings (parties, birthdays, celebrations), appointments (doctor, dentist, meetings), social events (dinners, playdates, get-togethers), trips and outings.
 
 IMPORTANT: If the email contains MULTIPLE events, extract ALL of them as separate events.
@@ -228,10 +240,14 @@ If no clear events with dates, return {"events": []}.`;
         continue;
       }
 
-      // If family members are tracked, require familyMemberName to be present
+      // If family members are tracked, prefer familyMemberName but allow events without it if confidence is reasonable
       if (familyMembers.length > 0 && !event.familyMemberName) {
-        console.log("Skipping event - no tracked family member mentioned:", event.title);
-        continue;
+        // Allow events without explicit family member if confidence is >= 0.6 (contextually relevant)
+        if (!event.confidence || event.confidence < 0.6) {
+          console.log("Skipping event - no tracked family member mentioned and low confidence:", event.title, "confidence:", event.confidence);
+          continue;
+        }
+        console.log("Accepting event without explicit family member (confidence:", event.confidence, "):", event.title);
       }
 
       extractedEvents.push({
@@ -306,7 +322,7 @@ export async function POST(request: NextRequest) {
     const messagesResponse = await gmail.users.messages.list({
       userId: "me",
       q: query,
-      maxResults: 25, // Reduced to 25 to prevent rate limiting during scans
+      maxResults: 50, // Scan up to 50 recent emails for events
     });
 
     const messages = messagesResponse.data.messages || [];

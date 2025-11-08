@@ -183,7 +183,7 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold text-primary-600">
             Our Daily Family
@@ -485,22 +485,22 @@ export default function DiscoverPage() {
 
                         {/* Source and Updated Info */}
                         <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                          {activity.sourceUrl && (
+                          {(activity.website || activity.sourceUrl) && (
                             <>
                               <a
-                                href={activity.sourceUrl}
+                                href={activity.website || activity.sourceUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary-600 hover:text-primary-700 hover:underline font-medium"
                               >
-                                From {activity.sourceName || (() => {
+                                {activity.website ? 'View Event Details' : `From ${activity.sourceName || (() => {
                                   try {
                                     const hostname = new URL(activity.sourceUrl).hostname;
                                     return hostname.replace('www.', '').split('.')[0];
                                   } catch {
                                     return 'web';
                                   }
-                                })()}
+                                })()}`}
                               </a>
                               {activity.sourceLocation && (
                                 <>
