@@ -37,7 +37,7 @@ export default function Onboarding() {
     if (currentStep < totalSteps) {
       // Show celebration for completing step 1
       if (currentStep === 1) {
-        setCelebrationMessage("Great start! 🎉");
+        setCelebrationMessage("Perfect! Nice to meet you! 🎉");
         setShowCelebration(true);
         setTimeout(() => {
           setShowCelebration(false);
@@ -186,7 +186,7 @@ export default function Onboarding() {
           </div>
           <div className="flex justify-between text-sm">
             <span className={currentStep === 1 ? "text-primary-600 font-semibold" : currentStep > 1 ? "text-green-600 font-medium" : "text-gray-500"}>
-              {currentStep > 1 ? "✓ Welcome!" : "Welcome"}
+              {currentStep > 1 ? "✓ About You" : "About You"}
             </span>
             <span className={currentStep === 2 ? "text-primary-600 font-semibold" : currentStep > 2 ? "text-green-600 font-medium" : "text-gray-500"}>
               {currentStep > 2 ? "✓ Your Family" : "Your Family"}
@@ -206,26 +206,12 @@ export default function Onboarding() {
                 <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <span className="text-4xl">👋</span>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-3">Welcome! We're so glad you're here.</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">Welcome! Let's start with you.</h1>
                 <p className="text-lg text-gray-600 max-w-xl mx-auto">
                   We know how overwhelming it can be to keep track of everyone's schedules.
-                  Let's get you set up so you can finally have everything in one place.
+                  Before we dive into your family, let's get your info set up.
                 </p>
                 <p className="text-sm text-primary-600 font-medium mt-2">This will only take 2-3 minutes 💙</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  What should we call your family? (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., The Johnsons"
-                  value={familyName}
-                  onChange={(e) => setFamilyName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
-                />
-                <p className="text-xs text-gray-500 mt-1.5">Just a nice personal touch - you can always change it later</p>
               </div>
 
               <div>
@@ -243,13 +229,27 @@ export default function Onboarding() {
                 <p className="text-xs text-gray-500 mt-1.5">We'll send you helpful reminders here (no spam, we promise!)</p>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  What should we call your family? (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., The Johnsons"
+                  value={familyName}
+                  onChange={(e) => setFamilyName(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">A nice personal touch - totally optional and you can always change it later</p>
+              </div>
+
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5 border border-blue-200">
                 <div className="flex gap-3">
                   <span className="text-2xl">✨</span>
                   <div>
                     <h4 className="font-semibold text-gray-900 text-sm mb-1">Coming up next...</h4>
                     <p className="text-sm text-gray-700">
-                      We'll ask you to add your family members, then we'll help you connect your email so we can
+                      Next, we'll ask about your family members and their interests. Then we'll help you connect your email so we can
                       automatically find all those soccer practices, piano lessons, and field trips. No more digging through your inbox!
                     </p>
                   </div>
@@ -265,9 +265,9 @@ export default function Onboarding() {
                 <div className="w-20 h-20 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <span className="text-4xl">💖</span>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-3">Tell us about your wonderful family!</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">Now, tell us about your family!</h1>
                 <p className="text-lg text-gray-600 max-w-xl mx-auto">
-                  Add family members whose schedules you're managing - kids, spouse, yourself, anyone!
+                  Add family members whose schedules you're managing - kids, spouse, yourself if you'd like, anyone!
                   We'll use this to personalize your experience.
                 </p>
                 <p className="text-sm text-primary-600 font-medium mt-2">Include hobbies so we can suggest relevant activities! 🎨⚽🎵</p>
