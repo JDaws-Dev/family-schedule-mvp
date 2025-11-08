@@ -1102,8 +1102,20 @@ function DashboardContent() {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Scanning Your Emails</h3>
-                  <p className="text-gray-600 mb-4">{scanMessage}</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Checking your emails for schedules...</h3>
+                  <p className="text-gray-600 mb-2 flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    This usually takes 2-3 minutes
+                  </p>
+
+                  {/* Current Activity */}
+                  {gmailAccounts && gmailAccounts.length > 0 && (
+                    <div className="mb-4 text-sm text-gray-600">
+                      <p className="font-medium">Checking: {gmailAccounts[0].email}</p>
+                    </div>
+                  )}
 
                   {/* Progress Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-3 mb-2 overflow-hidden">
@@ -1112,19 +1124,36 @@ function DashboardContent() {
                       style={{ width: `${scanProgress}%` }}
                     ></div>
                   </div>
-                  <p className="text-sm text-gray-500 mb-6">{Math.round(scanProgress)}% complete</p>
+                  <p className="text-sm text-gray-500 mb-4">{Math.round(scanProgress)}% complete</p>
 
-                  {/* Info box */}
-                  <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
-                    <div className="flex gap-3">
-                      <svg className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="text-left">
-                        <p className="text-xs text-primary-700">
-                          We're scanning up to 50 recent emails to detect events. This typically takes 1-2 minutes.
-                        </p>
+                  {/* Intermediate Results */}
+                  {scanResults && scanResults.eventsFound > 0 && (
+                    <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                      <p className="text-sm font-semibold text-green-800">
+                        So far: Found {scanResults.eventsFound} possible event{scanResults.eventsFound !== 1 ? "s" : ""}! ✨
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Info boxes */}
+                  <div className="space-y-3">
+                    <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
+                      <div className="flex gap-3">
+                        <svg className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="text-left">
+                          <p className="text-xs text-primary-700">
+                            We're looking through your recent emails for any schedules, events, or activities.
+                          </p>
+                        </div>
                       </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <p className="text-xs text-gray-600 text-left">
+                        💡 <span className="font-medium">Tip:</span> You can close this and come back later! We'll keep working in the background.
+                      </p>
                     </div>
                   </div>
                 </>
