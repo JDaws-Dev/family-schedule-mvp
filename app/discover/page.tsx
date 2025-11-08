@@ -189,7 +189,7 @@ export default function DiscoverPage() {
     new Set(
       suggestedActivities
         .map(activity => activity.category)
-        .filter(Boolean)
+        .filter(Boolean) as string[]
     )
   ).sort();
 

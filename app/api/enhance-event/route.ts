@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build context for AI
-    const contextParts = [];
+    const contextParts: string[] = [];
     if (category) contextParts.push(`Current Category: ${category}`);
     if (location) contextParts.push(`Location: ${location}`);
     if (time) contextParts.push(`Time: ${time}`);

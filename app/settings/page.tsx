@@ -1717,7 +1717,7 @@ function SettingsContent() {
         )}
 
         {/* Notifications Tab - MOVED TO PROFILE TAB */}
-        {false && activeTab === 'profile' && (
+        {false && activeTab === 'account' && (
         <div>
         {/* Notification Preferences */}
         <div className="bg-white rounded-lg shadow mb-6">

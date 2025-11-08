@@ -246,7 +246,7 @@ export default function Onboarding() {
       } else if (selectedCalendarId) {
         // Use selected calendar
         setCompletionMessage("Setting up your calendar...");
-        const selectedCal = availableCalendars?.find(cal => cal.id === selectedCalendarId);
+        const selectedCal = calendars?.find(cal => cal.id === selectedCalendarId);
         await setFamilyCalendar({
           familyId: currentUser.familyId,
           googleCalendarId: selectedCalendarId,

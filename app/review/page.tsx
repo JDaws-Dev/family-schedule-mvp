@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -52,7 +52,7 @@ function formatMomFriendlyDate(dateString: string): string {
   });
 }
 
-export default function ReviewPage() {
+function ReviewPageContent() {
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
@@ -497,10 +497,15 @@ export default function ReviewPage() {
           requiresAction: false,
           actionDescription: "",
           actionDeadline: "",
+          isRecurring: false,
+          recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+          recurrenceInterval: 1,
+          recurrenceDaysOfWeek: [] as string[],
+          recurrenceEndType: "never" as "never" | "date" | "count",
+          recurrenceEndDate: "",
+          recurrenceEndCount: 10,
         });
 
-        // Switch to manual tab to show the populated form
-        setAddEventTab("manual");
         showToast("Event details extracted! Review and save below.", "success");
       }
     } catch (error) {
@@ -2251,7 +2256,6 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
           onClick={() => {
             setShowAddEventModal(false);
-            setAddEventTab("manual");
           }}
         >
           <div
@@ -3021,5 +3025,13 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
       {/* Bottom Navigation for Mobile */}
       <BottomNav />
     </div>
+  );
+}
+
+export default function ReviewPage() {
+  return (
+    <Suspense fallback={<EventCardSkeleton />}>
+      <ReviewPageContent />
+    </Suspense>
   );
 }

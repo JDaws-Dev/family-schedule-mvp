@@ -282,7 +282,7 @@ function DashboardContent() {
 
     // Create a set of IDs to avoid duplicates
     const seenIds = new Set();
-    const combinedEvents = [];
+    const combinedEvents: any[] = [];
 
     // Filter for events that need attention:
     // 1. Events with action required that hasn't been completed
@@ -563,6 +563,15 @@ function DashboardContent() {
           category: categoryMap[event.category] || "Other",
           childName: "",
           description: event.description || pastedText,
+          requiresAction: false,
+          actionDescription: "",
+          actionDeadline: "",
+          isRecurring: false,
+          recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+          recurrenceDaysOfWeek: [] as string[],
+          recurrenceEndType: "never" as "date" | "count" | "never",
+          recurrenceEndDate: "",
+          recurrenceEndCount: 10,
         });
 
         // Switch to manual tab so user can review/edit

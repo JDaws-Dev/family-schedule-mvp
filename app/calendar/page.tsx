@@ -1932,7 +1932,7 @@ function CalendarContent() {
       {showVoiceRecordModal && (
         <VoiceRecordModal
           onClose={() => setShowVoiceRecordModal(false)}
-          onExtract={handleVoiceRecording}
+          onTranscribe={handleVoiceRecording}
         />
       )}
 
