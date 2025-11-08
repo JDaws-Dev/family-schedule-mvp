@@ -77,27 +77,6 @@ function SettingsContent() {
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
-  // Debug logging
-  useEffect(() => {
-    console.log("[Settings] Debug info:", {
-      convexUser: convexUser?._id,
-      familyId: convexUser?.familyId,
-      gmailAccounts: gmailAccounts,
-      gmailAccountsLength: gmailAccounts?.length,
-    });
-    if (gmailAccounts && gmailAccounts.length > 0) {
-      gmailAccounts.forEach((account, idx) => {
-        console.log(`[Settings] Gmail Account ${idx}:`, {
-          id: account._id,
-          gmailEmail: account.gmailEmail,
-          displayName: account.displayName,
-          connectedByName: account.connectedByName,
-          isActive: account.isActive,
-        });
-      });
-    }
-  }, [convexUser, gmailAccounts]);
-
   // Get email filters
   const emailFilters = useQuery(
     api.emailProcessing.getEmailFilters,

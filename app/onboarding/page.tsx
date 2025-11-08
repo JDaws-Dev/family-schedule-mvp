@@ -16,6 +16,8 @@ export default function Onboarding() {
   ]);
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionMessage, setCompletionMessage] = useState("");
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationMessage, setCelebrationMessage] = useState("");
   const { user: clerkUser } = useUser();
   const router = useRouter();
 
@@ -33,7 +35,34 @@ export default function Onboarding() {
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+      // Show celebration for completing step 1
+      if (currentStep === 1) {
+        setCelebrationMessage("Great start! 🎉");
+        setShowCelebration(true);
+        setTimeout(() => {
+          setShowCelebration(false);
+          setCurrentStep(currentStep + 1);
+        }, 1500);
+      }
+      // Show celebration for completing step 2
+      else if (currentStep === 2) {
+        const kidsAdded = familyMembers.filter(m => m.name.trim() !== "").length;
+        if (kidsAdded > 0) {
+          setCelebrationMessage(kidsAdded === 1
+            ? "Wonderful! We can't wait to help organize their schedule! 💝"
+            : `Amazing! ${kidsAdded} wonderful kids to keep track of! 💝`);
+        } else {
+          setCelebrationMessage("You're doing great! Almost there! ✨");
+        }
+        setShowCelebration(true);
+        setTimeout(() => {
+          setShowCelebration(false);
+          setCurrentStep(currentStep + 1);
+        }, 2000);
+      }
+      else {
+        setCurrentStep(currentStep + 1);
+      }
     }
   };
 
@@ -156,14 +185,14 @@ export default function Onboarding() {
             ))}
           </div>
           <div className="flex justify-between text-sm">
-            <span className={currentStep === 1 ? "text-primary-600 font-medium" : "text-gray-500"}>
-              Welcome
+            <span className={currentStep === 1 ? "text-primary-600 font-semibold" : currentStep > 1 ? "text-green-600 font-medium" : "text-gray-500"}>
+              {currentStep > 1 ? "✓ Welcome!" : "Welcome"}
             </span>
-            <span className={currentStep === 2 ? "text-primary-600 font-medium" : "text-gray-500"}>
-              Family Members
+            <span className={currentStep === 2 ? "text-primary-600 font-semibold" : currentStep > 2 ? "text-green-600 font-medium" : "text-gray-500"}>
+              {currentStep > 2 ? "✓ Your Family" : "Your Family"}
             </span>
-            <span className={currentStep === 3 ? "text-primary-600 font-medium" : "text-gray-500"}>
-              Connect Gmail
+            <span className={currentStep === 3 ? "text-primary-600 font-semibold" : "text-gray-500"}>
+              Connect Email
             </span>
           </div>
         </div>
@@ -174,18 +203,20 @@ export default function Onboarding() {
           {currentStep === 1 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
+                <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-4xl">👋</span>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Our Daily Family!</h1>
-                <p className="text-gray-600">Let's get your family calendar set up in just a few minutes.</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">Welcome! We're so glad you're here.</h1>
+                <p className="text-lg text-gray-600 max-w-xl mx-auto">
+                  We know how overwhelming it can be to keep track of everyone's schedules.
+                  Let's get you set up so you can finally have everything in one place.
+                </p>
+                <p className="text-sm text-primary-600 font-medium mt-2">This will only take 2-3 minutes 💙</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Family Name
+                  What should we call your family? (Optional)
                 </label>
                 <input
                   type="text"
@@ -194,12 +225,12 @@ export default function Onboarding() {
                   onChange={(e) => setFamilyName(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
                 />
-                <p className="text-xs text-gray-500 mt-1">This helps personalize your experience</p>
+                <p className="text-xs text-gray-500 mt-1.5">Just a nice personal touch - you can always change it later</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Primary Email
+                  Your Email
                 </label>
                 <input
                   type="email"
@@ -209,18 +240,17 @@ export default function Onboarding() {
                   defaultValue={clerkUser?.primaryEmailAddress?.emailAddress}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
                 />
-                <p className="text-xs text-gray-500 mt-1">We'll use this for important notifications</p>
+                <p className="text-xs text-gray-500 mt-1.5">We'll send you helpful reminders here (no spam, we promise!)</p>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5 border border-blue-200">
                 <div className="flex gap-3">
-                  <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <span className="text-2xl">✨</span>
                   <div>
-                    <h4 className="font-semibold text-blue-900 text-sm">What's next?</h4>
-                    <p className="text-sm text-blue-800 mt-1">
-                      We'll help you add family members and connect your Gmail to automatically find all your kids' activities.
+                    <h4 className="font-semibold text-gray-900 text-sm mb-1">Coming up next...</h4>
+                    <p className="text-sm text-gray-700">
+                      We'll ask you to add your family members, then we'll help you connect your email so we can
+                      automatically find all those soccer practices, piano lessons, and field trips. No more digging through your inbox!
                     </p>
                   </div>
                 </div>
@@ -232,13 +262,15 @@ export default function Onboarding() {
           {currentStep === 2 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+                <div className="w-20 h-20 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-4xl">💖</span>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Add Your Family Members</h1>
-                <p className="text-gray-600">Tell us about the people whose schedules you want to track.</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">Tell us about your wonderful family!</h1>
+                <p className="text-lg text-gray-600 max-w-xl mx-auto">
+                  Add your kids, spouse, or anyone else whose schedule you're juggling.
+                  This helps us organize everything just right.
+                </p>
+                <p className="text-sm text-primary-600 font-medium mt-2">We're excited to meet them! 🌟</p>
               </div>
 
               <div className="space-y-4">
@@ -303,13 +335,27 @@ export default function Onboarding() {
                 Add Another Family Member
               </button>
 
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                <h4 className="font-semibold text-purple-900 text-sm mb-2">Why add family members?</h4>
-                <ul className="text-sm text-purple-800 space-y-1 list-disc list-inside">
-                  <li>Organize events by person</li>
-                  <li>Get personalized activity recommendations</li>
-                  <li>Track everyone's schedule in one place</li>
-                </ul>
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-200">
+                <div className="flex gap-3">
+                  <span className="text-2xl">🎯</span>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 text-sm mb-2">Why we ask about your family</h4>
+                    <ul className="text-sm text-gray-700 space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-600">•</span>
+                        <span>We'll color-code each person's events so you can see at a glance who needs to be where</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-600">•</span>
+                        <span>Get activity suggestions based on their age and interests</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-purple-600">•</span>
+                        <span>Never miss a field trip permission slip or practice schedule again!</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -330,13 +376,15 @@ export default function Onboarding() {
               ) : (
                 <>
                   <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
-                      </svg>
+                    <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <span className="text-4xl">🎉</span>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Ready to Connect Gmail!</h1>
-                    <p className="text-gray-600">We'll save your family info and connect your email to find activities automatically.</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-3">You're almost there!</h1>
+                    <p className="text-lg text-gray-600 max-w-xl mx-auto">
+                      Last step: Let's connect your email so we can start finding all those activities for you.
+                      You're doing amazing!
+                    </p>
+                    <p className="text-sm text-green-600 font-medium mt-2">Just one click and you're done! 🌟</p>
                   </div>
                   <div className="space-y-4">
                     <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white">
@@ -387,32 +435,32 @@ export default function Onboarding() {
             <button
               onClick={handleSkip}
               disabled={isCompleting}
-              className="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed underline"
             >
-              Skip for now
+              I'll do this later
             </button>
 
             <div className="flex gap-3">
               {currentStep > 1 && !isCompleting && (
                 <button
                   onClick={handleBack}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
                 >
-                  Back
+                  ← Back
                 </button>
               )}
               {currentStep < totalSteps ? (
                 <button
                   onClick={handleNext}
-                  className="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                  className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg transform hover:scale-105"
                 >
-                  Continue
+                  {currentStep === 1 ? "Let's Go! →" : currentStep === 2 ? "Almost Done! →" : "Continue →"}
                 </button>
               ) : (
                 <button
                   onClick={handleComplete}
                   disabled={isCompleting}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
                 >
                   {isCompleting ? (
                     <>
@@ -423,14 +471,47 @@ export default function Onboarding() {
                       Saving...
                     </>
                   ) : (
-                    "Save & Connect Gmail"
+                    <>
+                      <span>Let's Connect My Email!</span>
+                      <span className="text-xl">🚀</span>
+                    </>
                   )}
                 </button>
               )}
             </div>
           </div>
         </div>
+
+        {/* Celebration Modal */}
+        {showCelebration && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
+            <div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl animate-scaleIn">
+              <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-5xl">🎊</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{celebrationMessage}</h2>
+              <p className="text-gray-600">Loading next step...</p>
+            </div>
+          </div>
+        )}
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        .animate-scaleIn {
+          animation: scaleIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

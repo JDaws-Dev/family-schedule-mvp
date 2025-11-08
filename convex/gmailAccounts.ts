@@ -79,26 +79,10 @@ export const getFamilyGmailAccounts = query({
     familyId: v.id("families"),
   },
   handler: async (ctx, args) => {
-    console.log("[getFamilyGmailAccounts] Called with familyId:", args.familyId);
-
-    // First, let's see ALL accounts in the database for debugging
-    const allAccounts = await ctx.db.query("gmailAccounts").collect();
-    console.log("[getFamilyGmailAccounts] ALL accounts in DB:", allAccounts.length);
-    allAccounts.forEach(acc => {
-      console.log("  - Account:", {
-        id: acc._id,
-        email: acc.gmailEmail,
-        familyId: acc.familyId,
-        isActive: acc.isActive
-      });
-    });
-
     const accounts = await ctx.db
       .query("gmailAccounts")
       .withIndex("by_family", (q) => q.eq("familyId", args.familyId))
       .collect();
-
-    console.log("[getFamilyGmailAccounts] Found accounts for this family:", accounts.length);
 
     // Get user info for each account
     const accountsWithUsers = await Promise.all(
@@ -111,7 +95,6 @@ export const getFamilyGmailAccounts = query({
       })
     );
 
-    console.log("[getFamilyGmailAccounts] Returning accounts with users:", accountsWithUsers.length);
     return accountsWithUsers;
   },
 });
