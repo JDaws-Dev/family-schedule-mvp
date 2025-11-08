@@ -12,6 +12,9 @@ import MobileNav from "@/app/components/MobileNav";
 import BottomNav from "@/app/components/BottomNav";
 import { useToast } from "@/app/components/Toast";
 import { CalendarSkeleton } from "@/app/components/LoadingSkeleton";
+import AddEventChoiceModal from "@/app/components/AddEventChoiceModal";
+import PhotoUploadModal from "@/app/components/PhotoUploadModal";
+import VoiceRecordModal from "@/app/components/VoiceRecordModal";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -90,9 +93,9 @@ function getCategoryEmoji(category: string): string {
     "Theater": "🎭",
     "Social": "🍽️",
     "Family Event": "👨‍👩‍👧‍👦",
-    "Other": "📅"
+    "Other": "🎈"
   };
-  return emojis[category] || "📅";
+  return emojis[category] || "🎈";
 }
 
 // Helper function to format date in mom-friendly format
@@ -156,6 +159,9 @@ function CalendarContent() {
   const [filterMember, setFilterMember] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showUpcomingOnly, setShowUpcomingOnly] = useState(true);
+  const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
+  const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
@@ -163,6 +169,7 @@ function CalendarContent() {
   // Mutations
   const deleteEvent = useMutation(api.events.deleteEvent);
   const updateEvent = useMutation(api.events.updateEvent);
+  const createUnconfirmedEvent = useMutation(api.events.createUnconfirmedEvent);
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -584,6 +591,134 @@ function CalendarContent() {
     router.push(`/review?addEvent=true&date=${formattedDate}`);
   };
 
+  // Handle photo upload for event extraction
+  const handlePhotoUpload = async (file: File) => {
+    if (!convexUser?.familyId) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      setShowPhotoUploadModal(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      formData.append("familyMembers", JSON.stringify(familyMembers || []));
+      formData.append("currentUserName", convexUser?.fullName || "Unknown");
+
+      const response = await fetch("/api/photo/extract-event", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event from photo");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event information found in the photo. " + (data.explanation || ""), "info", undefined, 7000);
+        setShowPhotoUploadModal(false);
+        return;
+      }
+
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      for (const event of data.events) {
+        await createUnconfirmedEvent({
+          familyId: convexUser.familyId,
+          createdByUserId: convexUser._id,
+          title: event.title || "Untitled Event",
+          eventDate: event.date || "",
+          eventTime: event.time || undefined,
+          endTime: event.endTime || undefined,
+          location: event.location || undefined,
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || "",
+        });
+      }
+
+      setShowPhotoUploadModal(false);
+      showToast(`✓ Found ${data.events.length} event(s) from photo! Go to Review page to approve them.`, "success", undefined, 7000);
+    } catch (error: any) {
+      console.error("Error extracting event from photo:", error);
+      showToast("Failed to extract event from photo. Please try again.", "error");
+      setShowPhotoUploadModal(false);
+    }
+  };
+
+  // Handle voice recording for event extraction
+  const handleVoiceRecording = async (audioBlob: Blob) => {
+    if (!convexUser?.familyId) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      setShowVoiceRecordModal(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+      formData.append("familyMembers", JSON.stringify(familyMembers || []));
+      formData.append("currentUserName", convexUser?.fullName || "Unknown");
+
+      const response = await fetch("/api/voice/extract-event", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event from voice recording");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event information found in the recording. " + (data.explanation || ""), "info", undefined, 7000);
+        setShowVoiceRecordModal(false);
+        return;
+      }
+
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      for (const event of data.events) {
+        await createUnconfirmedEvent({
+          familyId: convexUser.familyId,
+          createdByUserId: convexUser._id,
+          title: event.title || "Untitled Event",
+          eventDate: event.date || "",
+          eventTime: event.time || undefined,
+          endTime: event.endTime || undefined,
+          location: event.location || undefined,
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || "",
+        });
+      }
+
+      setShowVoiceRecordModal(false);
+      showToast(`✓ Found ${data.events.length} event(s) from recording! Go to Review page to approve them.`, "success", undefined, 7000);
+    } catch (error: any) {
+      console.error("Error extracting event from voice:", error);
+      showToast("Failed to extract event from voice recording. Please try again.", "error");
+      setShowVoiceRecordModal(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
@@ -877,15 +1012,15 @@ function CalendarContent() {
                         {showUpcomingOnly ? 'Showing upcoming events only' : 'Showing all events'}
                       </span>
                     </div>
-                    <Link
-                      href="/review"
+                    <button
+                      onClick={() => setShowAddEventChoiceModal(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                       <span>Add Event</span>
-                    </Link>
+                    </button>
                   </div>
                 </div>
 
@@ -923,7 +1058,24 @@ function CalendarContent() {
 
                               {/* Event Details */}
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-gray-900 text-lg mb-2">{event.title}</h3>
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <h3 className="font-bold text-gray-900 text-lg">{event.title}</h3>
+                                  {event.category && (
+                                    <span
+                                      className="px-2.5 py-1 rounded-lg text-xs font-bold text-white whitespace-nowrap shadow-sm"
+                                      style={{ backgroundColor: getCategoryColor(event.category) }}
+                                    >
+                                      {event.category}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Description if available */}
+                                {event.description && (
+                                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                                    {event.description}
+                                  </p>
+                                )}
 
                                 <div className="space-y-1.5 mb-3">
                                   {event.eventTime && (
@@ -967,7 +1119,7 @@ function CalendarContent() {
                                   )}
                                   {event.requiresAction && !event.actionCompleted && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 shadow-sm">
-                                      ⚠️ Action Needed
+                                      ⚠️ {event.actionDescription || 'Action Needed'}
                                     </span>
                                   )}
                                 </div>
@@ -1595,6 +1747,42 @@ function CalendarContent() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </Link>
+
+      {/* Add Event Choice Modal */}
+      {showAddEventChoiceModal && (
+        <AddEventChoiceModal
+          onClose={() => setShowAddEventChoiceModal(false)}
+          onCheckEmails={() => router.push('/review')}
+          onTypeManually={() => router.push('/review')}
+          onPasteText={() => router.push('/review')}
+          onUploadPhoto={() => {
+            setShowAddEventChoiceModal(false);
+            setShowPhotoUploadModal(true);
+          }}
+          onVoiceRecord={() => {
+            setShowAddEventChoiceModal(false);
+            setShowVoiceRecordModal(true);
+          }}
+          onSearchSpecific={() => router.push('/review')}
+          isGmailConnected={!!gmailAccounts && gmailAccounts.length > 0}
+        />
+      )}
+
+      {/* Photo Upload Modal */}
+      {showPhotoUploadModal && (
+        <PhotoUploadModal
+          onClose={() => setShowPhotoUploadModal(false)}
+          onExtract={handlePhotoUpload}
+        />
+      )}
+
+      {/* Voice Record Modal */}
+      {showVoiceRecordModal && (
+        <VoiceRecordModal
+          onClose={() => setShowVoiceRecordModal(false)}
+          onExtract={handleVoiceRecording}
+        />
+      )}
 
       {/* Bottom Navigation for Mobile */}
       <BottomNav />

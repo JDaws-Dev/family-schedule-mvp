@@ -75,6 +75,7 @@ export default function ReviewPage() {
   const [showPasteTextModal, setShowPasteTextModal] = useState(false);
   const [pastedText, setPastedText] = useState("");
   const [isExtractingEvent, setIsExtractingEvent] = useState(false);
+  const [isEnhancingEvent, setIsEnhancingEvent] = useState(false);
   const [emailSearchQuery, setEmailSearchQuery] = useState("");
   const [emailSearchTimeframe, setEmailSearchTimeframe] = useState("3"); // months
   const [isSearchingEmails, setIsSearchingEmails] = useState(false);
@@ -639,6 +640,92 @@ export default function ReviewPage() {
     } catch (error: any) {
       console.error("Error extracting event from voice:", error);
       showToast("Failed to extract event from recording. Please try again or enter manually.", "error");
+    }
+  };
+
+  // Handle AI enhancement of event details
+  const handleEnhanceEvent = async () => {
+    if (!newEventForm.title.trim()) {
+      showToast("Please enter an event title first", "info");
+      return;
+    }
+
+    setIsEnhancingEvent(true);
+    try {
+      const response = await fetch("/api/enhance-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newEventForm.title,
+          category: newEventForm.category,
+          location: newEventForm.location,
+          time: newEventForm.eventTime,
+          childName: newEventForm.childName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to enhance event");
+      }
+
+      // Update form with enhanced details
+      setNewEventForm({
+        ...newEventForm,
+        title: data.enhancedTitle || newEventForm.title,
+        description: data.description || newEventForm.description,
+      });
+
+      showToast("✨ Event enhanced! Review the updated title and description.", "success");
+    } catch (error: any) {
+      console.error("Error enhancing event:", error);
+      showToast("Failed to enhance event. Please try again.", "error");
+    } finally {
+      setIsEnhancingEvent(false);
+    }
+  };
+
+  // Handle AI enhancement for edit event modal
+  const handleEnhanceEditEvent = async () => {
+    if (!editingEvent?.title?.trim()) {
+      showToast("Please enter an event title first", "info");
+      return;
+    }
+
+    setIsEnhancingEvent(true);
+    try {
+      const response = await fetch("/api/enhance-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingEvent.title,
+          category: editingEvent.category,
+          location: editingEvent.location,
+          time: editingEvent.eventTime,
+          childName: editingEvent.childName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to enhance event");
+      }
+
+      // Update editing event with enhanced details
+      setEditingEvent({
+        ...editingEvent,
+        title: data.enhancedTitle || editingEvent.title,
+        description: data.description || editingEvent.description,
+      });
+
+      showToast("✨ Event enhanced! Review the updated title and description.", "success");
+    } catch (error: any) {
+      console.error("Error enhancing event:", error);
+      showToast("Failed to enhance event. Please try again.", "error");
+    } finally {
+      setIsEnhancingEvent(false);
     }
   };
 
@@ -1791,12 +1878,32 @@ export default function ReviewPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     type="submit"
                     className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
                   >
                     Save Changes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEnhanceEditEvent}
+                    disabled={isEnhancingEvent || !editingEvent?.title?.trim()}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isEnhancingEvent ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Enhancing...
+                      </>
+                    ) : (
+                      <>
+                        ✨ Enhance
+                      </>
+                    )}
                   </button>
                   <button
                     type="button"
@@ -2388,6 +2495,26 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Add Event
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEnhanceEvent}
+                  disabled={isEnhancingEvent || !newEventForm.title.trim()}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition shadow-soft flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isEnhancingEvent ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Enhancing...
+                    </>
+                  ) : (
+                    <>
+                      ✨ Enhance with AI
+                    </>
+                  )}
                 </button>
                 <button
                   type="button"

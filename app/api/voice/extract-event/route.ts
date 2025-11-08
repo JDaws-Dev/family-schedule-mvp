@@ -72,7 +72,7 @@ Return a JSON object with this structure:
   "events": [
     {
       "title": "Event name",
-      "description": "Event description",
+      "description": "Brief description with helpful context - what to bring, dress code, special notes, etc. DO NOT repeat the category name or family member names here as they are shown separately.",
       "date": "YYYY-MM-DD (if you can determine it)",
       "time": "HH:MM in 24-hour format (if mentioned)",
       "endTime": "HH:MM (if mentioned)",

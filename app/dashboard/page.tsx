@@ -80,9 +80,9 @@ function getCategoryEmoji(category: string): string {
     "Theater": "🎭",
     "Social": "🍽️",
     "Family Event": "👨‍👩‍👧‍👦",
-    "Other": "📅"
+    "Other": "🎈"
   };
-  return emojis[category] || "📅";
+  return emojis[category] || "🎈";
 }
 
 // Helper function to format date in mom-friendly format
