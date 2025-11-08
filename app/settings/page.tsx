@@ -622,8 +622,9 @@ function SettingsContent() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-2 mb-6">
-          <div className="flex flex-wrap gap-2">
+        {/* Tab Navigation with Descriptions */}
+        <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-4 mb-6">
+          <div className="flex flex-wrap gap-2 mb-3">
             <button
               onClick={() => setActiveTab('account')}
               className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
@@ -632,7 +633,7 @@ function SettingsContent() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              My Account
+              Your Info
             </button>
             <button
               onClick={() => setActiveTab('family')}
@@ -642,7 +643,7 @@ function SettingsContent() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Family
+              Family Members
             </button>
             <button
               onClick={() => setActiveTab('apps')}
@@ -652,8 +653,27 @@ function SettingsContent() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Connected Apps
+              Email Connection
             </button>
+          </div>
+
+          {/* Tab Descriptions */}
+          <div className="px-2">
+            {activeTab === 'account' && (
+              <p className="text-sm text-gray-600">
+                Manage your personal information and account preferences
+              </p>
+            )}
+            {activeTab === 'family' && (
+              <p className="text-sm text-gray-600">
+                Add and manage the people in your family to track their schedules
+              </p>
+            )}
+            {activeTab === 'apps' && (
+              <p className="text-sm text-gray-600">
+                Connect your email so we can automatically find events for you
+              </p>
+            )}
           </div>
         </div>
 
