@@ -920,8 +920,8 @@ function DashboardContent() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Your calendar is empty!</h3>
-                    <p className="text-gray-600 mb-6">Let's get you set up with your family's activities.</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Let's get started!</h3>
+                    <p className="text-gray-600 mb-6">Add your first event and we'll help you stay organized.</p>
 
                     <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left max-w-md mx-auto">
                       <h4 className="font-semibold text-gray-900 mb-3">Getting started:</h4>
@@ -933,8 +933,8 @@ function DashboardContent() {
                             </svg>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900 text-sm">Connect Gmail to automatically find events</p>
-                            <p className="text-xs text-gray-600 mt-0.5">We'll scan for sports, schools, and activities</p>
+                            <p className="font-medium text-gray-900 text-sm">Check your emails for schedules</p>
+                            <p className="text-xs text-gray-600 mt-0.5">We'll look for sports, schools, and activities</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
@@ -944,7 +944,7 @@ function DashboardContent() {
                             </svg>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900 text-sm">Add events manually</p>
+                            <p className="font-medium text-gray-900 text-sm">Type in an event</p>
                             <p className="text-xs text-gray-600 mt-0.5">Quick entry for any activity or appointment</p>
                           </div>
                         </div>

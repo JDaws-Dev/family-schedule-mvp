@@ -791,10 +791,10 @@ function CalendarContent() {
             ) : sortedEvents.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="text-xl font-semibold text-gray-900 mb-2">
-                  No events yet
+                  Your calendar is empty
                 </div>
                 <p className="text-gray-600 mb-4">
-                  Check your emails or type in events to get started
+                  Let's add your first event! Check your emails for schedules or type one in yourself.
                 </p>
                 <div className="flex gap-3">
                   <Link
@@ -910,10 +910,10 @@ function CalendarContent() {
             ) : calendarEvents.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="text-xl font-semibold text-gray-900 mb-2">
-                  No events yet
+                  Your calendar is empty
                 </div>
                 <p className="text-gray-600 mb-4">
-                  Check your emails or type in events to get started
+                  Let's add your first event! Check your emails or type one in yourself.
                 </p>
                 <div className="flex gap-3">
                   <Link
