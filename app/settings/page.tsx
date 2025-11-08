@@ -19,6 +19,10 @@ function SettingsContent() {
     yourInfo: true,
     notifications: false,
     billing: false,
+    familyDetails: true,
+    familyMembers: false,
+    gmail: true,
+    googleCalendar: false,
   });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
@@ -587,7 +591,7 @@ function SettingsContent() {
     }
   };
 
-  const toggleSection = (section: 'yourInfo' | 'notifications' | 'billing') => {
+  const toggleSection = (section: 'yourInfo' | 'notifications' | 'billing' | 'familyDetails' | 'familyMembers' | 'gmail' | 'googleCalendar') => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
@@ -1098,13 +1102,26 @@ function SettingsContent() {
         <div>
         {/* Family Details */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Family Details</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Manage your family's basic information and contact preferences
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('familyDetails')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Family Details</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage your family's basic information and contact preferences
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.familyDetails ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.familyDetails ? 'block' : 'hidden md:block'}`}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1177,13 +1194,26 @@ function SettingsContent() {
 
         {/* Family Members */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Family Members</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Share your family calendar with your spouse. One subscription, two logins.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('familyMembers')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Family Members</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Share your family calendar with your spouse. One subscription, two logins.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.familyMembers ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.familyMembers ? 'block' : 'hidden md:block'}`}>
             {/* Current Family Members */}
             {!familyMembers ? (
               <div className="text-center py-4 text-gray-500">Loading...</div>
@@ -1390,13 +1420,26 @@ function SettingsContent() {
         <div>
         {/* Google Calendar */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Google Calendar</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Choose where to sync your events. They'll appear on your phone, computer, and anywhere else you use Google Calendar.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('googleCalendar')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Google Calendar</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Choose where to sync your events. They'll appear on your phone, computer, and anywhere else you use Google Calendar.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.googleCalendar ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.googleCalendar ? 'block' : 'hidden md:block'}`}>
             {/* Current Selection */}
             {family?.googleCalendarId && family?.calendarName && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -1512,13 +1555,26 @@ function SettingsContent() {
 
         {/* Gmail Connections - Multiple Accounts */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Gmail</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Connect your Gmail to automatically find events in your inbox - sports schedules, school emails, medical appointments, and more.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('gmail')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Gmail</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Connect your Gmail to automatically find events in your inbox - sports schedules, school emails, medical appointments, and more.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.gmail ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.gmail ? 'block' : 'hidden md:block'}`}>
             {/* Privacy Reassurance */}
             <div className="mb-6">
               <PrivacyBadge variant="email" />
