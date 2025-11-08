@@ -24,8 +24,8 @@ export default function AddEventChoiceModal({
   isGmailConnected
 }: AddEventChoiceModalProps) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-strong max-w-lg w-full transform transition-all">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-strong max-w-lg w-full transform transition-all my-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 rounded-t-2xl">
           <h2 className="text-2xl font-bold text-white mb-1">
@@ -154,7 +154,87 @@ export default function AddEventChoiceModal({
             </button>
           )}
 
-          {/* Option 4: Type it in */}
+          {/* Option 4: Paste text */}
+          {onPasteText && (
+            <button
+              onClick={() => {
+                onClose();
+                onPasteText();
+              }}
+              className="w-full text-left p-5 bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 border-2 border-purple-300 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium group"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-lg text-gray-900">
+                      Copy & paste text
+                    </h3>
+                    <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-semibold rounded-full">
+                      Quick!
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Copy an email or text message and paste it here. We'll automatically extract all the event details for you!
+                  </p>
+                  <p className="text-xs text-purple-700 mt-2 font-medium">
+                    📋 Great for forwarded emails or text messages
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-purple-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
+          )}
+
+          {/* Option 5: Search for something specific */}
+          <button
+            onClick={() => {
+              onClose();
+              onSearchSpecific();
+            }}
+            disabled={!isGmailConnected}
+            className="w-full text-left p-5 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-2 border-amber-300 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-bold text-lg text-gray-900">
+                    Search for something specific
+                  </h3>
+                  <span className="px-2 py-0.5 bg-amber-500 text-white text-xs font-semibold rounded-full">
+                    Powerful!
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Looking for a particular event? Tell us what to look for and we'll search your emails to find it!
+                </p>
+                <p className="text-xs text-amber-700 mt-2 font-medium">
+                  🔍 "Find my daughter's dance recital" or "Search for soccer"
+                </p>
+                {!isGmailConnected && (
+                  <p className="text-xs text-red-600 mt-2 font-medium">
+                    ⚠️ Connect your email in Settings first
+                  </p>
+                )}
+              </div>
+              <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Option 6: Type it in */}
           <button
             onClick={() => {
               onClose();
@@ -177,70 +257,6 @@ export default function AddEventChoiceModal({
                 </p>
               </div>
               <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-500 flex-shrink-0 mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </button>
-
-          {/* Option 5: Paste text */}
-          {onPasteText && (
-            <button
-              onClick={() => {
-                onClose();
-                onPasteText();
-              }}
-              className="w-full text-left p-5 bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-secondary-300 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gray-100 group-hover:bg-secondary-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-all">
-                  <svg className="w-6 h-6 text-gray-600 group-hover:text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg text-gray-900 mb-1">
-                    Copy & paste text
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Copy an email or text message and paste it here. We'll automatically extract all the event details for you!
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-gray-400 group-hover:text-secondary-500 flex-shrink-0 mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-          )}
-
-          {/* Option 6: Search for something specific */}
-          <button
-            onClick={() => {
-              onClose();
-              onSearchSpecific();
-            }}
-            disabled={!isGmailConnected}
-            className="w-full text-left p-5 bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-accent-300 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed group"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-gray-100 group-hover:bg-accent-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-all">
-                <svg className="w-6 h-6 text-gray-600 group-hover:text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-gray-900 mb-1">
-                  Search for something specific
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Looking for a particular event? We'll search your emails for exactly what you need.
-                </p>
-                {!isGmailConnected && (
-                  <p className="text-xs text-red-600 mt-2 font-medium">
-                    ⚠️ Connect your email in Settings first
-                  </p>
-                )}
-              </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-accent-500 flex-shrink-0 mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>

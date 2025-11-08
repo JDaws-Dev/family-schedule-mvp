@@ -13,6 +13,8 @@ import { useSearchParams } from "next/navigation";
 import { useGuidedTour, GuidedTourButton } from "../components/GuidedTour";
 import WelcomePopup from "../components/WelcomePopup";
 import AddEventChoiceModal from "../components/AddEventChoiceModal";
+import PhotoUploadModal from "../components/PhotoUploadModal";
+import VoiceRecordModal from "../components/VoiceRecordModal";
 import BottomNav from "../components/BottomNav";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
@@ -109,6 +111,8 @@ function DashboardContent() {
   const [addEventTab, setAddEventTab] = useState<"manual" | "paste" | "photo" | "voice">("manual");
   const [pastedText, setPastedText] = useState("");
   const [isExtractingEvent, setIsExtractingEvent] = useState(false);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
+  const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
   const [showSearchEmailsModal, setShowSearchEmailsModal] = useState(false);
   const [emailSearchQuery, setEmailSearchQuery] = useState("");
   const [emailSearchTimeframe, setEmailSearchTimeframe] = useState("3"); // months
@@ -438,6 +442,178 @@ function DashboardContent() {
       showToast("Failed to extract event. Please try again or enter manually.", "error");
     } finally {
       setIsExtractingEvent(false);
+    }
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!convexUser?.familyId) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      setShowPhotoUploadModal(false);
+      return;
+    }
+
+    try {
+      // Create FormData to send the file
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const response = await fetch("/api/photo/extract-event", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event from photo");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event information found in the photo. " + (data.explanation || ""), "info", undefined, 7000);
+        return;
+      }
+
+      // Map category from API format to our format
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      // If multiple events found, create them all as unconfirmed events for review
+      if (data.events.length > 1) {
+        let createdCount = 0;
+        for (const event of data.events) {
+          try {
+            await createUnconfirmedEvent({
+              familyId: convexUser.familyId,
+              createdByUserId: convexUser._id,
+              title: event.title || "Untitled Event",
+              eventDate: event.date || "",
+              eventTime: event.time || undefined,
+              endTime: event.endTime || undefined,
+              location: event.location || undefined,
+              category: categoryMap[event.category] || "Other",
+              childName: "",
+              description: event.description || "",
+            });
+            createdCount++;
+          } catch (err) {
+            console.error("Error creating event:", err);
+          }
+        }
+        setShowPhotoUploadModal(false);
+        showToast(`✓ Found ${data.events.length} events from photo! Go to Review page to approve them.`, "success", undefined, 7000);
+      } else {
+        // Single event - create as unconfirmed for review
+        const event = data.events[0];
+        await createUnconfirmedEvent({
+          familyId: convexUser.familyId,
+          createdByUserId: convexUser._id,
+          title: event.title || "Untitled Event",
+          eventDate: event.date || "",
+          eventTime: event.time || undefined,
+          endTime: event.endTime || undefined,
+          location: event.location || undefined,
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || "",
+        });
+        setShowPhotoUploadModal(false);
+        showToast(`✓ Event extracted from photo! Go to Review page to approve it.`, "success", undefined, 5000);
+      }
+    } catch (error: any) {
+      console.error("Error extracting event from photo:", error);
+      showToast("Failed to extract event from photo. Please try again or enter manually.", "error");
+    }
+  };
+
+  const handleVoiceRecording = async (audioBlob: Blob) => {
+    if (!convexUser?.familyId) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      setShowVoiceRecordModal(false);
+      return;
+    }
+
+    try {
+      // Create FormData to send the audio file
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+
+      const response = await fetch("/api/voice/extract-event", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event from voice recording");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event information found in the recording. " + (data.explanation || ""), "info", undefined, 7000);
+        return;
+      }
+
+      // Map category from API format to our format
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      // If multiple events found, create them all as unconfirmed events for review
+      if (data.events.length > 1) {
+        let createdCount = 0;
+        for (const event of data.events) {
+          try {
+            await createUnconfirmedEvent({
+              familyId: convexUser.familyId,
+              createdByUserId: convexUser._id,
+              title: event.title || "Untitled Event",
+              eventDate: event.date || "",
+              eventTime: event.time || undefined,
+              endTime: event.endTime || undefined,
+              location: event.location || undefined,
+              category: categoryMap[event.category] || "Other",
+              childName: "",
+              description: event.description || "",
+            });
+            createdCount++;
+          } catch (err) {
+            console.error("Error creating event:", err);
+          }
+        }
+        setShowVoiceRecordModal(false);
+        showToast(`✓ Found ${data.events.length} events from your recording! Go to Review page to approve them.`, "success", undefined, 7000);
+      } else {
+        // Single event - create as unconfirmed for review
+        const event = data.events[0];
+        await createUnconfirmedEvent({
+          familyId: convexUser.familyId,
+          createdByUserId: convexUser._id,
+          title: event.title || "Untitled Event",
+          eventDate: event.date || "",
+          eventTime: event.time || undefined,
+          endTime: event.endTime || undefined,
+          location: event.location || undefined,
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || "",
+        });
+        setShowVoiceRecordModal(false);
+        showToast(`✓ Event extracted from recording! Go to Review page to approve it.`, "success", undefined, 5000);
+      }
+    } catch (error: any) {
+      console.error("Error extracting event from voice:", error);
+      showToast("Failed to extract event from recording. Please try again or enter manually.", "error");
     }
   };
 
@@ -1863,15 +2039,29 @@ function DashboardContent() {
             setShowAddEventModal(true);
           }}
           onUploadPhoto={() => {
-            setAddEventTab("photo");
-            setShowAddEventModal(true);
+            setShowPhotoUploadModal(true);
           }}
           onVoiceRecord={() => {
-            setAddEventTab("voice");
-            setShowAddEventModal(true);
+            setShowVoiceRecordModal(true);
           }}
           onSearchSpecific={() => setShowSearchEmailsModal(true)}
           isGmailConnected={isGmailConnected}
+        />
+      )}
+
+      {/* Photo Upload Modal */}
+      {showPhotoUploadModal && (
+        <PhotoUploadModal
+          onClose={() => setShowPhotoUploadModal(false)}
+          onExtract={handlePhotoUpload}
+        />
+      )}
+
+      {/* Voice Record Modal */}
+      {showVoiceRecordModal && (
+        <VoiceRecordModal
+          onClose={() => setShowVoiceRecordModal(false)}
+          onTranscribe={handleVoiceRecording}
         />
       )}
 
