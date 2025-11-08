@@ -12,6 +12,7 @@ import { EventCardSkeleton, StatCardSkeleton } from "../components/LoadingSkelet
 import { useSearchParams } from "next/navigation";
 import { useGuidedTour, GuidedTourButton } from "../components/GuidedTour";
 import WelcomePopup from "../components/WelcomePopup";
+import AddEventChoiceModal from "../components/AddEventChoiceModal";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -102,6 +103,7 @@ function DashboardContent() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
   const [pastedText, setPastedText] = useState("");
@@ -1015,102 +1017,62 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Add Event Options */}
+          {/* Add Event Button - Progressive Disclosure */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-soft p-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Add an Event
-              </h2>
-              <div className="space-y-3">
-                <button
-                  onClick={() => setShowAddEventModal(true)}
-                  className="block w-full text-left px-4 py-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
+              <button
+                onClick={() => setShowAddEventChoiceModal(true)}
+                className="w-full px-6 py-6 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-2xl transition-all duration-200 shadow-medium hover:shadow-strong transform hover:-translate-y-1 group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1">
+                    <div className="text-xl font-bold text-white mb-1">
+                      Add an Event
                     </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-white">
-                        Add Event
-                      </div>
-                      <div className="text-xs text-white/80">
-                        Manually add an event
-                      </div>
+                    <div className="text-sm text-white/90">
+                      Let us help you
                     </div>
                   </div>
-                </button>
-
-                <button
-                  onClick={handleScanEmail}
-                  disabled={isScanning || !isGmailConnected}
-                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-white">
-                        {isScanning ? "Scanning..." : "Scan Email"}
-                      </div>
-                      <div className="text-xs text-white/80">
-                        {scanMessage || "Check for new events"}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => setShowSearchEmailsModal(true)}
-                  disabled={!isGmailConnected}
-                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-accent-400 to-accent-500 hover:from-accent-500 hover:to-accent-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-white">
-                        🔍 Search Emails
-                      </div>
-                      <div className="text-xs text-white/80">
-                        Find ANY event in your inbox
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                <Link
-                  href="/settings"
-                  className="block w-full text-left px-4 py-4 bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-white">
-                        Settings
-                      </div>
-                      <div className="text-xs text-white/80">
-                        Manage preferences
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </div>
+                  <svg className="w-6 h-6 text-white/80 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
             </div>
 
+            {/* Quick Links */}
+            <div className="bg-white rounded-lg shadow-soft p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">Quick Links</h3>
+              <Link
+                href="/settings"
+                className="block w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-200 group-hover:bg-primary-100 rounded-lg flex items-center justify-center transition-colors">
+                    <svg className="w-5 h-5 text-gray-600 group-hover:text-primary-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900">
+                      Settings
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      Manage preferences
+                    </div>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -1858,6 +1820,21 @@ function DashboardContent() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Add Event Choice Modal */}
+      {showAddEventChoiceModal && (
+        <AddEventChoiceModal
+          onClose={() => setShowAddEventChoiceModal(false)}
+          onCheckEmails={handleScanEmail}
+          onTypeManually={() => setShowAddEventModal(true)}
+          onPasteText={() => {
+            setAddEventTab("paste");
+            setShowAddEventModal(true);
+          }}
+          onSearchSpecific={() => setShowSearchEmailsModal(true)}
+          isGmailConnected={isGmailConnected}
+        />
       )}
 
       {/* Add Event Modal */}

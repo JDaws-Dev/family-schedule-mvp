@@ -11,6 +11,7 @@ import { EventCardSkeleton } from "@/app/components/LoadingSkeleton";
 import { useToast } from "@/app/components/Toast";
 import HelpTooltip from "@/app/components/HelpTooltip";
 import CelebrationToast from "@/app/components/CelebrationToast";
+import AddEventChoiceModal from "@/app/components/AddEventChoiceModal";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -51,6 +52,7 @@ function formatMomFriendlyDate(dateString: string): string {
 
 export default function ReviewPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showSearchEmailsModal, setShowSearchEmailsModal] = useState(false);
@@ -726,101 +728,29 @@ export default function ReviewPage() {
           </div>
         )}
 
-        {/* Add Event Options */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Add Event Button - Progressive Disclosure */}
+        <div className="mb-6">
           <button
-            onClick={() => setShowAddEventModal(true)}
-            className="text-left px-4 py-4 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
+            onClick={() => setShowAddEventChoiceModal(true)}
+            className="w-full px-6 py-6 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 rounded-2xl transition-all duration-200 shadow-medium hover:shadow-strong transform hover:-translate-y-1 group"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </div>
-              <div className="flex-1">
-                <div className="font-semibold text-white">
-                  Add Event
+              <div className="text-left">
+                <div className="text-2xl font-bold text-white mb-1">
+                  Add an Event
                 </div>
-                <div className="text-xs text-white/80">
-                  Type in an event yourself
-                </div>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => {
-              setShowAddEventModal(true);
-              setAddEventTab("paste");
-            }}
-            className="text-left px-4 py-4 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium transform hover:-translate-y-0.5"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-white">
-                  Paste Event
-                </div>
-                <div className="text-xs text-white/80">
-                  Paste text & auto-extract details
+                <div className="text-sm text-white/90">
+                  Let us help you add events to your calendar
                 </div>
               </div>
-            </div>
-          </button>
-
-          <button
-            onClick={handleScanEmail}
-            disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
-            className="text-left px-4 py-4 bg-gradient-to-r from-accent-400 to-accent-500 hover:from-accent-500 hover:to-accent-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                {isScanning ? (
-                  <svg className="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
-                  </svg>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-white">
-                  {isScanning ? "Checking..." : "Find Events in My Emails"}
-                </div>
-                <div className="text-xs text-white/80">
-                  {scanMessage || "We'll look for schedules automatically"}
-                </div>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setShowSearchEmailsModal(true)}
-            disabled={!gmailAccounts || gmailAccounts.length === 0}
-            className="text-left px-4 py-4 bg-gradient-to-r from-accent-400 to-accent-500 hover:from-accent-500 hover:to-accent-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <div className="font-semibold text-white">
-                  Search Emails
-                </div>
-                <div className="text-xs text-white/80">
-                  Find ANY event in your inbox
-                </div>
-              </div>
+              <svg className="w-6 h-6 text-white/80 group-hover:translate-x-1 transition-transform ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
           </button>
         </div>
@@ -1456,6 +1386,21 @@ export default function ReviewPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add Event Choice Modal */}
+      {showAddEventChoiceModal && (
+        <AddEventChoiceModal
+          onClose={() => setShowAddEventChoiceModal(false)}
+          onCheckEmails={handleScanEmail}
+          onTypeManually={() => setShowAddEventModal(true)}
+          onPasteText={() => {
+            setAddEventTab("paste");
+            setShowAddEventModal(true);
+          }}
+          onSearchSpecific={() => setShowSearchEmailsModal(true)}
+          isGmailConnected={gmailAccounts && gmailAccounts.length > 0}
+        />
       )}
 
       {/* Add Event Modal */}
