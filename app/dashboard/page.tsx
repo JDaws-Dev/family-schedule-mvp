@@ -486,6 +486,7 @@ function DashboardContent() {
       });
 
       setShowAddEventModal(false);
+      setAddEventTab("manual");
       showToast(`✓ Event "${newEventForm.title}" added successfully!`, "success", undefined, 7000);
 
       // Automatically push to Google Calendar
@@ -1873,7 +1874,10 @@ function DashboardContent() {
       {showAddEventModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
-          onClick={() => setShowAddEventModal(false)}
+          onClick={() => {
+            setShowAddEventModal(false);
+            setAddEventTab("manual");
+          }}
         >
           <div
             className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
@@ -1884,7 +1888,10 @@ function DashboardContent() {
               <div className="flex justify-between items-start mb-4">
                 <h2 className="text-2xl font-bold text-white">Add New Event</h2>
                 <button
-                  onClick={() => setShowAddEventModal(false)}
+                  onClick={() => {
+                    setShowAddEventModal(false);
+                    setAddEventTab("manual");
+                  }}
                   className="text-white hover:bg-white/20 rounded-lg p-2 transition"
                   aria-label="Close add event modal"
                   title="Close"
@@ -1984,7 +1991,11 @@ Example:
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddEventModal(false)}
+                    onClick={() => {
+                      setShowAddEventModal(false);
+                      setAddEventTab("manual");
+                      setPastedText("");
+                    }}
                     className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
                   >
                     Cancel
