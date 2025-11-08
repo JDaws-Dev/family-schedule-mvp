@@ -123,9 +123,12 @@ export async function POST(request: NextRequest) {
           const endDate = new Date(gEvent.end.dateTime);
           endTime = endDate.toTimeString().slice(0, 5);
         }
-      } else {
+      } else if (gEvent.start?.date) {
         // All-day event
-        eventDate = gEvent.start.date!;
+        eventDate = gEvent.start.date;
+      } else {
+        // No valid date, skip this event
+        continue;
       }
 
       // Check if we already have this event
