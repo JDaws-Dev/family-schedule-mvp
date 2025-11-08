@@ -107,7 +107,7 @@ type ExtendedView = View | "list";
 function CalendarContent() {
   const { showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [view, setView] = useState<ExtendedView>("month");
+  const [view, setView] = useState<ExtendedView>("list");
   const [date, setDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
