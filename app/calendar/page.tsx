@@ -790,11 +790,12 @@ function CalendarContent() {
               <CalendarSkeleton />
             ) : sortedEvents.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-6xl mb-4">☕</div>
                 <div className="text-xl font-semibold text-gray-900 mb-2">
-                  Your calendar is empty
+                  Nothing scheduled yet!
                 </div>
                 <p className="text-gray-600 mb-4">
-                  Let's add your first event! Check your emails for schedules or type one in yourself.
+                  Enjoy the free time or add your first event to get started.
                 </p>
                 <div className="flex gap-3">
                   <Link

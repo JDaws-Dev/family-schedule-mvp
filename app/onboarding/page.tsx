@@ -179,7 +179,7 @@ export default function Onboarding() {
       return true;
     } catch (error) {
       console.error("Error saving onboarding data:", error);
-      alert("Failed to save your information. Please try again.");
+      alert("Oops! We couldn't save that. Want to try again?");
       return false;
     }
   };
