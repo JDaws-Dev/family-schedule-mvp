@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { smsText } = await request.json();
+    const { smsText, familyMembers, currentUserName } = await request.json();
 
     if (!smsText || smsText.trim().length === 0) {
       return NextResponse.json(
@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Build family member context for AI
+    const familyMemberNames = familyMembers?.map((m: any) => m.name).join(", ") || "";
+    const familyContext = familyMemberNames
+      ? `\n\nFAMILY MEMBERS: ${familyMemberNames}\nCURRENT USER: ${currentUserName || "Unknown"}`
+      : "";
 
     // Use OpenAI to extract event information from SMS
     const systemPrompt = `You are an AI assistant that extracts event information from text messages.
@@ -33,18 +39,22 @@ Return a JSON object with this structure:
       "location": "Location name or address",
       "category": "A descriptive category name (e.g., 'Sports', 'Music Lessons', 'Birthday Party', 'Doctor Appointment', 'School Event', 'Dance', 'Soccer', etc.)",
       "childName": "Name of child/person event is for (e.g., 'Emma', 'Sarah'). If multiple people mentioned, separate with ', '",
+      "attendees": ["Array of family member names who are attending this event"],
       "requiresAction": true/false (if RSVP or registration needed),
       "actionDeadline": "YYYY-MM-DD (if RSVP deadline mentioned)",
       "actionDescription": "What action is needed (e.g., 'RSVP by email', 'Pay $50')",
       "priceRange": "Free" | "$" | "$$" | "$$$" (if cost mentioned)",
       "ageRange": "age range if mentioned (e.g., '5-12 years')",
       "phoneNumber": "contact phone if mentioned",
-      "website": "URL if mentioned"
+      "website": "URL if mentioned",
+      "isRecurring": true/false (if event repeats),
+      "recurrencePattern": "daily" | "weekly" | "monthly" | "yearly" (if recurring),
+      "recurrenceDaysOfWeek": ["Monday", "Tuesday", etc.] (for weekly recurring events)
     }
   ],
   "confidence": "high" | "medium" | "low",
   "explanation": "Brief explanation of what you extracted and why"
-}
+}${familyContext}
 
 If the message doesn't contain event information, set hasEvents to false and return an empty events array.
 IMPORTANT: If multiple events are mentioned (e.g., "Soccer on Monday and dance class on Wednesday"), create separate event objects for each one.
@@ -111,6 +121,28 @@ IMPORTANT - Extract Names:
 - If the text mentions a specific child's name (e.g., "Emma's soccer practice" or "dance class for Sarah"), extract that name in the childName field
 - Look for possessive forms ("Emma's", "Sarah's") or "for [name]" patterns
 - If multiple children are mentioned for the same event, separate names with ", " (e.g., "Emma, Sarah")
+
+IMPORTANT - Detect Attendees:
+- Use the FAMILY MEMBERS list provided above to identify who is attending
+- Look for explicit mentions: "I'm going with Sara and Bella", "Emma and I will be there", "taking the kids"
+- "I" or "me" always refers to the CURRENT USER listed above
+- "We" typically means CURRENT USER + spouse (if listed in family members)
+- "The kids" or "all the kids" means all children in the family members list
+- Return attendees as an array of exact names from the FAMILY MEMBERS list
+- Examples:
+  - "I'm seeing a movie with Sara and Bella" → attendees: [CURRENT USER, "Sara", "Bella"]
+  - "Emma's soccer practice" → attendees: ["Emma"]
+  - "Taking the kids to the park" → attendees: [all children from family members]
+  - "We have a dinner reservation" → attendees: [CURRENT USER, spouse if listed]
+
+IMPORTANT - Detect Recurring Events:
+- Look for patterns like "every", "weekly", "daily", "monthly", "each"
+- Examples:
+  - "Soccer practice every Tuesday" → isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Tuesday"]
+  - "Piano lessons every Monday and Wednesday" → isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Monday", "Wednesday"]
+  - "Dance class weekly on Thursdays" → isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Thursday"]
+  - "Monthly book club meeting" → isRecurring: true, recurrencePattern: "monthly"
+  - "Tutoring every other week" → isRecurring: true, recurrencePattern: "weekly" (interval would be 2, but we'll handle that in UI)
 
 Examples:
 - "Soccer practice Saturday at 9am at City Park" → title="Soccer Practice", date=(next Saturday), time="09:00", location="City Park", category="Soccer"

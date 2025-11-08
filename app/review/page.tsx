@@ -395,7 +395,11 @@ export default function ReviewPage() {
       const response = await fetch("/api/sms/extract-event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ smsText: pastedText }),
+        body: JSON.stringify({
+          smsText: pastedText,
+          familyMembers: familyMembers || [],
+          currentUserName: convexUser?.fullName || "Unknown"
+        }),
       });
 
       const data = await response.json();
@@ -485,6 +489,8 @@ export default function ReviewPage() {
     try {
       const formData = new FormData();
       formData.append("photo", file);
+      formData.append("familyMembers", JSON.stringify(familyMembers || []));
+      formData.append("currentUserName", convexUser?.fullName || "Unknown");
 
       const response = await fetch("/api/photo/extract-event", {
         method: "POST",
@@ -549,6 +555,8 @@ export default function ReviewPage() {
     try {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
+      formData.append("familyMembers", JSON.stringify(familyMembers || []));
+      formData.append("currentUserName", convexUser?.fullName || "Unknown");
 
       const response = await fetch("/api/voice/extract-event", {
         method: "POST",

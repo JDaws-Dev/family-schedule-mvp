@@ -8,6 +8,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const photo = formData.get('photo') as File;
+    const familyMembersJson = formData.get('familyMembers') as string;
+    const currentUserName = formData.get('currentUserName') as string;
 
     if (!photo) {
       return NextResponse.json(
@@ -15,6 +17,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Parse family members
+    const familyMembers = familyMembersJson ? JSON.parse(familyMembersJson) : [];
+    const familyMemberNames = familyMembers?.map((m: any) => m.name).join(", ") || "";
+    const familyContext = familyMemberNames
+      ? `\n\nFAMILY MEMBERS: ${familyMemberNames}\nCURRENT USER: ${currentUserName || "Unknown"}`
+      : "";
 
     // Convert image to base64 for OpenAI Vision API
     const bytes = await photo.arrayBuffer();
@@ -40,18 +49,22 @@ Return a JSON object with this structure:
       "location": "Location name or address",
       "category": "A descriptive category name (e.g., 'Sports', 'Music Lessons', 'Birthday Party', 'Doctor Appointment', 'School Event', 'Dance', 'Soccer', etc.)",
       "childName": "Name of child/person event is for if mentioned",
+      "attendees": ["Array of family member names who are attending this event"],
       "requiresAction": true/false (if RSVP or registration needed),
       "actionDeadline": "YYYY-MM-DD (if RSVP deadline mentioned)",
       "actionDescription": "What action is needed (e.g., 'RSVP by email', 'Pay $50')",
       "priceRange": "Free" | "$" | "$$" | "$$$" (if cost mentioned)",
       "ageRange": "age range if mentioned (e.g., '5-12 years')",
       "phoneNumber": "contact phone if mentioned",
-      "website": "URL if mentioned"
+      "website": "URL if mentioned",
+      "isRecurring": true/false (if event repeats),
+      "recurrencePattern": "daily" | "weekly" | "monthly" | "yearly" (if recurring),
+      "recurrenceDaysOfWeek": ["Monday", "Tuesday", etc.] (for weekly recurring events)
     }
   ],
   "confidence": "high" | "medium" | "low",
   "explanation": "Brief explanation of what you extracted and why"
-}
+}${familyContext}
 
 If the image doesn't contain event information, set hasEvents to false and return an empty events array.
 IMPORTANT: If multiple events are shown (e.g., a weekly schedule showing different activities each day), create separate event objects for each one.
@@ -100,6 +113,19 @@ RELIGIOUS:
 - Church, religious events → "Religious"
 
 Use "Other" only if truly doesn't fit any category.
+
+IMPORTANT - Detect Attendees:
+- Use the FAMILY MEMBERS list provided above to identify who is attending
+- Look for names written on the flyer/schedule (e.g., "Emma Johnson", "For: Sara")
+- If you see family member names on a schedule, include them in attendees
+- For team sports schedules, if you see a family member's name on the roster, they're attending
+
+IMPORTANT - Detect Recurring Events:
+- Look for text like "Every Monday", "Weekly", "Daily Practice Schedule", "Monthly Meeting"
+- Examples:
+  - "Practice every Tuesday and Thursday" → isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Tuesday", "Thursday"]
+  - "Weekly lessons on Wednesdays" → isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Wednesday"]
+  - "Daily summer camp" → isRecurring: true, recurrencePattern: "daily"
 
 Examples of photos you might see:
 - Soccer team schedule with multiple game dates and times
