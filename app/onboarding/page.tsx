@@ -25,6 +25,9 @@ export default function Onboarding() {
   const [calendars, setCalendars] = useState<any[]>([]);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [enableSms, setEnableSms] = useState(false);
+  const [smsReminderHoursBefore, setSmsReminderHoursBefore] = useState(24); // Default: 1 day before
+  const [dailySmsDigestEnabled, setDailySmsDigestEnabled] = useState(false);
+  const [dailySmsDigestTime, setDailySmsDigestTime] = useState("07:00");
   const [emailDigestFrequency, setEmailDigestFrequency] = useState<"none" | "daily" | "weekly">("daily");
   const { user: clerkUser } = useUser();
   const router = useRouter();
@@ -45,6 +48,7 @@ export default function Onboarding() {
   const updateFamilyDetails = useMutation(api.families.updateFamilyDetails);
   const saveFamilyMember = useMutation(api.familyMembers.addFamilyMember);
   const setFamilyCalendar = useMutation(api.families.updateSelectedCalendar);
+  const updateNotificationPreferences = useMutation(api.notifications.updateNotificationPreferences);
 
   const totalSteps = 6;
 
@@ -263,6 +267,18 @@ export default function Onboarding() {
         enableSmsNotifications: enableSms,
         emailDigestFrequency: emailDigestFrequency,
       });
+
+      // Save user-specific notification preferences
+      if (currentUser?.userId) {
+        await updateNotificationPreferences({
+          userId: currentUser.userId,
+          smsRemindersEnabled: enableSms,
+          smsReminderHoursBefore: smsReminderHoursBefore,
+          dailySmsDigestEnabled: dailySmsDigestEnabled,
+          dailySmsDigestTime: dailySmsDigestTime,
+        });
+      }
+
       setCompletionMessage("✓ All set! Redirecting to your dashboard...");
 
       // Redirect to dashboard
@@ -938,20 +954,74 @@ export default function Onboarding() {
                       </div>
 
                       {enableSms && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Your phone number
-                          </label>
-                          <input
-                            type="tel"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            placeholder="(555) 123-4567"
-                            className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                          />
-                          <p className="text-xs text-gray-600 mt-2">
-                            We'll send you reminders 1 day before events and when actions are due soon.
-                          </p>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Your phone number
+                            </label>
+                            <input
+                              type="tel"
+                              value={phoneNumber}
+                              onChange={(e) => setPhoneNumber(e.target.value)}
+                              placeholder="(555) 123-4567"
+                              className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Send event reminders
+                            </label>
+                            <select
+                              value={smsReminderHoursBefore}
+                              onChange={(e) => setSmsReminderHoursBefore(Number(e.target.value))}
+                              className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            >
+                              <option value={1}>1 hour before</option>
+                              <option value={2}>2 hours before</option>
+                              <option value={4}>4 hours before</option>
+                              <option value={12}>12 hours before</option>
+                              <option value={24}>1 day before (recommended)</option>
+                              <option value={48}>2 days before</option>
+                            </select>
+                          </div>
+
+                          <div className="border-t border-purple-200 pt-4">
+                            <div className="flex items-start gap-3 mb-3">
+                              <input
+                                type="checkbox"
+                                id="dailySmsDigest"
+                                checked={dailySmsDigestEnabled}
+                                onChange={(e) => setDailySmsDigestEnabled(e.target.checked)}
+                                className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500 mt-0.5"
+                              />
+                              <label htmlFor="dailySmsDigest" className="flex-1 cursor-pointer">
+                                <span className="block text-sm font-semibold text-gray-900">
+                                  Daily text summary
+                                </span>
+                                <span className="block text-xs text-gray-600 mt-0.5">
+                                  Get one text each morning with today's schedule
+                                </span>
+                              </label>
+                            </div>
+
+                            {dailySmsDigestEnabled && (
+                              <div className="ml-8">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  What time?
+                                </label>
+                                <input
+                                  type="time"
+                                  value={dailySmsDigestTime}
+                                  onChange={(e) => setDailySmsDigestTime(e.target.value)}
+                                  className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                />
+                                <p className="text-xs text-gray-600 mt-1">
+                                  We'll send a quick summary of today's events each morning
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
