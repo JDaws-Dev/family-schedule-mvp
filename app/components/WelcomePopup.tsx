@@ -51,7 +51,7 @@ export default function WelcomePopup({ onClose, userFirstName }: WelcomePopupPro
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-900">
-                    <strong>💡 You can close this and come back!</strong> We'll keep working in the background and show you what we found on the <strong>"Review Events"</strong> page.
+                    <strong>💡 You can close this and come back!</strong> We'll keep working in the background and show you what we found on the <strong>"Events"</strong> page.
                   </p>
                 </div>
               </div>
@@ -69,7 +69,7 @@ export default function WelcomePopup({ onClose, userFirstName }: WelcomePopupPro
                   Check back in 10 minutes
                 </h3>
                 <p className="text-gray-600 mb-3">
-                  Go to <strong>"Review Events"</strong> to see what we found. You'll approve or dismiss each event (it only takes a few seconds!).
+                  Go to <strong>"Events"</strong> to see what we found. You'll approve or dismiss each event (it only takes a few seconds!).
                 </p>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm text-gray-700">

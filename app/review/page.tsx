@@ -1026,7 +1026,7 @@ export default function ReviewPage() {
               Calendar
             </Link>
             <Link href="/review" className="text-primary-600 font-medium">
-              Review Events
+              Events
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
               Find Activities

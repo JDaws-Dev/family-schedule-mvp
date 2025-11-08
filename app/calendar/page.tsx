@@ -737,7 +737,7 @@ function CalendarContent() {
               Calendar
             </Link>
             <Link href="/review" className="text-gray-600 hover:text-gray-900">
-              Review Events
+              Events
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
               Find Activities

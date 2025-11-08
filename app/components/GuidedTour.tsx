@@ -39,8 +39,8 @@ export function useGuidedTour() {
         {
           element: "#review-link",
           popover: {
-            title: "✅ Review Events",
-            description: "After scanning, go to the Review page to confirm which events you want to add to your calendar. You can edit, approve, or decline each one.",
+            title: "✅ Events",
+            description: "Add new events or review events found in your emails. You can edit, approve, or decline each one.",
             side: "bottom",
             align: "start",
           },
