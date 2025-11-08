@@ -2876,7 +2876,7 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
                             <h4 className="font-semibold text-gray-900">{event.title}</h4>
                             <div className="text-sm text-gray-600 mt-1 space-y-1">
                               <div>📅 {new Date(event.eventDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</div>
-                              {event.eventTime && <div>🕐 {event.eventTime}</div>}
+                              {event.eventTime && <div>🕐 {formatTime12Hour(event.eventTime)}{event.endTime && ` - ${formatTime12Hour(event.endTime)}`}</div>}
                               {event.location && <div>📍 {event.location}</div>}
                               {event.description && <div className="text-gray-500 mt-2">{event.description}</div>}
                               {event.sourceEmailSubject && (
@@ -2889,7 +2889,8 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
                           <button
                             onClick={async () => {
                               try {
-                                await createEvent({
+                                await createUnconfirmedEvent({
+                                  familyId: convexUser!.familyId,
                                   createdByUserId: convexUser!._id,
                                   title: event.title,
                                   eventDate: event.eventDate,
@@ -2902,11 +2903,10 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
                                   requiresAction: event.requiresAction || undefined,
                                   actionDescription: event.actionDescription || undefined,
                                   actionDeadline: event.actionDeadline || undefined,
-                                  actionCompleted: false,
-                                  isConfirmed: true,
+                                  sourceEmailSubject: event.sourceEmailSubject || undefined,
                                 });
-                                showToast(`✓ Added "${event.title}" to your calendar!`, "success");
-                                // Remove from results
+                                showToast(`✓ Added "${event.title}" - scroll down to review and edit details!`, "success");
+                                // Remove from search results
                                 setEmailSearchResults(prev => prev.filter((_, i) => i !== idx));
                               } catch (error) {
                                 console.error("Error adding event:", error);
@@ -2915,7 +2915,7 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
                             }}
                             className="ml-4 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition text-sm whitespace-nowrap"
                           >
-                            + Add to Calendar
+                            + Add to Review
                           </button>
                         </div>
                       </div>
