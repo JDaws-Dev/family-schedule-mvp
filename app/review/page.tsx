@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -64,6 +64,11 @@ export default function ReviewPage() {
   const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
   const [pastedText, setPastedText] = useState("");
   const [isExtractingEvent, setIsExtractingEvent] = useState(false);
+  const [emailSearchQuery, setEmailSearchQuery] = useState("");
+  const [emailSearchTimeframe, setEmailSearchTimeframe] = useState("3"); // months
+  const [isSearchingEmails, setIsSearchingEmails] = useState(false);
+  const [emailSearchProgress, setEmailSearchProgress] = useState({ current: 0, total: 0 });
+  const [emailSearchResults, setEmailSearchResults] = useState<any[]>([]);
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     eventDate: "",
@@ -73,6 +78,9 @@ export default function ReviewPage() {
     category: "Sports",
     childName: "",
     description: "",
+    requiresAction: false,
+    actionDescription: "",
+    actionDeadline: "",
   });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
@@ -113,6 +121,38 @@ export default function ReviewPage() {
     api.families.getAllCategories,
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
+
+  // Get all events for category extraction
+  const allEvents = useQuery(
+    api.events.getAllEvents,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Extract unique categories from existing events
+  const existingCategories = React.useMemo(() => {
+    if (!allEvents) return [];
+    const categories = new Set<string>();
+    allEvents.forEach((event: any) => {
+      if (event.category) categories.add(event.category);
+    });
+    return Array.from(categories).sort();
+  }, [allEvents]);
+
+  // Standard preset categories
+  const standardCategories = [
+    "Sports",
+    "School",
+    "Music",
+    "Dance",
+    "Arts & Crafts",
+    "Tutoring",
+    "Medical",
+    "Birthday Party",
+    "Play Date",
+    "Field Trip",
+    "Club Meeting",
+    "Other"
+  ];
 
   // Mutations
   const confirmEvent = useMutation(api.events.confirmEvent);
@@ -407,6 +447,9 @@ export default function ReviewPage() {
           category: categoryMap[event.category] || "Sports",
           childName: "",
           description: event.description || "",
+          requiresAction: false,
+          actionDescription: "",
+          actionDeadline: "",
         });
 
         // Switch to manual tab to show the populated form
@@ -497,6 +540,9 @@ export default function ReviewPage() {
         category: "Sports",
         childName: "",
         description: "",
+        requiresAction: false,
+        actionDescription: "",
+        actionDeadline: "",
       });
 
       // Close modal
@@ -1403,102 +1449,198 @@ export default function ReviewPage() {
 
       {/* Add Event Modal */}
       {showAddEventModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Add Event</h2>
-              <button
-                onClick={() => setShowAddEventModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-                aria-label="Close add event modal"
-                title="Close"
-              >
-                ×
-              </button>
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => {
+            setShowAddEventModal(false);
+            setAddEventTab("manual");
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Gradient */}
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-white">Add New Event</h2>
+                <button
+                  onClick={() => {
+                    setShowAddEventModal(false);
+                    setAddEventTab("manual");
+                  }}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close add event modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAddEventTab("manual")}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    addEventTab === "manual"
+                      ? "bg-white text-primary-600 shadow-soft"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  Manual Entry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddEventTab("paste")}
+                  className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+                    addEventTab === "paste"
+                      ? "bg-white text-primary-600 shadow-soft"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Paste Text
+                </button>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-6">
-              {addEventTab === "paste" ? (
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-primary-200 rounded-xl p-6 mb-6">
-                    <div className="flex items-start gap-4">
-                      <div className="text-4xl">✨</div>
-                      <div>
-                        <h3 className="font-bold text-primary-900 mb-2 text-lg">Smart Event Extraction</h3>
-                        <p className="text-primary-800 text-sm leading-relaxed">
-                          Simply paste any text containing event details and we'll automatically extract the information for you.
-                        </p>
-                      </div>
+            {/* Paste Text Tab */}
+            {addEventTab === "paste" && (
+              <div className="p-6 space-y-4">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-primary-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-primary-800 mb-1">How it works</h4>
+                      <p className="text-sm text-primary-700">
+                        Paste an email, text message, or any text containing event information. Our AI will automatically extract the event details for you!
+                      </p>
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Paste Event Text
-                    </label>
-                    <textarea
-                      value={pastedText}
-                      onChange={(e) => setPastedText(e.target.value)}
-                      placeholder="Paste any text here... For example:&#10;&#10;Soccer practice this Saturday at 9am at City Park&#10;&#10;Piano recital - Dec 15th at 7pm, Community Center&#10;&#10;Birthday party for Emma next Sunday 2pm at Chuck E Cheese"
-                      rows={10}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-primary-500 transition font-mono text-sm resize-none"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={handleExtractFromPaste}
-                      disabled={isExtractingEvent || !pastedText.trim()}
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/30"
-                    >
-                      {isExtractingEvent ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Extracting Event Details...
-                        </span>
-                      ) : (
-                        "Extract Event Details"
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddEventModal(false)}
-                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
                 </div>
-              ) : (
-                <form className="space-y-4" onSubmit={handleAddEvent}>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Event Title *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g., Soccer Practice"
-                      value={newEventForm.title}
-                      onChange={(e) => setNewEventForm({ ...newEventForm, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date *
+                    Paste Email or Text Message
+                  </label>
+                  <textarea
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    rows={10}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Paste your email or text message here...
+
+Example:
+'Soccer practice this Saturday at 9am at Memorial Park. Please bring water and shin guards!'"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleExtractFromPaste}
+                    disabled={isExtractingEvent || !pastedText.trim()}
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center justify-center gap-2"
+                  >
+                    {isExtractingEvent ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Extracting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Extract Event
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddEventModal(false);
+                      setAddEventTab("manual");
+                      setPastedText("");
+                    }}
+                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Entry Tab */}
+            {addEventTab === "manual" && (
+              <form onSubmit={handleAddEvent}>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newEventForm.title}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Soccer Practice"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
+                    required
                     value={newEventForm.eventDate}
                     onChange={(e) => setNewEventForm({ ...newEventForm, eventDate: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={newEventForm.eventTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, eventTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={newEventForm.endTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, endTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={newEventForm.location}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, location: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Local Soccer Field"
                   />
                 </div>
 
@@ -1544,95 +1686,374 @@ export default function ReviewPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Time
-                    </label>
-                    <input
-                      type="time"
-                      value={newEventForm.eventTime}
-                      onChange={(e) => setNewEventForm({ ...newEventForm, eventTime: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Time
-                    </label>
-                    <input
-                      type="time"
-                      value={newEventForm.endTime}
-                      onChange={(e) => setNewEventForm({ ...newEventForm, endTime: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., West Field"
-                    value={newEventForm.location}
-                    onChange={(e) => setNewEventForm({ ...newEventForm, location: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <input
-                    list="add-categories"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
                     value={newEventForm.category}
-                    onChange={(e) => setNewEventForm({ ...newEventForm, category: e.target.value })}
-                    placeholder="Select or type a category"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                  />
-                  <datalist id="add-categories">
-                    {allCategories?.defaultCategories.map((cat) => (
-                      <option key={cat} value={cat} />
-                    ))}
-                    {allCategories?.customCategories.map((cat) => (
-                      <option key={cat} value={cat} />
-                    ))}
-                  </datalist>
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "custom") {
+                        const customCategory = prompt("Enter custom category:");
+                        if (customCategory && customCategory.trim()) {
+                          setNewEventForm({ ...newEventForm, category: customCategory.trim() });
+                        }
+                      } else {
+                        setNewEventForm({ ...newEventForm, category: value });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">Select a category...</option>
+                    {/* Standard Categories */}
+                    <optgroup label="Standard Categories">
+                      {standardCategories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </optgroup>
+                    {/* Previously Used Categories (if any new ones) */}
+                    {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                      <optgroup label="Your Categories">
+                        {existingCategories
+                          .filter(cat => !standardCategories.includes(cat))
+                          .map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))
+                        }
+                      </optgroup>
+                    )}
+                    <option value="custom">+ Add Custom Category</option>
+                  </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notes (Optional)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                   <textarea
-                    rows={3}
-                    placeholder="Any additional details..."
                     value={newEventForm.description}
                     onChange={(e) => setNewEventForm({ ...newEventForm, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  ></textarea>
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Add any additional details..."
+                  />
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                {/* Action Items Section */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-start gap-3 mb-4">
+                    <input
+                      type="checkbox"
+                      id="requiresAction"
+                      checked={newEventForm.requiresAction}
+                      onChange={(e) => setNewEventForm({
+                        ...newEventForm,
+                        requiresAction: e.target.checked,
+                        actionDescription: e.target.checked ? newEventForm.actionDescription : "",
+                        actionDeadline: e.target.checked ? newEventForm.actionDeadline : ""
+                      })}
+                      className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
+                    />
+                    <label htmlFor="requiresAction" className="flex-1 cursor-pointer">
+                      <span className="block text-sm font-semibold text-gray-900">
+                        This event requires action
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">
+                        RSVP, payment, form submission, or other follow-up needed
+                      </span>
+                    </label>
+                  </div>
+
+                  {newEventForm.requiresAction && (
+                    <div className="space-y-3 pl-8">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          What action is needed?
+                        </label>
+                        <input
+                          type="text"
+                          value={newEventForm.actionDescription}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, actionDescription: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
+                          placeholder="e.g., RSVP by email, Pay $50, Sign permission slip"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Action deadline
+                        </label>
+                        <input
+                          type="date"
+                          value={newEventForm.actionDeadline}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, actionDeadline: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Add Event
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddEventModal(false)}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+              </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Search Emails Modal */}
+      {showSearchEmailsModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => setShowSearchEmailsModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-4xl w-full shadow-strong my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-accent-400 to-accent-500 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">🔍 Search Your Emails</h2>
+                  <p className="text-white/90 text-sm">
+                    Find any event from your entire email history - schedules, registrations, you name it!
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowSearchEmailsModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close search modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Search Form */}
+            <div className="p-6">
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  What are you looking for?
+                </label>
+                <div className="flex gap-3 mb-3">
+                  <input
+                    type="text"
+                    value={emailSearchQuery}
+                    onChange={(e) => setEmailSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isSearchingEmails && emailSearchQuery.trim()) {
+                        // Trigger search on Enter
+                        document.getElementById('search-emails-btn')?.click();
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="e.g., baseball schedule, soccer registration, piano recital..."
+                  />
+                </div>
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      How far back to search?
+                    </label>
+                    <select
+                      value={emailSearchTimeframe}
+                      onChange={(e) => setEmailSearchTimeframe(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value="1">Last month</option>
+                      <option value="3">Last 3 months (Recommended)</option>
+                      <option value="6">Last 6 months</option>
+                      <option value="12">Last year</option>
+                    </select>
+                  </div>
                   <button
-                    type="submit"
-                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition"
+                    id="search-emails-btn"
+                    onClick={async () => {
+                      if (!emailSearchQuery.trim() || isSearchingEmails) return;
+
+                      setIsSearchingEmails(true);
+                      setEmailSearchResults([]);
+                      setEmailSearchProgress({ current: 0, total: 0 });
+
+                      try {
+                        const response = await fetch("/api/search-emails", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            query: emailSearchQuery,
+                            familyId: convexUser?.familyId,
+                            timeframeMonths: parseInt(emailSearchTimeframe)
+                          }),
+                        });
+
+                        const data = await response.json();
+
+                        if (data.error) {
+                          showToast(data.error, "error");
+                        } else {
+                          setEmailSearchResults(data.results || []);
+                          if (data.results && data.results.length === 0) {
+                            showToast("No events found matching your search", "info");
+                          } else {
+                            showToast(`Found ${data.results.length} event(s)!`, "success");
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Search error:", error);
+                        showToast("Failed to search emails. Please try again.", "error");
+                      } finally {
+                        setIsSearchingEmails(false);
+                      }
+                    }}
+                    disabled={!emailSearchQuery.trim() || isSearchingEmails}
+                    className="px-6 py-3 bg-accent-500 text-white rounded-lg font-semibold hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center gap-2"
                   >
-                    Add Event
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddEventModal(false)}
-                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
-                  >
-                    Cancel
+                    {isSearchingEmails ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search
+                      </>
+                    )}
                   </button>
                 </div>
-              </form>
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Tip: Be specific! Try "baseball practice schedule" or "soccer team registration"
+                </p>
+              </div>
+
+              {/* Results */}
+              {emailSearchResults.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-gray-900 mb-3">
+                    Found {emailSearchResults.length} event(s):
+                  </h3>
+                  <div className="max-h-96 overflow-y-auto space-y-3">
+                    {emailSearchResults.map((event: any, idx: number) => (
+                      <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900">{event.title}</h4>
+                            <div className="text-sm text-gray-600 mt-1 space-y-1">
+                              <div>📅 {new Date(event.eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                              {event.eventTime && <div>🕐 {event.eventTime}</div>}
+                              {event.location && <div>📍 {event.location}</div>}
+                              {event.description && <div className="text-gray-500 mt-2">{event.description}</div>}
+                              {event.sourceEmailSubject && (
+                                <div className="text-xs text-primary-500 mt-2">
+                                  📧 From: {event.sourceEmailSubject}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await createEvent({
+                                  createdByUserId: convexUser!._id,
+                                  title: event.title,
+                                  eventDate: event.eventDate,
+                                  eventTime: event.eventTime || undefined,
+                                  endTime: event.endTime || undefined,
+                                  location: event.location || undefined,
+                                  category: event.category || undefined,
+                                  childName: event.childName || undefined,
+                                  description: event.description || undefined,
+                                  requiresAction: event.requiresAction || undefined,
+                                  actionDescription: event.actionDescription || undefined,
+                                  actionDeadline: event.actionDeadline || undefined,
+                                  isConfirmed: true,
+                                });
+                                showToast(`✓ Added "${event.title}" to your calendar!`, "success");
+                                // Remove from results
+                                setEmailSearchResults(prev => prev.filter((_, i) => i !== idx));
+                              } catch (error) {
+                                console.error("Error adding event:", error);
+                                showToast("Failed to add event", "error");
+                              }
+                            }}
+                            className="ml-4 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition text-sm whitespace-nowrap"
+                          >
+                            + Add to Calendar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
+
+              {isSearchingEmails && (
+                <div className="text-center py-12">
+                  <svg className="animate-spin h-12 w-12 text-accent-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-gray-900 font-semibold text-lg">Searching your emails...</p>
+                  <p className="text-gray-600 mt-2">
+                    Scanning {emailSearchTimeframe === "1" ? "last month" : emailSearchTimeframe === "3" ? "last 3 months" : emailSearchTimeframe === "6" ? "last 6 months" : "last year"} for "{emailSearchQuery}"
+                  </p>
+                  <div className="mt-4 inline-flex items-center gap-2 bg-accent-50 px-4 py-2 rounded-lg">
+                    <svg className="animate-pulse w-5 h-5 text-accent-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                    <span className="text-sm text-accent-700 font-medium">
+                      Estimated time: {
+                        emailSearchTimeframe === "1" ? "30-60 seconds" :
+                        emailSearchTimeframe === "3" ? "1-2 minutes" :
+                        emailSearchTimeframe === "6" ? "2-3 minutes" :
+                        "3-5 minutes"
+                      }
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">Please wait while we find all your events...</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex justify-end">
+              <button
+                onClick={() => {
+                  setShowSearchEmailsModal(false);
+                  setEmailSearchQuery("");
+                  setEmailSearchTimeframe("3");
+                  setEmailSearchResults([]);
+                  setEmailSearchProgress({ current: 0, total: 0 });
+                }}
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
