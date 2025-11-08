@@ -512,7 +512,7 @@ function DashboardContent() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
+          <Link href="/" className="text-2xl font-bold text-accent-600">
             Our Daily Family
           </Link>
 
@@ -520,7 +520,7 @@ function DashboardContent() {
           <nav className="hidden md:flex items-center gap-6">
             <Link
               href="/dashboard"
-              className="text-indigo-600 font-medium"
+              className="text-accent-600 font-medium"
             >
               Dashboard
             </Link>
@@ -689,7 +689,7 @@ function DashboardContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Guide - Shows after onboarding */}
         {showWelcomeGuide && (
-          <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-4 mb-6 relative">
+          <div className="bg-primary-50 border-l-4 border-primary-400 rounded-lg p-4 mb-6 relative">
             <button
               onClick={() => setShowWelcomeGuide(false)}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
@@ -702,9 +702,9 @@ function DashboardContent() {
             <div className="pr-8">
               <h3 className="text-sm font-bold text-gray-900 mb-1">Welcome! Get started in 3 steps:</h3>
               <p className="text-xs text-gray-700">
-                1. <Link href="/settings" className="text-green-700 font-semibold hover:underline">Connect Gmail</Link> to find events  •
-                2. <Link href="/review" className="text-green-700 font-semibold hover:underline ml-1">Review events</Link>  •
-                3. <Link href="/calendar" className="text-green-700 font-semibold hover:underline ml-1">View calendar</Link>
+                1. <Link href="/settings" className="text-primary-600 font-semibold hover:underline">Connect Gmail</Link> to find events  •
+                2. <Link href="/review" className="text-primary-600 font-semibold hover:underline ml-1">Review events</Link>  •
+                3. <Link href="/calendar" className="text-primary-600 font-semibold hover:underline ml-1">View calendar</Link>
               </p>
             </div>
           </div>
@@ -731,7 +731,7 @@ function DashboardContent() {
 
         {/* Gmail Connection Banner */}
         {!isGmailConnected && (
-          <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+          <div className="bg-primary-50 border-l-4 border-primary-400 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">
@@ -740,7 +740,7 @@ function DashboardContent() {
               </div>
               <Link
                 href="/settings"
-                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap"
+                className="inline-block bg-primary-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition whitespace-nowrap"
               >
                 Connect
               </Link>
@@ -775,7 +775,7 @@ function DashboardContent() {
           {/* Needs Action Card */}
           <div
             onClick={() => setShowActionsModal(true)}
-            className="bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+            className="bg-gradient-to-br from-secondary-400 to-secondary-600 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -807,7 +807,7 @@ function DashboardContent() {
           {/* To Review Card */}
           <Link
             href="/review"
-            className="bg-gradient-to-br from-amber-500 to-amber-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+            className="bg-gradient-to-br from-accent-400 to-accent-600 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -832,10 +832,10 @@ function DashboardContent() {
 
         {/* Today's Events - Prominent Section */}
         {todayEvents && todayEvents.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-8 border-2 border-blue-200">
+          <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-6 mb-8 border-2 border-primary-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -845,7 +845,7 @@ function DashboardContent() {
                   <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>
               </div>
-              <span className="text-3xl font-bold text-blue-600">{todayEvents.length}</span>
+              <span className="text-3xl font-bold text-primary-600">{todayEvents.length}</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {todayEvents.map((event) => (
@@ -860,7 +860,7 @@ function DashboardContent() {
                       {event.title}
                     </h3>
                     {event.eventTime && (
-                      <span className="text-sm font-bold text-blue-600">{formatTime12Hour(event.eventTime)}</span>
+                      <span className="text-sm font-bold text-primary-600">{formatTime12Hour(event.eventTime)}</span>
                     )}
                   </div>
                   {event.location && (
@@ -873,7 +873,7 @@ function DashboardContent() {
                     </p>
                   )}
                   {event.childName && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mt-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent-100 text-accent-800 mt-2">
                       {event.childName}
                     </span>
                   )}
@@ -897,7 +897,7 @@ function DashboardContent() {
                 </div>
                 <Link
                   href="/calendar"
-                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm flex items-center gap-1"
+                  className="text-accent-600 hover:text-accent-700 font-medium text-sm flex items-center gap-1"
                 >
                   View Calendar
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -926,8 +926,8 @@ function DashboardContent() {
                       <h4 className="font-semibold text-gray-900 mb-3">Getting started:</h4>
                       <div className="space-y-3">
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
                             </svg>
                           </div>
@@ -937,8 +937,8 @@ function DashboardContent() {
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
                           </div>
@@ -948,8 +948,8 @@ function DashboardContent() {
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-6 h-6 bg-accent-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-4 h-4 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                           </div>
@@ -961,7 +961,7 @@ function DashboardContent() {
                       </div>
                     </div>
 
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
                       <p className="text-sm text-gray-700 text-center">
                         👉 Use <strong>Quick Actions</strong> on the right to get started!
                       </p>
@@ -1009,7 +1009,7 @@ function DashboardContent() {
                             </div>
                             <div className="sm:ml-4 flex flex-col gap-2 items-end">
                               {event.childName && (
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent-100 text-accent-800">
                                   {event.childName}
                                 </span>
                               )}
@@ -1055,7 +1055,7 @@ function DashboardContent() {
                 <button
                   onClick={handleScanEmail}
                   disabled={isScanning || !isGmailConnected}
-                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
+                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -1077,7 +1077,7 @@ function DashboardContent() {
                 <button
                   onClick={() => setShowSearchEmailsModal(true)}
                   disabled={!isGmailConnected}
-                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
+                  className="w-full text-left px-4 py-4 bg-gradient-to-r from-accent-400 to-accent-500 hover:from-accent-500 hover:to-accent-600 rounded-xl transition-all duration-200 shadow-soft hover:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-0.5"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -1143,7 +1143,7 @@ function DashboardContent() {
             <div className="text-center">
               {isScanning ? (
                 <>
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                  <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-primary-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
                     <svg className="w-10 h-10 text-white animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -1155,20 +1155,20 @@ function DashboardContent() {
                   {/* Progress Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-3 mb-2 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                      className="bg-gradient-to-r from-primary-400 to-primary-500 h-3 rounded-full transition-all duration-500 ease-out"
                       style={{ width: `${scanProgress}%` }}
                     ></div>
                   </div>
                   <p className="text-sm text-gray-500 mb-6">{Math.round(scanProgress)}% complete</p>
 
                   {/* Info box */}
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="bg-primary-50 rounded-lg p-4 border border-primary-200">
                     <div className="flex gap-3">
-                      <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div className="text-left">
-                        <p className="text-xs text-blue-800">
+                        <p className="text-xs text-primary-700">
                           We're scanning up to 50 recent emails to detect events. This typically takes 1-2 minutes.
                         </p>
                       </div>
@@ -1179,7 +1179,7 @@ function DashboardContent() {
                 <>
                   {scanResults && scanResults.eventsFound > 0 ? (
                     <>
-                      <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-primary-500 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -1187,27 +1187,27 @@ function DashboardContent() {
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">Scan Complete!</h3>
                       <p className="text-gray-600 mb-6">{scanMessage}</p>
 
-                      <div className="bg-green-50 rounded-lg p-4 mb-6 border border-green-200">
+                      <div className="bg-primary-50 rounded-lg p-4 mb-6 border border-primary-200">
                         <div className="grid grid-cols-2 gap-4 text-center">
                           <div>
-                            <p className="text-3xl font-bold text-green-600">{scanResults.eventsFound}</p>
+                            <p className="text-3xl font-bold text-primary-500">{scanResults.eventsFound}</p>
                             <p className="text-sm text-gray-600 mt-1">Event{scanResults.eventsFound !== 1 ? "s" : ""} Found</p>
                           </div>
                           <div>
-                            <p className="text-3xl font-bold text-green-600">{scanResults.messagesScanned}</p>
+                            <p className="text-3xl font-bold text-primary-500">{scanResults.messagesScanned}</p>
                             <p className="text-sm text-gray-600 mt-1">Email{scanResults.messagesScanned !== 1 ? "s" : ""} Scanned</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+                      <div className="bg-primary-50 rounded-lg p-4 mb-6 border border-primary-200">
                         <div className="flex gap-3">
-                          <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <div className="text-left">
-                            <h4 className="font-semibold text-blue-900 text-sm">What's next?</h4>
-                            <p className="text-sm text-blue-800 mt-1">
+                            <h4 className="font-semibold text-primary-800 text-sm">What's next?</h4>
+                            <p className="text-sm text-primary-700 mt-1">
                               Review the new events to confirm details and add them to your calendar.
                             </p>
                           </div>
@@ -1278,7 +1278,7 @@ function DashboardContent() {
             {isEditingEvent ? (
               <>
                 {/* Edit Mode Header */}
-                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+                <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
                   <div className="flex justify-between items-start">
                     <h2 className="text-2xl font-bold text-white">Edit Event</h2>
                     <button
@@ -1300,7 +1300,7 @@ function DashboardContent() {
             ) : (
               <>
                 {/* View Mode Header with Gradient */}
-                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+                <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
                   <div className="flex justify-between items-start mb-3">
                     <h2 className="text-2xl font-bold text-white pr-8">{selectedEvent.title}</h2>
                     <button
@@ -1506,7 +1506,7 @@ function DashboardContent() {
                           actionDescription: e.target.checked ? editFormData?.actionDescription : "",
                           actionDeadline: e.target.checked ? editFormData?.actionDeadline : ""
                         })}
-                        className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500 mt-0.5"
+                        className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
                       />
                       <label htmlFor="editRequiresAction" className="flex-1 cursor-pointer">
                         <span className="block text-sm font-semibold text-gray-900">
@@ -1528,7 +1528,7 @@ function DashboardContent() {
                             type="text"
                             value={editFormData?.actionDescription || ""}
                             onChange={(e) => setEditFormData({ ...editFormData, actionDescription: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
                             placeholder="e.g., RSVP by email, Pay $50, Sign permission slip"
                           />
                         </div>
@@ -1540,7 +1540,7 @@ function DashboardContent() {
                             type="date"
                             value={editFormData?.actionDeadline || ""}
                             onChange={(e) => setEditFormData({ ...editFormData, actionDeadline: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
                           />
                         </div>
                       </div>
@@ -1688,8 +1688,8 @@ function DashboardContent() {
                   {selectedEvent.requiresAction && (
                     <div className={`mb-6 border-l-4 rounded-lg p-4 ${
                       selectedEvent.actionCompleted
-                        ? 'bg-green-50 border-green-400'
-                        : 'bg-orange-50 border-orange-400'
+                        ? 'bg-primary-50 border-primary-400'
+                        : 'bg-secondary-50 border-secondary-400'
                     }`}>
                       <div className="flex items-start gap-3">
                         <button
@@ -1712,7 +1712,7 @@ function DashboardContent() {
                           }}
                           className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition ${
                             selectedEvent.actionCompleted
-                              ? 'bg-green-600 border-green-600'
+                              ? 'bg-primary-500 border-primary-500'
                               : 'bg-white border-orange-400 hover:border-orange-600'
                           }`}
                           title={selectedEvent.actionCompleted ? "Mark as incomplete" : "Mark as complete"}
@@ -1725,14 +1725,14 @@ function DashboardContent() {
                         </button>
                         <div className="flex-1">
                           <h4 className={`text-sm font-semibold mb-1 ${
-                            selectedEvent.actionCompleted ? 'text-green-900 line-through' : 'text-orange-900'
+                            selectedEvent.actionCompleted ? 'text-primary-700 line-through' : 'text-secondary-700'
                           }`}>
                             {selectedEvent.actionCompleted ? '✓ ' : ''}
                             Action: {selectedEvent.actionDescription || 'Action required'}
                           </h4>
                           {selectedEvent.actionDeadline && (
                             <p className={`text-sm ${
-                              selectedEvent.actionCompleted ? 'text-green-700' : 'text-orange-700'
+                              selectedEvent.actionCompleted ? 'text-primary-600' : 'text-secondary-600'
                             }`}>
                               Deadline: {new Date(selectedEvent.actionDeadline).toLocaleDateString('en-US', {
                                 month: 'long',
@@ -1742,7 +1742,7 @@ function DashboardContent() {
                             </p>
                           )}
                           {selectedEvent.actionCompleted && (
-                            <p className="text-xs text-green-600 mt-1 font-medium">
+                            <p className="text-xs text-primary-500 mt-1 font-medium">
                               Completed
                             </p>
                           )}
@@ -1753,16 +1753,16 @@ function DashboardContent() {
 
                   {/* Source Information */}
                   {selectedEvent.sourceEmailSubject && (
-                    <div className="mb-6 bg-blue-50 rounded-lg p-4">
-                      <div className="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">
+                    <div className="mb-6 bg-primary-50 rounded-lg p-4">
+                      <div className="text-xs font-semibold text-primary-800 uppercase tracking-wide mb-2">
                         Source Information
                       </div>
                       <div className="space-y-2">
-                        <div className="text-sm text-blue-900">
+                        <div className="text-sm text-primary-800">
                           <span className="font-medium">Email:</span> {selectedEvent.sourceEmailSubject}
                         </div>
                         {selectedEvent.sourceGmailAccountId && gmailAccounts && (
-                          <div className="text-sm text-blue-800">
+                          <div className="text-sm text-primary-700">
                             <span className="font-medium">Account:</span> {gmailAccounts.find(a => a._id === selectedEvent.sourceGmailAccountId)?.gmailEmail || 'Unknown'}
                           </div>
                         )}
@@ -1770,7 +1770,7 @@ function DashboardContent() {
                           href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`subject:"${selectedEvent.sourceEmailSubject}"`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                          className="inline-flex items-center gap-2 text-sm text-primary-500 hover:text-primary-700 font-medium"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -1783,11 +1783,11 @@ function DashboardContent() {
 
                   {/* Sync Status */}
                   {selectedEvent.googleCalendarEventId && (
-                    <div className="mb-6 bg-green-50 rounded-lg p-4 flex items-center gap-3">
-                      <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="mb-6 bg-primary-50 rounded-lg p-4 flex items-center gap-3">
+                      <svg className="w-5 h-5 text-primary-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                      <span className="text-sm font-medium text-green-900">
+                      <span className="text-sm font-medium text-primary-700">
                         Synced to Google Calendar
                       </span>
                     </div>
@@ -1880,7 +1880,7 @@ function DashboardContent() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
               <div className="flex justify-between items-start mb-4">
                 <h2 className="text-2xl font-bold text-white">Add New Event</h2>
                 <button
@@ -1928,14 +1928,14 @@ function DashboardContent() {
             {/* Paste Text Tab */}
             {addEventTab === "paste" && (
               <div className="p-6 space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
                   <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-primary-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-blue-900 mb-1">How it works</h4>
-                      <p className="text-sm text-blue-800">
+                      <h4 className="text-sm font-semibold text-primary-800 mb-1">How it works</h4>
+                      <p className="text-sm text-primary-700">
                         Paste an email, text message, or any text containing event information. Our AI will automatically extract the event details for you!
                       </p>
                     </div>
@@ -2161,7 +2161,7 @@ Example:
                         actionDescription: e.target.checked ? newEventForm.actionDescription : "",
                         actionDeadline: e.target.checked ? newEventForm.actionDeadline : ""
                       })}
-                      className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500 mt-0.5"
+                      className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
                     />
                     <label htmlFor="requiresAction" className="flex-1 cursor-pointer">
                       <span className="block text-sm font-semibold text-gray-900">
@@ -2183,7 +2183,7 @@ Example:
                           type="text"
                           value={newEventForm.actionDescription}
                           onChange={(e) => setNewEventForm({ ...newEventForm, actionDescription: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
                           placeholder="e.g., RSVP by email, Pay $50, Sign permission slip"
                         />
                       </div>
@@ -2195,7 +2195,7 @@ Example:
                           type="date"
                           value={newEventForm.actionDeadline}
                           onChange={(e) => setNewEventForm({ ...newEventForm, actionDeadline: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
                         />
                       </div>
                     </div>
@@ -2239,7 +2239,7 @@ Example:
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-2xl p-6">
+            <div className="bg-gradient-to-r from-secondary-400 to-secondary-500 rounded-t-2xl p-6">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">⚠️ Actions Needed</h2>
@@ -2279,8 +2279,8 @@ Example:
                 if (actionsNeeded.length === 0) {
                   return (
                     <div className="text-center py-12">
-                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-10 h-10 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
@@ -2307,7 +2307,7 @@ Example:
                         <div
                           key={event._id}
                           className={`border-2 rounded-xl p-5 ${
-                            isUrgent ? 'border-red-300 bg-red-50' : 'border-orange-200 bg-orange-50'
+                            isUrgent ? 'border-red-300 bg-red-50' : 'border-secondary-200 bg-secondary-50'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -2318,7 +2318,7 @@ Example:
                                     URGENT
                                   </span>
                                 )}
-                                <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded">
+                                <span className="px-2 py-1 bg-secondary-100 text-secondary-800 text-xs font-semibold rounded">
                                   {event.category || "Other"}
                                 </span>
                               </div>
@@ -2340,7 +2340,7 @@ Example:
                                     day: 'numeric'
                                   })}
                                 </span>
-                                <span className={`font-semibold ${isUrgent ? 'text-red-600' : 'text-orange-600'}`}>
+                                <span className={`font-semibold ${isUrgent ? 'text-red-600' : 'text-secondary-500'}`}>
                                   ({daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow!' : `in ${daysUntil} days`})
                                 </span>
                               </div>
@@ -2364,7 +2364,7 @@ Example:
                                 });
                                 showToast("Action marked as complete!", "success");
                               }}
-                              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors whitespace-nowrap"
+                              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-semibold transition-colors whitespace-nowrap"
                             >
                               ✓ Mark Done
                             </button>
@@ -2401,7 +2401,7 @@ Example:
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-t-2xl p-6">
+            <div className="bg-gradient-to-r from-accent-400 to-accent-500 rounded-t-2xl p-6">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">🔍 Search Your Emails</h2>
@@ -2499,7 +2499,7 @@ Example:
                       }
                     }}
                     disabled={!emailSearchQuery.trim() || isSearchingEmails}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center gap-2"
+                    className="px-6 py-3 bg-accent-500 text-white rounded-lg font-semibold hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center gap-2"
                   >
                     {isSearchingEmails ? (
                       <>
@@ -2542,7 +2542,7 @@ Example:
                               {event.location && <div>📍 {event.location}</div>}
                               {event.description && <div className="text-gray-500 mt-2">{event.description}</div>}
                               {event.sourceEmailSubject && (
-                                <div className="text-xs text-blue-600 mt-2">
+                                <div className="text-xs text-primary-500 mt-2">
                                   📧 From: {event.sourceEmailSubject}
                                 </div>
                               )}
@@ -2574,7 +2574,7 @@ Example:
                                 showToast("Failed to add event", "error");
                               }
                             }}
-                            className="ml-4 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition text-sm whitespace-nowrap"
+                            className="ml-4 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition text-sm whitespace-nowrap"
                           >
                             + Add to Calendar
                           </button>
@@ -2587,7 +2587,7 @@ Example:
 
               {isSearchingEmails && (
                 <div className="text-center py-12">
-                  <svg className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-12 w-12 text-accent-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -2595,12 +2595,12 @@ Example:
                   <p className="text-gray-600 mt-2">
                     Scanning {emailSearchTimeframe === "1" ? "last month" : emailSearchTimeframe === "3" ? "last 3 months" : emailSearchTimeframe === "6" ? "last 6 months" : "last year"} for "{emailSearchQuery}"
                   </p>
-                  <div className="mt-4 inline-flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-lg">
-                    <svg className="animate-pulse w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="mt-4 inline-flex items-center gap-2 bg-accent-50 px-4 py-2 rounded-lg">
+                    <svg className="animate-pulse w-5 h-5 text-accent-500" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                       <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                     </svg>
-                    <span className="text-sm text-purple-800 font-medium">
+                    <span className="text-sm text-accent-700 font-medium">
                       Estimated time: {
                         emailSearchTimeframe === "1" ? "30-60 seconds" :
                         emailSearchTimeframe === "3" ? "1-2 minutes" :
