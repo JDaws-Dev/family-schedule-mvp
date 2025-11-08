@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 
 export default function Onboarding() {
-  const [currentStep, setCurrentStep] = useState(1);
+  // Initialize currentStep from localStorage if available
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('onboarding_step');
+      return saved ? parseInt(saved) : 1;
+    }
+    return 1;
+  });
   const [familyName, setFamilyName] = useState("");
   const [primaryEmail, setPrimaryEmail] = useState("");
   const [familyMembers, setFamilyMembers] = useState<Array<{ name: string; birthdate: string; relationship: string; interests: string }>>([
@@ -51,6 +58,42 @@ export default function Onboarding() {
   const updateNotificationPreferences = useMutation(api.notifications.updateNotificationPreferences);
 
   const totalSteps = 6;
+
+  // Save step to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('onboarding_step', currentStep.toString());
+    }
+  }, [currentStep]);
+
+  // Load saved form data from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('onboarding_data');
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData);
+          if (data.familyName) setFamilyName(data.familyName);
+          if (data.primaryEmail) setPrimaryEmail(data.primaryEmail);
+          if (data.familyMembers) setFamilyMembers(data.familyMembers);
+        } catch (e) {
+          console.error('Failed to load saved onboarding data');
+        }
+      }
+    }
+  }, []);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const dataToSave = {
+        familyName,
+        primaryEmail,
+        familyMembers,
+      };
+      localStorage.setItem('onboarding_data', JSON.stringify(dataToSave));
+    }
+  }, [familyName, primaryEmail, familyMembers]);
 
   const handleNext = async () => {
     if (currentStep < totalSteps) {
@@ -280,6 +323,12 @@ export default function Onboarding() {
       }
 
       setCompletionMessage("✓ All set! Redirecting to your dashboard...");
+
+      // Clear onboarding data from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('onboarding_step');
+        localStorage.removeItem('onboarding_data');
+      }
 
       // Redirect to dashboard
       setTimeout(() => {
