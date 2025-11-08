@@ -228,8 +228,16 @@ export default function VoiceRecordModal({
                 {/* Audio player */}
                 {audioUrl && (
                   <div className="mt-4">
-                    <audio controls className="w-full" src={audioUrl}>
-                      Your browser does not support the audio element.
+                    <audio
+                      controls
+                      className="w-full"
+                      src={audioUrl}
+                      onError={(e) => {
+                        console.warn('Audio playback error (non-critical):', e);
+                        // Suppress the error - recording was successful even if playback has issues
+                      }}
+                    >
+                      {/* Fallback text - only shown if audio element not supported */}
                     </audio>
                   </div>
                 )}

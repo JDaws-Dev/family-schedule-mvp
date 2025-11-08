@@ -14,6 +14,8 @@ import { useToast } from "@/app/components/Toast";
 import CelebrationToast from "@/app/components/CelebrationToast";
 import PhotoUploadModal from "@/app/components/PhotoUploadModal";
 import VoiceRecordModal from "@/app/components/VoiceRecordModal";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
+import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -181,6 +183,32 @@ function ReviewPageContent() {
   const createEvent = useMutation(api.events.createEvent);
   const createUnconfirmedEvent = useMutation(api.events.createUnconfirmedEvent);
   const addCustomCategory = useMutation(api.families.addCustomCategory);
+
+  // Add keyboard shortcuts for closing modals
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (editingEvent) {
+          setEditingEvent(null);
+        } else if (showAddEventModal) {
+          setShowAddEventModal(false);
+        } else if (showEditEventModal) {
+          setShowEditEventModal(false);
+        } else if (showSearchEmailsModal) {
+          setShowSearchEmailsModal(false);
+        } else if (showPhotoUploadModal) {
+          setShowPhotoUploadModal(false);
+        } else if (showVoiceRecordModal) {
+          setShowVoiceRecordModal(false);
+        } else if (showPasteTextModal) {
+          setShowPasteTextModal(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editingEvent, showAddEventModal, showEditEventModal, showSearchEmailsModal, showPhotoUploadModal, showVoiceRecordModal, showPasteTextModal]);
 
   // Handle query parameters for adding event from calendar
   useEffect(() => {
@@ -732,6 +760,16 @@ function ReviewPageContent() {
       // Use the first event to fill the form
       const event = data.events[0];
 
+      // Map category from API format to our format
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
       setNewEventForm({
         ...newEventForm,
         title: event.title || "",
@@ -739,7 +777,7 @@ function ReviewPageContent() {
         eventTime: event.time || "",
         endTime: event.endTime || "",
         location: event.location || "",
-        category: event.category || "Other",
+        category: categoryMap[event.category] || event.category || "Other",
         childName: event.childName || (event.attendees && event.attendees.length > 0 ? event.attendees.join(", ") : ""),
         description: event.description || "",
         requiresAction: event.requiresAction || false,
@@ -754,7 +792,9 @@ function ReviewPageContent() {
         recurrenceEndCount: 10,
       });
 
-      showToast("✨ AI filled the form! Review and adjust as needed.", "success");
+      // Open the modal so user can review and save the AI-filled form
+      setShowAddEventModal(true);
+      showToast("✨ AI filled the form! Review and click Save when ready.", "success");
       setConversationalInput(""); // Clear the input
     } catch (error: any) {
       console.error("Error parsing conversational input:", error);

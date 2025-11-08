@@ -10,6 +10,8 @@ import BottomNav from "@/app/components/BottomNav";
 import { useToast } from "@/app/components/Toast";
 import { useSearchParams } from "next/navigation";
 import PrivacyBadge from "@/app/components/PrivacyBadge";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
+import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
 
 function SettingsContent() {
   const searchParams = useSearchParams();

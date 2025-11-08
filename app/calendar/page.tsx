@@ -15,6 +15,9 @@ import { CalendarSkeleton } from "@/app/components/LoadingSkeleton";
 import AddEventChoiceModal from "@/app/components/AddEventChoiceModal";
 import PhotoUploadModal from "@/app/components/PhotoUploadModal";
 import VoiceRecordModal from "@/app/components/VoiceRecordModal";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
+import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
+import SwipeableCard from "@/app/components/SwipeableCard";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -163,6 +166,17 @@ function CalendarContent() {
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
   const [isEnhancingEvent, setIsEnhancingEvent] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info';
+    itemCount?: number;
+  } | null>(null);
+  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
+  const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
@@ -171,6 +185,7 @@ function CalendarContent() {
   const deleteEvent = useMutation(api.events.deleteEvent);
   const updateEvent = useMutation(api.events.updateEvent);
   const createUnconfirmedEvent = useMutation(api.events.createUnconfirmedEvent);
+  const createEvent = useMutation(api.events.createEvent);
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -277,9 +292,19 @@ function CalendarContent() {
 
     let events = [...filteredEvents];
 
-    // Filter to upcoming only if toggle is on
-    if (showUpcomingOnly) {
-      const today = new Date().toISOString().split('T')[0];
+    // Apply date range filter
+    const today = new Date().toISOString().split('T')[0];
+
+    if (dateRangeFilter === 'today') {
+      events = events.filter(event => event.eventDate === today);
+    } else if (dateRangeFilter === 'week') {
+      const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      events = events.filter(event => event.eventDate >= today && event.eventDate <= weekFromNow);
+    } else if (dateRangeFilter === 'month') {
+      const monthFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      events = events.filter(event => event.eventDate >= today && event.eventDate <= monthFromNow);
+    } else if (showUpcomingOnly) {
+      // Filter to upcoming only if toggle is on and no specific range is selected
       events = events.filter(event => event.eventDate >= today);
     }
 
@@ -291,7 +316,7 @@ function CalendarContent() {
       }
       return dateComparison;
     });
-  }, [filteredEvents, showUpcomingOnly]);
+  }, [filteredEvents, showUpcomingOnly, dateRangeFilter]);
 
   // Format last sync timestamp
   const formatLastSync = (timestamp: number | undefined): string => {
@@ -632,23 +657,43 @@ function CalendarContent() {
         "other": "Other"
       };
 
+      setShowPhotoUploadModal(false);
+
+      // Create all events as unconfirmed
+      let createdCount = 0;
       for (const event of data.events) {
-        await createUnconfirmedEvent({
-          familyId: convexUser.familyId,
-          createdByUserId: convexUser._id,
-          title: event.title || "Untitled Event",
-          eventDate: event.date || "",
-          eventTime: event.time || undefined,
-          endTime: event.endTime || undefined,
-          location: event.location || undefined,
-          category: categoryMap[event.category] || "Other",
-          childName: "",
-          description: event.description || "",
-        });
+        try {
+          await createUnconfirmedEvent({
+            familyId: convexUser.familyId,
+            createdByUserId: convexUser._id,
+            title: event.title || "Untitled Event",
+            eventDate: event.date || "",
+            eventTime: event.time || undefined,
+            endTime: event.endTime || undefined,
+            location: event.location || undefined,
+            category: categoryMap[event.category] || "Other",
+            childName: "",
+            description: event.description || "",
+          });
+          createdCount++;
+        } catch (err) {
+          console.error("Error creating event:", err);
+        }
       }
 
-      setShowPhotoUploadModal(false);
-      showToast(`✓ Found ${data.events.length} event(s) from photo! Go to Review page to approve them.`, "success", undefined, 7000);
+      if (createdCount > 0) {
+        showToast(
+          `✓ Created ${createdCount} event${createdCount > 1 ? 's' : ''} from photo! Check the Review page to edit and confirm.`,
+          "success",
+          () => {
+            // Click toast to go to Review page
+            window.location.href = "/review";
+          },
+          8000
+        );
+      } else {
+        showToast("Failed to create events. Please try again.", "error");
+      }
     } catch (error: any) {
       console.error("Error extracting event from photo:", error);
       showToast("Failed to extract event from photo. Please try again.", "error");
@@ -696,23 +741,43 @@ function CalendarContent() {
         "other": "Other"
       };
 
+      setShowVoiceRecordModal(false);
+
+      // Create all events as unconfirmed
+      let createdCount = 0;
       for (const event of data.events) {
-        await createUnconfirmedEvent({
-          familyId: convexUser.familyId,
-          createdByUserId: convexUser._id,
-          title: event.title || "Untitled Event",
-          eventDate: event.date || "",
-          eventTime: event.time || undefined,
-          endTime: event.endTime || undefined,
-          location: event.location || undefined,
-          category: categoryMap[event.category] || "Other",
-          childName: "",
-          description: event.description || "",
-        });
+        try {
+          await createUnconfirmedEvent({
+            familyId: convexUser.familyId,
+            createdByUserId: convexUser._id,
+            title: event.title || "Untitled Event",
+            eventDate: event.date || "",
+            eventTime: event.time || undefined,
+            endTime: event.endTime || undefined,
+            location: event.location || undefined,
+            category: categoryMap[event.category] || "Other",
+            childName: "",
+            description: event.description || "",
+          });
+          createdCount++;
+        } catch (err) {
+          console.error("Error creating event:", err);
+        }
       }
 
-      setShowVoiceRecordModal(false);
-      showToast(`✓ Found ${data.events.length} event(s) from recording! Go to Review page to approve them.`, "success", undefined, 7000);
+      if (createdCount > 0) {
+        showToast(
+          `✓ Created ${createdCount} event${createdCount > 1 ? 's' : ''} from recording! Check the Review page to edit and confirm.`,
+          "success",
+          () => {
+            // Click toast to go to Review page
+            window.location.href = "/review";
+          },
+          8000
+        );
+      } else {
+        showToast("Failed to create events. Please try again.", "error");
+      }
     } catch (error: any) {
       console.error("Error extracting event from voice:", error);
       showToast("Failed to extract event from voice recording. Please try again.", "error");
@@ -900,7 +965,7 @@ function CalendarContent() {
         {/* Search and Filters */}
         {confirmedEvents && confirmedEvents.length > 0 && (
           <div className="mb-6 bg-white rounded-lg shadow p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Search input */}
               <div>
                 <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
@@ -914,6 +979,24 @@ function CalendarContent() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
+              </div>
+
+              {/* Date Range Filter */}
+              <div>
+                <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700 mb-1">
+                  Date Range
+                </label>
+                <select
+                  id="dateRange"
+                  value={dateRangeFilter}
+                  onChange={(e) => setDateRangeFilter(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="all">All Dates</option>
+                  <option value="today">Today</option>
+                  <option value="week">Next 7 Days</option>
+                  <option value="month">Next 30 Days</option>
+                </select>
               </div>
 
               {/* Family member filter */}
@@ -958,13 +1041,14 @@ function CalendarContent() {
             </div>
 
             {/* Clear filters button */}
-            {(searchQuery || filterMember !== "all" || filterCategory !== "all") && (
+            {(searchQuery || filterMember !== "all" || filterCategory !== "all" || dateRangeFilter !== "all") && (
               <div className="mt-3 flex justify-end">
                 <button
                   onClick={() => {
                     setSearchQuery("");
                     setFilterMember("all");
                     setFilterCategory("all");
+                    setDateRangeFilter("all");
                   }}
                   className="text-sm text-primary-600 hover:text-primary-800 font-medium"
                 >
@@ -1003,8 +1087,110 @@ function CalendarContent() {
               <>
                 {/* Filter Toggle and Add Event Button */}
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  {/* Bulk Selection Bar */}
+                  {selectedEventIds.size > 0 && (
+                    <div className="mb-4 bg-primary-50 border border-primary-200 rounded-lg p-3 flex items-center justify-between gap-3 animate-slideDown">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-primary-900">
+                          {selectedEventIds.size} event{selectedEventIds.size > 1 ? 's' : ''} selected
+                        </span>
+                        <button
+                          onClick={() => setSelectedEventIds(new Set())}
+                          className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-white rounded-lg transition-colors"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          onClick={() => {
+                            setConfirmDialogConfig({
+                              title: 'Delete Multiple Events?',
+                              message: `Are you sure you want to delete ${selectedEventIds.size} event${selectedEventIds.size > 1 ? 's' : ''}?`,
+                              variant: 'danger',
+                              itemCount: selectedEventIds.size,
+                              onConfirm: async () => {
+                                try {
+                                  const idsToDelete = Array.from(selectedEventIds);
+                                  const eventsToDelete = sortedEvents?.filter((e: any) => idsToDelete.includes(e._id));
+                                  const eventBackups = eventsToDelete?.map((e: any) => ({ ...e })) || [];
+
+                                  for (const id of idsToDelete) {
+                                    await deleteEvent({ eventId: id as any });
+                                  }
+
+                                  setSelectedEventIds(new Set());
+                                  setShowConfirmDialog(false);
+
+                                  // Show toast with undo option
+                                  showToast(
+                                    `${idsToDelete.length} event${idsToDelete.length > 1 ? 's' : ''} deleted`,
+                                    "success",
+                                    async () => {
+                                      // Undo: recreate all events
+                                      try {
+                                        for (const backup of eventBackups) {
+                                          await createEvent({
+                                            createdByUserId: backup.createdByUserId,
+                                            title: backup.title,
+                                            eventDate: backup.eventDate,
+                                            eventTime: backup.eventTime || undefined,
+                                            endTime: backup.endTime || undefined,
+                                            location: backup.location || undefined,
+                                            category: backup.category || undefined,
+                                            childName: backup.childName || undefined,
+                                            description: backup.description || undefined,
+                                            requiresAction: backup.requiresAction || false,
+                                            actionDescription: backup.actionDescription || undefined,
+                                            actionDeadline: backup.actionDeadline || undefined,
+                                            isConfirmed: backup.isConfirmed,
+                                          });
+                                        }
+                                        showToast(`${eventBackups.length} event${eventBackups.length > 1 ? 's' : ''} restored`, "success");
+                                      } catch (error) {
+                                        console.error("Error restoring events:", error);
+                                        showToast("Unable to restore events. Please try adding them again manually.", "error");
+                                      }
+                                    },
+                                    10000
+                                  );
+                                } catch (error) {
+                                  console.error("Error deleting events:", error);
+                                  showToast("Unable to delete some events. Please try again.", "error");
+                                  setShowConfirmDialog(false);
+                                }
+                              },
+                            });
+                            setShowConfirmDialog(true);
+                          }}
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors min-h-[44px] sm:min-h-[36px]"
+                        >
+                          Delete Selected
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-3">
+                      {/* Select All Checkbox */}
+                      {sortedEvents && sortedEvents.length > 0 && (
+                        <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={sortedEvents.every((e: any) => selectedEventIds.has(e._id))}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                const allIds = new Set(sortedEvents.map((event: any) => event._id));
+                                setSelectedEventIds(allIds);
+                              } else {
+                                setSelectedEventIds(new Set());
+                              }
+                            }}
+                            className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Select All</span>
+                        </label>
+                      )}
+
                       <button
                         onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
                         className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
@@ -1050,12 +1236,35 @@ function CalendarContent() {
                         {events.map((event: any) => (
                           <div
                             key={event._id}
-                            className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-all cursor-pointer border-2 border-gray-100 hover:border-primary-200"
-                            onClick={() => setSelectedEvent(event)}
+                            className={`bg-white rounded-2xl p-5 shadow-card hover:shadow-card-hover transition-all border-2 ${
+                              selectedEventIds.has(event._id)
+                                ? 'border-primary-500 bg-primary-50'
+                                : 'border-gray-100 hover:border-primary-200'
+                            }`}
                           >
                             <div className="flex gap-4">
+                              {/* Checkbox for bulk selection */}
+                              <div className="flex-shrink-0 flex items-start pt-1">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedEventIds.has(event._id)}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    const newSet = new Set(selectedEventIds);
+                                    if (e.target.checked) {
+                                      newSet.add(event._id);
+                                    } else {
+                                      newSet.delete(event._id);
+                                    }
+                                    setSelectedEventIds(newSet);
+                                  }}
+                                  className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                  aria-label={`Select ${event.title}`}
+                                />
+                              </div>
+
                               {/* Category Emoji Icon */}
-                              <div className="flex-shrink-0">
+                              <div className="flex-shrink-0 cursor-pointer" onClick={() => setSelectedEvent(event)}>
                                 <div
                                   className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm"
                                   style={{

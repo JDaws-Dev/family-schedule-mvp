@@ -16,6 +16,10 @@ import AddEventChoiceModal from "../components/AddEventChoiceModal";
 import PhotoUploadModal from "../components/PhotoUploadModal";
 import VoiceRecordModal from "../components/VoiceRecordModal";
 import BottomNav from "../components/BottomNav";
+import ConfirmDialog from "../components/ConfirmDialog";
+import LoadingSpinner, { ButtonSpinner } from "../components/LoadingSpinner";
+import SwipeableCard from "../components/SwipeableCard";
+import PullToRefresh from "../components/PullToRefresh";
 
 // Bible verses - Family and Peace themed (ESV)
 const BIBLE_VERSES = [
@@ -210,6 +214,20 @@ function DashboardContent() {
     return BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
   });
 
+  // New state for UX improvements
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info';
+    itemCount?: number;
+  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletedEventBackup, setDeletedEventBackup] = useState<any>(null);
+
   const { user: clerkUser } = useUser();
   const { signOut} = useClerk();
   const { startTour, hasSeenTour } = useGuidedTour();
@@ -324,6 +342,23 @@ function DashboardContent() {
     });
   }, [upcomingEvents, unconfirmedEvents]);
 
+  // Filter events based on search query
+  const filteredActionEvents = React.useMemo(() => {
+    if (!actionRequiredEvents) return undefined;
+    if (!searchQuery.trim()) return actionRequiredEvents;
+
+    const query = searchQuery.toLowerCase();
+    return actionRequiredEvents.filter((event: any) => {
+      return (
+        event.title?.toLowerCase().includes(query) ||
+        event.location?.toLowerCase().includes(query) ||
+        event.childName?.toLowerCase().includes(query) ||
+        event.description?.toLowerCase().includes(query) ||
+        event.category?.toLowerCase().includes(query)
+      );
+    });
+  }, [actionRequiredEvents, searchQuery]);
+
   // Standard preset categories
   const standardCategories = [
     "Sports",
@@ -395,8 +430,20 @@ function DashboardContent() {
 
       // Press 'Escape' to close modals
       if (event.key === 'Escape') {
-        if (showAddEventModal) {
+        if (showConfirmDialog) {
+          setShowConfirmDialog(false);
+        } else if (showAddEventModal) {
           setShowAddEventModal(false);
+        } else if (showPhotoUploadModal) {
+          setShowPhotoUploadModal(false);
+        } else if (showVoiceRecordModal) {
+          setShowVoiceRecordModal(false);
+        } else if (showAddEventChoiceModal) {
+          setShowAddEventChoiceModal(false);
+        } else if (showSearchEmailsModal) {
+          setShowSearchEmailsModal(false);
+        } else if (showActionsModal) {
+          setShowActionsModal(false);
         } else if (selectedEvent) {
           setSelectedEvent(null);
           setIsEditingEvent(false);
@@ -409,7 +456,7 @@ function DashboardContent() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAddEventModal, selectedEvent, showScanModal, showToast]);
+  }, [showAddEventModal, selectedEvent, showScanModal, showPhotoUploadModal, showVoiceRecordModal, showAddEventChoiceModal, showSearchEmailsModal, showActionsModal, showConfirmDialog, showToast]);
 
   const handleScanEmail = async () => {
     if (!gmailAccounts || gmailAccounts.length === 0) {
@@ -652,22 +699,33 @@ function DashboardContent() {
         setShowPhotoUploadModal(false);
         showToast(`✓ Found ${data.events.length} events from photo! Go to Review page to approve them.`, "success", undefined, 7000);
       } else {
-        // Single event - create as unconfirmed for review
+        // Single event - populate the form for immediate review/editing
         const event = data.events[0];
-        await createUnconfirmedEvent({
-          familyId: convexUser.familyId,
-          createdByUserId: convexUser._id,
-          title: event.title || "Untitled Event",
+        setNewEventForm({
+          title: event.title || "",
           eventDate: event.date || "",
-          eventTime: event.time || undefined,
-          endTime: event.endTime || undefined,
-          location: event.location || undefined,
+          eventTime: event.time || "",
+          endTime: event.endTime || "",
+          location: event.location || "",
           category: categoryMap[event.category] || "Other",
           childName: "",
           description: event.description || "",
+          requiresAction: false,
+          actionDescription: "",
+          actionDeadline: "",
+          isRecurring: false,
+          recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+          recurrenceDaysOfWeek: [] as string[],
+          recurrenceEndType: "never" as "date" | "count" | "never",
+          recurrenceEndDate: "",
+          recurrenceEndCount: 10,
         });
+
+        // Close photo modal and open the add event modal with the form populated
         setShowPhotoUploadModal(false);
-        showToast(`✓ Event extracted from photo! Go to Review page to approve it.`, "success", undefined, 5000);
+        setShowAddEventModal(true);
+        setAddEventTab("manual");
+        showToast(`✓ Event extracted from photo! Review and save below.`, "success", undefined, 5000);
       }
     } catch (error: any) {
       console.error("Error extracting event from photo:", error);
@@ -740,22 +798,33 @@ function DashboardContent() {
         setShowVoiceRecordModal(false);
         showToast(`✓ Found ${data.events.length} events from your recording! Go to Review page to approve them.`, "success", undefined, 7000);
       } else {
-        // Single event - create as unconfirmed for review
+        // Single event - populate the form for immediate review/editing
         const event = data.events[0];
-        await createUnconfirmedEvent({
-          familyId: convexUser.familyId,
-          createdByUserId: convexUser._id,
-          title: event.title || "Untitled Event",
+        setNewEventForm({
+          title: event.title || "",
           eventDate: event.date || "",
-          eventTime: event.time || undefined,
-          endTime: event.endTime || undefined,
-          location: event.location || undefined,
+          eventTime: event.time || "",
+          endTime: event.endTime || "",
+          location: event.location || "",
           category: categoryMap[event.category] || "Other",
           childName: "",
           description: event.description || "",
+          requiresAction: false,
+          actionDescription: "",
+          actionDeadline: "",
+          isRecurring: false,
+          recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+          recurrenceDaysOfWeek: [] as string[],
+          recurrenceEndType: "never" as "date" | "count" | "never",
+          recurrenceEndDate: "",
+          recurrenceEndCount: 10,
         });
+
+        // Close voice modal and open the add event modal with the form populated
         setShowVoiceRecordModal(false);
-        showToast(`✓ Event extracted from recording! Go to Review page to approve it.`, "success", undefined, 5000);
+        setShowAddEventModal(true);
+        setAddEventTab("manual");
+        showToast(`✓ Event extracted from recording! Review and save below.`, "success", undefined, 5000);
       }
     } catch (error: any) {
       console.error("Error extracting event from voice:", error);
@@ -1347,32 +1416,186 @@ function DashboardContent() {
           {/* Upcoming Events */}
           <div id="upcoming-events" className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <span className="text-2xl">⚡</span>
-                    Action Dashboard
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-0.5">Events requiring your attention this week</p>
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <span className="text-2xl">⚡</span>
+                      Action Dashboard
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-0.5">Events requiring your attention this week</p>
+                  </div>
+                  <Link
+                    href="/calendar"
+                    className="text-accent-600 hover:text-accent-700 font-medium text-sm flex items-center gap-1"
+                  >
+                    View Calendar
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
                 </div>
-                <Link
-                  href="/calendar"
-                  className="text-accent-600 hover:text-accent-700 font-medium text-sm flex items-center gap-1"
-                >
-                  View Calendar
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+
+                {/* Search Bar and Select All */}
+                <div className="flex gap-3 items-center">
+                  {filteredActionEvents && filteredActionEvents.length > 0 && (
+                    <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={filteredActionEvents.every((e: any) => selectedEventIds.has(e._id))}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const allIds = new Set(filteredActionEvents.map((event: any) => event._id));
+                            setSelectedEventIds(allIds);
+                          } else {
+                            setSelectedEventIds(new Set());
+                          }
+                        }}
+                        className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Select All</span>
+                    </label>
+                  )}
+
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search events by title, location, child, or description..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm min-h-[44px] sm:min-h-[40px]"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 min-h-[44px] min-w-[44px] sm:min-h-[40px] sm:min-w-[40px] flex items-center justify-center"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bulk Actions Bar */}
+                {selectedEventIds.size > 0 && (
+                  <div className="mt-3 bg-primary-50 border border-primary-200 rounded-lg p-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900">
+                      {selectedEventIds.size} event{selectedEventIds.size > 1 ? 's' : ''} selected
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setSelectedEventIds(new Set())}
+                        className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-white rounded-lg transition-colors"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmDialogConfig({
+                            title: 'Delete Multiple Events?',
+                            message: `Are you sure you want to delete ${selectedEventIds.size} event${selectedEventIds.size > 1 ? 's' : ''}?`,
+                            variant: 'danger',
+                            itemCount: selectedEventIds.size,
+                            onConfirm: async () => {
+                              try {
+                                const idsToDelete = Array.from(selectedEventIds);
+
+                                // Backup all events for undo
+                                const eventsToDelete = filteredActionEvents?.filter((e: any) =>
+                                  idsToDelete.includes(e._id)
+                                );
+                                const eventBackups = eventsToDelete?.map((e: any) => ({ ...e })) || [];
+
+                                // Delete all selected events
+                                for (const id of idsToDelete) {
+                                  await deleteEvent({ eventId: id as any });
+                                }
+
+                                setSelectedEventIds(new Set());
+                                setShowConfirmDialog(false);
+
+                                // Show toast with undo option
+                                showToast(
+                                  `${idsToDelete.length} event${idsToDelete.length > 1 ? 's' : ''} deleted`,
+                                  "success",
+                                  async () => {
+                                    // Undo: recreate all events
+                                    try {
+                                      for (const backup of eventBackups) {
+                                        await createEvent({
+                                          createdByUserId: backup.createdByUserId,
+                                          title: backup.title,
+                                          eventDate: backup.eventDate,
+                                          eventTime: backup.eventTime || undefined,
+                                          endTime: backup.endTime || undefined,
+                                          location: backup.location || undefined,
+                                          category: backup.category || undefined,
+                                          childName: backup.childName || undefined,
+                                          description: backup.description || undefined,
+                                          requiresAction: backup.requiresAction || false,
+                                          actionDescription: backup.actionDescription || undefined,
+                                          actionDeadline: backup.actionDeadline || undefined,
+                                          isConfirmed: backup.isConfirmed,
+                                        });
+                                      }
+                                      showToast(`${eventBackups.length} event${eventBackups.length > 1 ? 's' : ''} restored`, "success");
+                                    } catch (error) {
+                                      console.error("Error restoring events:", error);
+                                      showToast("Unable to restore events. Please try adding them again manually.", "error");
+                                    }
+                                  },
+                                  10000
+                                );
+                              } catch (error) {
+                                console.error("Error deleting events:", error);
+                                showToast("Unable to delete some events. Please try again.", "error");
+                                setShowConfirmDialog(false);
+                              }
+                            },
+                          });
+                          setShowConfirmDialog(true);
+                        }}
+                        className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors min-h-[44px] sm:min-h-[36px]"
+                      >
+                        Delete Selected
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="divide-y divide-gray-200">
-                {actionRequiredEvents === undefined ? (
+                {filteredActionEvents === undefined ? (
                   <>
                     <EventCardSkeleton />
                     <EventCardSkeleton />
                     <EventCardSkeleton />
                   </>
-                ) : actionRequiredEvents.length === 0 ? (
+                ) : filteredActionEvents.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">No events found</h3>
+                    <p className="text-sm text-gray-600">
+                      {searchQuery ? `No events match "${searchQuery}"` : "No action items this week"}
+                    </p>
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="mt-4 text-sm text-primary-600 hover:text-primary-700 font-medium"
+                      >
+                        Clear search
+                      </button>
+                    )}
+                  </div>
+                ) : (actionRequiredEvents && actionRequiredEvents.length === 0) ? (
                   <div className="p-8 sm:p-12 text-center">
                     <div className="w-20 h-20 bg-gradient-to-br from-green-200 to-green-300 rounded-full flex items-center justify-center mx-auto mb-4">
                       <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1429,7 +1652,14 @@ function DashboardContent() {
                   </div>
                 ) : (
                   <div className="space-y-6 p-4">
-                    {groupEventsByDate(actionRequiredEvents).map(({ date, events }) => (
+                    {searchQuery && actionRequiredEvents && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-blue-900">
+                          Showing {filteredActionEvents.length} of {actionRequiredEvents.length} events
+                        </p>
+                      </div>
+                    )}
+                    {groupEventsByDate(filteredActionEvents).map(({ date, events }) => (
                       <div key={date}>
                         {/* Date Header - More playful */}
                         <div className="mb-3">
@@ -1439,21 +1669,131 @@ function DashboardContent() {
                           </h3>
                         </div>
                         {/* Events for this day - Card style */}
-                        <div className="space-y-3">
-                          {events.map((event: any) => (
-                            <div
+                        <div className="space-y-4">
+                          {events.map((event: any, index: number) => (
+                            <SwipeableCard
                               key={event._id}
-                              className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-all cursor-pointer border-2 border-gray-100 hover:border-primary-200"
-                              onClick={() => setSelectedEvent(event)}
+                              onSwipeLeft={async () => {
+                                // Delete on swipe left
+                                setConfirmDialogConfig({
+                                  title: 'Delete Event?',
+                                  message: `Are you sure you want to delete "${event.title}"?`,
+                                  variant: 'danger',
+                                  onConfirm: async () => {
+                                    try {
+                                      const eventBackup = { ...event };
+                                      await deleteEvent({ eventId: event._id });
+                                      setShowConfirmDialog(false);
+
+                                      // Show undo toast
+                                      showToast(
+                                        'Event deleted',
+                                        'success',
+                                        async () => {
+                                          await createEvent({
+                                            createdByUserId: eventBackup.createdByUserId,
+                                            title: eventBackup.title,
+                                            eventDate: eventBackup.eventDate,
+                                            eventTime: eventBackup.eventTime || undefined,
+                                            endTime: eventBackup.endTime || undefined,
+                                            location: eventBackup.location || undefined,
+                                            category: eventBackup.category || undefined,
+                                            childName: eventBackup.childName || undefined,
+                                            description: eventBackup.description || undefined,
+                                            requiresAction: eventBackup.requiresAction || false,
+                                            actionDescription: eventBackup.actionDescription || undefined,
+                                            actionDeadline: eventBackup.actionDeadline || undefined,
+                                            isConfirmed: eventBackup.isConfirmed,
+                                          });
+                                          showToast('Event restored', 'success');
+                                        },
+                                        10000
+                                      );
+                                    } catch (error) {
+                                      console.error('Error deleting event:', error);
+                                      showToast('Unable to delete event. Please try again.', 'error');
+                                      setShowConfirmDialog(false);
+                                    }
+                                  },
+                                });
+                                setShowConfirmDialog(true);
+                              }}
+                              onSwipeRight={async () => {
+                                // Mark as complete on swipe right (if action required)
+                                if (event.requiresAction && !event.actionCompleted) {
+                                  try {
+                                    await updateEvent({
+                                      eventId: event._id,
+                                      actionCompleted: true,
+                                    });
+                                    showToast('Action marked as complete! 🎉', 'success');
+                                  } catch (error) {
+                                    console.error('Error updating event:', error);
+                                    showToast('Unable to update event. Please try again.', 'error');
+                                  }
+                                }
+                              }}
+                              leftAction={{
+                                label: 'Delete',
+                                icon: (
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                ),
+                                color: '#ef4444',
+                              }}
+                              rightAction={
+                                event.requiresAction && !event.actionCompleted
+                                  ? {
+                                      label: 'Complete',
+                                      icon: (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      ),
+                                      color: '#10b981',
+                                    }
+                                  : undefined
+                              }
                             >
+                              <div
+                                className={`bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 cursor-pointer animate-scaleIn ${
+                                  selectedEventIds.has(event._id)
+                                    ? 'border-primary-500 bg-primary-50 scale-[0.98]'
+                                    : 'border-gray-100 hover:border-primary-200 hover:scale-[1.01]'
+                                }`}
+                                style={{ animationDelay: `${index * 50}ms` }}
+                              >
                               <div className="flex gap-4">
+                                {/* Checkbox for bulk selection */}
+                                <div className="flex-shrink-0 flex items-start pt-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedEventIds.has(event._id)}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      const newSet = new Set(selectedEventIds);
+                                      if (e.target.checked) {
+                                        newSet.add(event._id);
+                                      } else {
+                                        newSet.delete(event._id);
+                                      }
+                                      setSelectedEventIds(newSet);
+                                    }}
+                                    className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                    aria-label={`Select ${event.title}`}
+                                  />
+                                </div>
+
                                 {/* Category Emoji Icon */}
                                 <div className="flex-shrink-0">
                                   <div
-                                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm"
+                                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm cursor-pointer"
                                     style={{
                                       backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
+                                      borderLeft: `4px solid ${getCategoryColor(event.category)}`,
                                     }}
+                                    onClick={() => setSelectedEvent(event)}
                                   >
                                     {getCategoryEmoji(event.category)}
                                   </div>
@@ -1461,36 +1801,39 @@ function DashboardContent() {
 
                                 {/* Event Details */}
                                 <div className="flex-1 min-w-0">
-                                  <h3 className="font-bold text-gray-900 text-lg mb-2">{event.title}</h3>
+                                  <h3 className="font-bold text-gray-900 text-xl mb-3 leading-tight">{event.title}</h3>
 
                                   {/* Action Required Banner */}
                                   {!event.isConfirmed ? (
-                                    <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
-                                      <div className="flex items-start gap-2">
-                                        <span className="text-xl flex-shrink-0">📋</span>
+                                    <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl shadow-soft animate-pulse-subtle">
+                                      <div className="flex items-start gap-3">
+                                        <span className="text-2xl flex-shrink-0">📋</span>
                                         <div className="flex-1 min-w-0">
-                                          <div className="font-bold text-blue-900 text-sm mb-1">
+                                          <div className="font-bold text-blue-900 text-base mb-1.5">
                                             Needs Review
                                           </div>
-                                          <div className="text-blue-800 text-sm">
+                                          <div className="text-blue-800 text-sm leading-relaxed">
                                             This event was found in your emails and needs confirmation
                                           </div>
                                         </div>
                                       </div>
                                     </div>
                                   ) : event.requiresAction && !event.actionCompleted && (
-                                    <div className="mb-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-orange-300 rounded-lg">
-                                      <div className="flex items-start gap-2">
-                                        <span className="text-xl flex-shrink-0">⚠️</span>
+                                    <div className="mb-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-orange-300 rounded-xl shadow-soft animate-pulse-subtle">
+                                      <div className="flex items-start gap-3">
+                                        <span className="text-2xl flex-shrink-0 animate-bounce-subtle">⚠️</span>
                                         <div className="flex-1 min-w-0">
-                                          <div className="font-bold text-orange-900 text-sm mb-1">
+                                          <div className="font-bold text-orange-900 text-base mb-1.5">
                                             Action Required
                                           </div>
-                                          <div className="text-orange-800 text-sm">
+                                          <div className="text-orange-800 text-sm leading-relaxed">
                                             {event.actionDescription || 'Action needed'}
                                           </div>
                                           {event.actionDeadline && (
-                                            <div className="text-orange-700 text-xs mt-1 font-semibold">
+                                            <div className="text-orange-700 text-xs mt-2 font-semibold flex items-center gap-1">
+                                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                              </svg>
                                               Due: {new Date(event.actionDeadline).toLocaleDateString('en-US', {
                                                 month: 'short',
                                                 day: 'numeric',
@@ -1503,24 +1846,24 @@ function DashboardContent() {
                                     </div>
                                   )}
 
-                                  <div className="space-y-1.5 mb-3">
+                                  <div className="space-y-2 mb-4">
                                     {event.eventTime && (
-                                      <div className="flex items-center gap-2 text-gray-700">
-                                        <span className="text-lg">🕐</span>
-                                        <span className="font-medium">{formatTime12Hour(event.eventTime)}</span>
+                                      <div className="flex items-center gap-2.5 text-gray-700">
+                                        <span className="text-xl">🕐</span>
+                                        <span className="font-semibold text-base">{formatTime12Hour(event.eventTime)}</span>
                                       </div>
                                     )}
                                     {event.location && (
-                                      <div className="flex items-center gap-2 text-gray-700">
-                                        <span className="text-lg">📍</span>
-                                        <span className="truncate">{event.location}</span>
+                                      <div className="flex items-center gap-2.5 text-gray-700">
+                                        <span className="text-xl">📍</span>
+                                        <span className="truncate text-base">{event.location}</span>
                                       </div>
                                     )}
                                   </div>
 
                                   {/* Tags Row */}
                                   {event.childName && (
-                                    <div className="flex flex-wrap gap-1.5">
+                                    <div className="flex flex-wrap gap-2">
                                       {(() => {
                                         const names = event.childName.split(",").map((n: string) => n.trim());
                                         return names.map((name: string, idx: number) => {
@@ -1529,7 +1872,7 @@ function DashboardContent() {
                                           return (
                                             <span
                                               key={idx}
-                                              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-white shadow-sm"
+                                              className="inline-flex items-center px-3.5 py-2 rounded-full text-sm font-semibold text-white shadow-soft hover:shadow-medium transition-all duration-200 transform hover:scale-105"
                                               style={{ backgroundColor: color }}
                                             >
                                               {name}
@@ -1542,6 +1885,7 @@ function DashboardContent() {
                                 </div>
                               </div>
                             </div>
+                            </SwipeableCard>
                           ))}
                         </div>
                       </div>
@@ -2518,34 +2862,74 @@ function DashboardContent() {
                 {/* Action Buttons */}
                 <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
                   <button
-                    onClick={async () => {
-                      if (confirm(`Delete "${selectedEvent.title}"?`)) {
-                        try {
-                          // Delete from Google Calendar first if it was synced
-                          if (selectedEvent.googleCalendarEventId) {
-                            try {
-                              await fetch("/api/delete-calendar-event", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ eventId: selectedEvent._id }),
-                              });
-                            } catch (error) {
-                              console.error("Error deleting from Google Calendar:", error);
-                              // Continue with deletion even if Google Calendar deletion fails
-                            }
-                          }
+                    onClick={() => {
+                      setConfirmDialogConfig({
+                        title: 'Delete Event?',
+                        message: `Are you sure you want to delete "${selectedEvent.title}"? This action cannot be undone.`,
+                        variant: 'danger',
+                        onConfirm: async () => {
+                          try {
+                            // Store event data for undo
+                            const eventBackup = { ...selectedEvent };
 
-                          // Delete from Convex database
-                          await deleteEvent({ eventId: selectedEvent._id });
-                          setSelectedEvent(null);
-                          showToast(`✓ Event "${selectedEvent.title}" deleted`, "success", undefined, 7000);
-                        } catch (error) {
-                          console.error("Error deleting event:", error);
-                          showToast("Failed to delete event. Please try again.", "error");
-                        }
-                      }
+                            // Delete from Google Calendar first if it was synced
+                            if (selectedEvent.googleCalendarEventId) {
+                              try {
+                                await fetch("/api/delete-calendar-event", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ eventId: selectedEvent._id }),
+                                });
+                              } catch (error) {
+                                console.error("Error deleting from Google Calendar:", error);
+                                // Continue with deletion even if Google Calendar deletion fails
+                              }
+                            }
+
+                            // Delete from Convex database
+                            await deleteEvent({ eventId: selectedEvent._id });
+                            setSelectedEvent(null);
+                            setShowConfirmDialog(false);
+
+                            // Show toast with undo option
+                            showToast(
+                              `Event "${selectedEvent.title}" deleted`,
+                              "success",
+                              async () => {
+                                // Undo: recreate the event
+                                try {
+                                  await createEvent({
+                                    familyId: eventBackup.familyId,
+                                    title: eventBackup.title,
+                                    eventDate: eventBackup.eventDate,
+                                    eventTime: eventBackup.eventTime || undefined,
+                                    endTime: eventBackup.endTime || undefined,
+                                    location: eventBackup.location || undefined,
+                                    category: eventBackup.category || undefined,
+                                    childName: eventBackup.childName || undefined,
+                                    description: eventBackup.description || undefined,
+                                    requiresAction: eventBackup.requiresAction || false,
+                                    actionDescription: eventBackup.actionDescription || undefined,
+                                    actionDeadline: eventBackup.actionDeadline || undefined,
+                                  });
+                                  showToast("Event restored", "success");
+                                } catch (error) {
+                                  console.error("Error restoring event:", error);
+                                  showToast("Unable to restore event. Please try adding it again manually.", "error");
+                                }
+                              },
+                              10000
+                            );
+                          } catch (error) {
+                            console.error("Error deleting event:", error);
+                            showToast("Unable to delete event. Please check your internet connection and try again.", "error");
+                            setShowConfirmDialog(false);
+                          }
+                        },
+                      });
+                      setShowConfirmDialog(true);
                     }}
-                    className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow-soft flex items-center justify-center gap-2"
+                    className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow-soft flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[40px]"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -3587,6 +3971,19 @@ Example:
 
       {/* Bottom Navigation for Mobile */}
       <BottomNav />
+
+      {/* Confirm Dialog */}
+      {confirmDialogConfig && (
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          title={confirmDialogConfig.title}
+          message={confirmDialogConfig.message}
+          onConfirm={confirmDialogConfig.onConfirm}
+          onCancel={() => setShowConfirmDialog(false)}
+          variant={confirmDialogConfig.variant}
+          itemCount={confirmDialogConfig.itemCount}
+        />
+      )}
     </div>
   );
 }

@@ -7,6 +7,8 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "../components/Toast";
 import BottomNav from "../components/BottomNav";
+import ConfirmDialog from "../components/ConfirmDialog";
+import LoadingSpinner, { ButtonSpinner } from "../components/LoadingSpinner";
 
 export default function DiscoverPage() {
   const { signOut } = useClerk();
