@@ -17,6 +17,7 @@ export default function DiscoverPage() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [discoveryKeyword, setDiscoveryKeyword] = useState(""); // Keyword for AI discovery
   const [isDiscovering, setIsDiscovering] = useState(false);
+  const [filtersExpanded, setFiltersExpanded] = useState(false); // For mobile collapsible filters
   const [discoveryMessage, setDiscoveryMessage] = useState("");
   const [discoveryProgress, setDiscoveryProgress] = useState("");
   const [location, setLocation] = useState("");
@@ -289,9 +290,40 @@ export default function DiscoverPage() {
         )}
 
         {/* Discovery Banner */}
-        <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-8 mb-8">
+        <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-4 sm:p-8 mb-8">
           <div className="flex flex-col gap-6">
-            <div className="flex items-start justify-between">
+            {/* Mobile: Collapsible Header */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setFiltersExpanded(!filtersExpanded)}
+                className="w-full flex items-center justify-between py-3 px-4 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span className="font-bold text-gray-900">
+                    {suggestedActivities.length > 0 ? 'Search Filters' : 'Search for Activities'}
+                  </span>
+                </div>
+                <svg
+                  className={`w-5 h-5 text-gray-500 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {!filtersExpanded && (
+                <p className="text-sm text-gray-600 mt-2 px-2">
+                  Tap to {location ? 'refine your search' : 'set your location and discover activities'}
+                </p>
+              )}
+            </div>
+
+            {/* Desktop: Always show header */}
+            <div className="hidden md:flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   {suggestedActivities.length > 0 ? 'Search for More Activities' : 'Start Discovering'}
@@ -311,8 +343,8 @@ export default function DiscoverPage() {
               <div className="text-5xl ml-6 hidden sm:block opacity-20">🎯</div>
             </div>
 
-            {/* Location and Distance Controls */}
-            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+            {/* Location and Distance Controls - Collapsible on Mobile */}
+            <div className={`bg-gray-50 rounded-lg p-6 border border-gray-200 ${filtersExpanded ? 'block' : 'hidden md:block'}`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
