@@ -106,7 +106,7 @@ function DashboardContent() {
   const [editFormData, setEditFormData] = useState<any>(null);
   const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
-  const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
+  const [addEventTab, setAddEventTab] = useState<"manual" | "paste" | "photo" | "voice">("manual");
   const [pastedText, setPastedText] = useState("");
   const [isExtractingEvent, setIsExtractingEvent] = useState(false);
   const [showSearchEmailsModal, setShowSearchEmailsModal] = useState(false);
@@ -1860,6 +1860,14 @@ function DashboardContent() {
           onTypeManually={() => setShowAddEventModal(true)}
           onPasteText={() => {
             setAddEventTab("paste");
+            setShowAddEventModal(true);
+          }}
+          onUploadPhoto={() => {
+            setAddEventTab("photo");
+            setShowAddEventModal(true);
+          }}
+          onVoiceRecord={() => {
+            setAddEventTab("voice");
             setShowAddEventModal(true);
           }}
           onSearchSpecific={() => setShowSearchEmailsModal(true)}
