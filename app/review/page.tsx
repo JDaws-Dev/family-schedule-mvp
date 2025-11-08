@@ -1762,21 +1762,43 @@ export default function ReviewPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
                   </label>
-                  <input
-                    list="edit-categories"
+                  <select
                     name="category"
-                    defaultValue={editingEvent.category || "Other"}
-                    placeholder="Select or type a category"
+                    defaultValue={editingEvent.category || ""}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") {
+                        const customCategory = prompt("Enter custom category:");
+                        if (customCategory && customCategory.trim()) {
+                          e.target.value = customCategory.trim();
+                          // Update editingEvent so the value persists
+                          setEditingEvent({ ...editingEvent, category: customCategory.trim() });
+                        } else {
+                          e.target.value = editingEvent.category || "";
+                        }
+                      }
+                    }}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                  <datalist id="edit-categories">
-                    {allCategories?.defaultCategories.map((cat) => (
-                      <option key={cat} value={cat} />
-                    ))}
-                    {allCategories?.customCategories.map((cat) => (
-                      <option key={cat} value={cat} />
-                    ))}
-                  </datalist>
+                  >
+                    <option value="">Select a category...</option>
+                    {/* Standard Categories */}
+                    <optgroup label="Standard Categories">
+                      {standardCategories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </optgroup>
+                    {/* Previously Used Categories (if any new ones) */}
+                    {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                      <optgroup label="Your Categories">
+                        {existingCategories
+                          .filter(cat => !standardCategories.includes(cat))
+                          .map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))
+                        }
+                      </optgroup>
+                    )}
+                    <option value="custom">+ Add Custom Category</option>
+                  </select>
                 </div>
 
                 <div>
