@@ -9,6 +9,8 @@ import type { Id } from "@/convex/_generated/dataModel";
 import MobileNav from "@/app/components/MobileNav";
 import { EventCardSkeleton } from "@/app/components/LoadingSkeleton";
 import { useToast } from "@/app/components/Toast";
+import HelpTooltip from "@/app/components/HelpTooltip";
+import CelebrationToast from "@/app/components/CelebrationToast";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -69,6 +71,8 @@ export default function ReviewPage() {
   const [isSearchingEmails, setIsSearchingEmails] = useState(false);
   const [emailSearchProgress, setEmailSearchProgress] = useState({ current: 0, total: 0 });
   const [emailSearchResults, setEmailSearchResults] = useState<any[]>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationMessage, setCelebrationMessage] = useState("");
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     eventDate: "",
@@ -620,6 +624,13 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Celebration Toast */}
+      {showCelebration && (
+        <CelebrationToast
+          message={celebrationMessage}
+          onClose={() => setShowCelebration(false)}
+        />
+      )}
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
