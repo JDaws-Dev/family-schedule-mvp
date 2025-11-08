@@ -1264,7 +1264,7 @@ function DashboardContent() {
 
       {/* Floating Action Button - Mobile Only */}
       <button
-        onClick={() => setShowAddEventModal(true)}
+        onClick={() => setShowAddEventChoiceModal(true)}
         title="Add new event"
         aria-label="Add new event"
         className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
