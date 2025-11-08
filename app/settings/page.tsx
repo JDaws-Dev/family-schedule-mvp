@@ -13,6 +13,9 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'family' | 'integrations'>('profile');
+  const { user: clerkUser } = useUser();
+  const { signOut } = useClerk();
+  const { showToast } = useToast();
 
   // Update tab based on URL parameters after mount
   useEffect(() => {
@@ -43,9 +46,6 @@ function SettingsContent() {
       window.history.replaceState({}, '', '/settings?tab=integrations');
     }
   }, [searchParams, showToast]);
-  const { user: clerkUser } = useUser();
-  const { signOut } = useClerk();
-  const { showToast } = useToast();
 
   // Get user from Convex
   const convexUser = useQuery(
