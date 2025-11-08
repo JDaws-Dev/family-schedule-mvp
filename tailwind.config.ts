@@ -9,41 +9,53 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Soft sage green - Main brand color (calming, nurturing, organized)
         primary: {
-          50: '#fff5f0',
-          100: '#ffe8de',
-          200: '#ffceba',
-          300: '#ffab87',
-          400: '#ff8456',
-          500: '#ff6b35', // Warm coral/orange - Main brand color
-          600: '#ff5722',
-          700: '#e64a19',
-          800: '#d84315',
-          900: '#bf360c',
+          50: '#f5f9f7',
+          100: '#e6f2ed',
+          200: '#c7e4d8',
+          300: '#a8d6c3',
+          400: '#89c8ae',
+          500: '#6bb899', // Soft sage
+          600: '#5a9d82',
+          700: '#4a826b',
+          800: '#396754',
+          900: '#294c3d',
         },
+        // Warm blush/rose - Secondary color (caring, gentle, friendly)
         secondary: {
-          50: '#e3f2fd',
-          100: '#bbdefb',
-          200: '#90caf9',
-          300: '#64b5f6',
-          400: '#42a5f5',
-          500: '#4A90E2', // Sky blue for trust
-          600: '#1e88e5',
-          700: '#1976d2',
-          800: '#1565c0',
-          900: '#0d47a1',
+          50: '#fef5f7',
+          100: '#fde8ec',
+          200: '#fbc5d0',
+          300: '#f8a2b4',
+          400: '#f67f98',
+          500: '#f45c7c', // Warm blush
+          600: '#d94a67',
+          700: '#b33952',
+          800: '#8d293d',
+          900: '#671828',
         },
+        // Soft lavender - Accent color (calm, trustworthy, supportive)
         accent: {
-          50: '#e8f5e9',
-          100: '#c8e6c9',
-          200: '#a5d6a7',
-          300: '#81c784',
-          400: '#66bb6a',
-          500: '#6BCF7F', // Mint green for success
-          600: '#43a047',
-          700: '#388e3c',
-          800: '#2e7d32',
-          900: '#1b5e20',
+          50: '#f7f5fb',
+          100: '#ede8f6',
+          200: '#d7cceb',
+          300: '#c1b0df',
+          400: '#ab94d4',
+          500: '#9578c8', // Soft lavender
+          600: '#7d63a6',
+          700: '#664e84',
+          800: '#4e3a63',
+          900: '#362541',
+        },
+        // Warm neutrals for a cozy feel
+        warm: {
+          50: '#fdfcfb',
+          100: '#faf8f5',
+          200: '#f5f1ea',
+          300: '#ede7dc',
+          400: '#e4dcc8',
+          500: '#d4c8b0',
         },
       },
       fontFamily: {
