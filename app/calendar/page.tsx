@@ -354,7 +354,7 @@ function CalendarContent() {
       if (response.ok) {
         const { addedCount, updatedCount } = data;
         if (addedCount > 0 || updatedCount > 0) {
-          const parts = [];
+          const parts: string[] = [];
           if (addedCount > 0) parts.push(`${addedCount} new event${addedCount !== 1 ? "s" : ""} added`);
           if (updatedCount > 0) parts.push(`${updatedCount} event${updatedCount !== 1 ? "s" : ""} updated`);
           showToast(`Synced from Google Calendar: ${parts.join(", ")}!`, "success");
