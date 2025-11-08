@@ -410,6 +410,7 @@ export default function ReviewPage() {
       requiresAction: formData.get("requiresAction") === "on",
       actionDeadline: formData.get("actionDeadline") as string || undefined,
       actionDescription: formData.get("actionDescription") as string || undefined,
+      actionCompleted: formData.get("actionCompleted") === "on",
     });
 
     setShowEditEventModal(false);
@@ -1866,6 +1867,20 @@ export default function ReviewPage() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       />
                     </div>
+                    <div className="pt-2 border-t border-gray-200">
+                      <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition">
+                        <input
+                          type="checkbox"
+                          name="actionCompleted"
+                          defaultChecked={editingEvent.actionCompleted || false}
+                          className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500"
+                        />
+                        <div>
+                          <span className="font-medium text-gray-900">✓ Action completed</span>
+                          <p className="text-xs text-gray-600">Check this when you've completed the RSVP, payment, or other action</p>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -2887,7 +2902,7 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
                           <div className="flex-1">
                             <h4 className="font-semibold text-gray-900">{event.title}</h4>
                             <div className="text-sm text-gray-600 mt-1 space-y-1">
-                              <div>📅 {new Date(event.eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                              <div>📅 {new Date(event.eventDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</div>
                               {event.eventTime && <div>🕐 {event.eventTime}</div>}
                               {event.location && <div>📍 {event.location}</div>}
                               {event.description && <div className="text-gray-500 mt-2">{event.description}</div>}
@@ -2914,6 +2929,7 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
                                   requiresAction: event.requiresAction || undefined,
                                   actionDescription: event.actionDescription || undefined,
                                   actionDeadline: event.actionDeadline || undefined,
+                                  actionCompleted: false,
                                   isConfirmed: true,
                                 });
                                 showToast(`✓ Added "${event.title}" to your calendar!`, "success");
