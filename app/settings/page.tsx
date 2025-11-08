@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import MobileNav from "@/app/components/MobileNav";
 import { useToast } from "@/app/components/Toast";
 import { useSearchParams } from "next/navigation";
+import PrivacyBadge from "@/app/components/PrivacyBadge";
 
 function SettingsContent() {
   const searchParams = useSearchParams();
@@ -1467,6 +1468,10 @@ function SettingsContent() {
             </p>
           </div>
           <div className="p-6">
+            {/* Privacy Reassurance */}
+            <div className="mb-6">
+              <PrivacyBadge variant="email" />
+            </div>
             {/* Connected Gmail Accounts */}
             {!gmailAccounts ? (
               <div className="text-center py-8 text-gray-500">Loading...</div>
