@@ -11,8 +11,8 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [familyName, setFamilyName] = useState("");
   const [primaryEmail, setPrimaryEmail] = useState("");
-  const [familyMembers, setFamilyMembers] = useState<Array<{ name: string; birthdate: string; relationship: string }>>([
-    { name: "", birthdate: "", relationship: "Child" }
+  const [familyMembers, setFamilyMembers] = useState<Array<{ name: string; birthdate: string; relationship: string; interests: string }>>([
+    { name: "", birthdate: "", relationship: "Child", interests: "" }
   ]);
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionMessage, setCompletionMessage] = useState("");
@@ -46,11 +46,11 @@ export default function Onboarding() {
       }
       // Show celebration for completing step 2
       else if (currentStep === 2) {
-        const kidsAdded = familyMembers.filter(m => m.name.trim() !== "").length;
-        if (kidsAdded > 0) {
-          setCelebrationMessage(kidsAdded === 1
-            ? "Wonderful! We can't wait to help organize their schedule! 💝"
-            : `Amazing! ${kidsAdded} wonderful kids to keep track of! 💝`);
+        const membersAdded = familyMembers.filter(m => m.name.trim() !== "").length;
+        if (membersAdded > 0) {
+          setCelebrationMessage(membersAdded === 1
+            ? "Wonderful! We can't wait to help organize your family's schedule! 💝"
+            : `Amazing! ${membersAdded} family members added - we've got everyone covered! 💝`);
         } else {
           setCelebrationMessage("You're doing great! Almost there! ✨");
         }
@@ -104,8 +104,8 @@ export default function Onboarding() {
           name: member.name.trim(),
           birthdate: member.birthdate || undefined,
           relationship: member.relationship || undefined,
-          nicknames: "", // Empty for now, can be added later in settings
-          interests: "", // Empty for now, can be added later in settings
+          nicknames: "", // Can be added later in settings
+          interests: member.interests.trim() || "", // Save interests from onboarding
           color: undefined, // Will be auto-assigned in settings
         });
       }
@@ -127,7 +127,7 @@ export default function Onboarding() {
   };
 
   const addFamilyMember = () => {
-    setFamilyMembers([...familyMembers, { name: "", birthdate: "", relationship: "Child" }]);
+    setFamilyMembers([...familyMembers, { name: "", birthdate: "", relationship: "Child", interests: "" }]);
   };
 
   const removeFamilyMember = (index: number) => {
@@ -267,10 +267,10 @@ export default function Onboarding() {
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-3">Tell us about your wonderful family!</h1>
                 <p className="text-lg text-gray-600 max-w-xl mx-auto">
-                  Add your kids, spouse, or anyone else whose schedule you're juggling.
-                  This helps us organize everything just right.
+                  Add family members whose schedules you're managing - kids, spouse, yourself, anyone!
+                  We'll use this to personalize your experience.
                 </p>
-                <p className="text-sm text-primary-600 font-medium mt-2">We're excited to meet them! 🌟</p>
+                <p className="text-sm text-primary-600 font-medium mt-2">Include hobbies so we can suggest relevant activities! 🎨⚽🎵</p>
               </div>
 
               <div className="space-y-4">
@@ -308,18 +308,32 @@ export default function Onboarding() {
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
-                      <select
-                        value={member.relationship}
-                        onChange={(e) => updateFamilyMember(index, "relationship", e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      >
-                        <option value="Child">Child</option>
-                        <option value="Parent">Parent</option>
-                        <option value="Spouse">Spouse</option>
-                        <option value="Other">Other</option>
-                      </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Relationship</label>
+                        <select
+                          value={member.relationship}
+                          onChange={(e) => updateFamilyMember(index, "relationship", e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        >
+                          <option value="Child">Child</option>
+                          <option value="Parent">Parent</option>
+                          <option value="Spouse">Spouse</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Hobbies/Interests (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g., soccer, piano, art"
+                          value={member.interests}
+                          onChange={(e) => updateFamilyMember(index, "interests", e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -339,19 +353,19 @@ export default function Onboarding() {
                 <div className="flex gap-3">
                   <span className="text-2xl">🎯</span>
                   <div>
-                    <h4 className="font-semibold text-gray-900 text-sm mb-2">Why we ask about your family</h4>
+                    <h4 className="font-semibold text-gray-900 text-sm mb-2">How this helps you</h4>
                     <ul className="text-sm text-gray-700 space-y-1.5">
                       <li className="flex items-start gap-2">
                         <span className="text-purple-600">•</span>
-                        <span>We'll color-code each person's events so you can see at a glance who needs to be where</span>
+                        <span>Color-coded events so you can see at a glance who needs to be where and when</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-600">•</span>
-                        <span>Get activity suggestions based on their age and interests</span>
+                        <span>Activity suggestions based on hobbies and interests (piano lessons, soccer camps, art classes, etc.)</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-purple-600">•</span>
-                        <span>Never miss a field trip permission slip or practice schedule again!</span>
+                        <span>Automatic reminders so you never miss a practice, recital, or permission slip deadline</span>
                       </li>
                     </ul>
                   </div>
