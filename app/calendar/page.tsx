@@ -887,7 +887,7 @@ function CalendarContent() {
                                   </div>
                                 )}
                                 {event.requiresAction && !event.actionCompleted && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-secondary-100 text-secondary-800">
                                     ⚠️ Action
                                   </span>
                                 )}
@@ -960,7 +960,7 @@ function CalendarContent() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
               <div className="flex justify-between items-start mb-3">
                 <h2 className="text-2xl font-bold text-white pr-8">{selectedEvent.title}</h2>
                 <button
@@ -1094,16 +1094,16 @@ function CalendarContent() {
 
               {/* Source Information */}
               {selectedEvent.sourceEmailSubject && (
-                <div className="mb-6 bg-blue-50 rounded-lg p-4">
-                  <div className="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">
+                <div className="mb-6 bg-primary-50 rounded-lg p-4">
+                  <div className="text-xs font-semibold text-primary-800 uppercase tracking-wide mb-2">
                     Source Information
                   </div>
                   <div className="space-y-2">
-                    <div className="text-sm text-blue-900">
+                    <div className="text-sm text-primary-800">
                       <span className="font-medium">Email:</span> {selectedEvent.sourceEmailSubject}
                     </div>
                     {selectedEvent.sourceGmailAccountId && gmailAccounts && (
-                      <div className="text-sm text-blue-800">
+                      <div className="text-sm text-primary-700">
                         <span className="font-medium">Account:</span> {gmailAccounts.find(a => a._id === selectedEvent.sourceGmailAccountId)?.gmailEmail || 'Unknown'}
                       </div>
                     )}
@@ -1111,7 +1111,7 @@ function CalendarContent() {
                       href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`subject:"${selectedEvent.sourceEmailSubject}"`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      className="inline-flex items-center gap-2 text-sm text-primary-500 hover:text-primary-700 font-medium"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -1207,7 +1207,7 @@ function CalendarContent() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-2xl p-6">
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
               <div className="flex justify-between items-start">
                 <h2 className="text-2xl font-bold text-white">Edit Event</h2>
                 <button
@@ -1383,7 +1383,7 @@ function CalendarContent() {
                       actionDescription: e.target.checked ? (editFormData?.actionDescription || "") : "",
                       actionDeadline: e.target.checked ? (editFormData?.actionDeadline || "") : ""
                     })}
-                    className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500 mt-0.5"
+                    className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
                   />
                   <label htmlFor="editRequiresAction" className="flex-1 cursor-pointer">
                     <span className="block text-sm font-semibold text-gray-900">
@@ -1405,7 +1405,7 @@ function CalendarContent() {
                         type="text"
                         value={editFormData?.actionDescription || ""}
                         onChange={(e) => setEditFormData({ ...editFormData, actionDescription: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
                         placeholder="e.g., RSVP by email, Pay $50, Sign permission slip"
                       />
                     </div>
@@ -1417,16 +1417,16 @@ function CalendarContent() {
                         type="date"
                         value={editFormData?.actionDeadline || ""}
                         onChange={(e) => setEditFormData({ ...editFormData, actionDeadline: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
                       />
                     </div>
-                    <div className="flex items-center gap-2 bg-orange-50 p-3 rounded-lg border border-orange-200">
+                    <div className="flex items-center gap-2 bg-secondary-50 p-3 rounded-lg border border-secondary-200">
                       <input
                         type="checkbox"
                         id="editActionCompleted"
                         checked={editFormData?.actionCompleted || false}
                         onChange={(e) => setEditFormData({ ...editFormData, actionCompleted: e.target.checked })}
-                        className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500"
+                        className="w-4 h-4 text-primary-500 rounded focus:ring-2 focus:ring-primary-400"
                       />
                       <label htmlFor="editActionCompleted" className="text-sm font-medium text-gray-900 cursor-pointer">
                         ✓ Action completed
@@ -1507,7 +1507,7 @@ function CalendarContent() {
       {/* Floating Action Button - Mobile Only */}
       <Link
         href="/review"
-        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
+        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
