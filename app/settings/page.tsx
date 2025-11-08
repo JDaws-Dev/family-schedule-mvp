@@ -15,6 +15,11 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'account' | 'family' | 'apps'>('account');
+  const [expandedSections, setExpandedSections] = useState({
+    yourInfo: true,
+    notifications: false,
+    billing: false,
+  });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const { showToast } = useToast();
@@ -582,6 +587,12 @@ function SettingsContent() {
     }
   };
 
+  const toggleSection = (section: 'yourInfo' | 'notifications' | 'billing') => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
@@ -684,11 +695,24 @@ function SettingsContent() {
         <div>
         {/* Your Info */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Your Info</h2>
-            <p className="text-sm text-gray-600 mt-1">Your personal information and contact details</p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('yourInfo')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Your Info</h2>
+              <p className="text-sm text-gray-600 mt-1">Your personal information and contact details</p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.yourInfo ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.yourInfo ? 'block' : 'hidden md:block'}`}>
             {!convexUser ? (
               <div className="text-center py-4 text-gray-500">Loading...</div>
             ) : (
@@ -762,13 +786,26 @@ function SettingsContent() {
 
         {/* Reminders & Notifications */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Reminders & Notifications</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Get reminders about upcoming events and important actions
-            </p>
-          </div>
-          <div className="p-6 space-y-6">
+          <button
+            onClick={() => toggleSection('notifications')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Reminders & Notifications</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Get reminders about upcoming events and important actions
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.notifications ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 space-y-6 ${expandedSections.notifications ? 'block' : 'hidden md:block'}`}>
             {/* Email Section */}
             <div className="border-l-4 border-blue-500 pl-4">
               <div className="flex items-start justify-between mb-3">
@@ -971,13 +1008,26 @@ function SettingsContent() {
 
         {/* Subscription & Payment */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Subscription & Payment</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Manage your plan and billing
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('billing')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Subscription & Payment</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage your plan and billing
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.billing ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.billing ? 'block' : 'hidden md:block'}`}>
             <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
               <div>
                 <h3 className="font-semibold text-gray-900">Standard Plan</h3>
