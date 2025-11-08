@@ -51,6 +51,40 @@ function getCategoryColor(category: string): string {
   return colors[category] || "#6b7280";
 }
 
+// Helper function to get category emoji
+function getCategoryEmoji(category: string): string {
+  const emojis: Record<string, string> = {
+    "Sports": "⚽",
+    "Soccer": "⚽",
+    "Basketball": "🏀",
+    "Football": "🏈",
+    "Baseball": "⚾",
+    "School": "🎒",
+    "Music": "🎵",
+    "Music Lessons": "🎹",
+    "Dance": "💃",
+    "Arts & Crafts": "🎨",
+    "Art": "🎨",
+    "Tutoring": "📚",
+    "Medical": "🏥",
+    "Doctor Appointment": "👨‍⚕️",
+    "Birthday Party": "🎂",
+    "Play Date": "🤸",
+    "Playdate": "🤸",
+    "Field Trip": "🚌",
+    "Club Meeting": "👥",
+    "Religious": "⛪",
+    "Swimming": "🏊",
+    "Gymnastics": "🤸",
+    "Martial Arts": "🥋",
+    "Theater": "🎭",
+    "Social": "🍽️",
+    "Family Event": "👨‍👩‍👧‍👦",
+    "Other": "📅"
+  };
+  return emojis[category] || "📅";
+}
+
 // Helper function to format date in mom-friendly format
 function formatMomFriendlyDate(dateString: string): string {
   const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
@@ -1146,57 +1180,85 @@ function DashboardContent() {
                     </div>
                   </div>
                 ) : (
-                  groupEventsByDate(upcomingEvents).map(({ date, events }) => (
-                    <div key={date}>
-                      {/* Date Header */}
-                      <div className="px-6 py-3 bg-gray-50 border-y border-gray-200">
-                        <h3 className="font-semibold text-gray-900 text-sm">
-                          {formatMomFriendlyDate(date)}
-                        </h3>
-                      </div>
-                      {/* Events for this day */}
-                      {events.map((event: any) => (
-                        <div
-                          key={event._id}
-                          className="p-4 sm:p-6 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-b-0"
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                            <div className="flex-1 flex items-start gap-3">
-                              {event.category && (
-                                <div
-                                  className="w-1 h-full rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: getCategoryColor(event.category), minHeight: '60px' }}
-                                  title={event.category}
-                                  aria-label={event.category}
-                                />
-                              )}
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-gray-900 mb-2">
-                                  {event.title}
-                                </h3>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
-                                  {event.eventTime && (
-                                    <span className="font-medium">{formatTime12Hour(event.eventTime)}</span>
-                                  )}
-                                  {event.location && (
-                                    <span>{event.location}</span>
+                  <div className="space-y-6 p-4">
+                    {groupEventsByDate(upcomingEvents).map(({ date, events }) => (
+                      <div key={date}>
+                        {/* Date Header - More playful */}
+                        <div className="mb-3">
+                          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span className="text-2xl">📅</span>
+                            {formatMomFriendlyDate(date)}
+                          </h3>
+                        </div>
+                        {/* Events for this day - Card style */}
+                        <div className="space-y-3">
+                          {events.map((event: any) => (
+                            <div
+                              key={event._id}
+                              className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-all cursor-pointer border-2 border-gray-100 hover:border-primary-200"
+                              onClick={() => setSelectedEvent(event)}
+                            >
+                              <div className="flex gap-4">
+                                {/* Category Emoji Icon */}
+                                <div className="flex-shrink-0">
+                                  <div
+                                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm"
+                                    style={{
+                                      backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
+                                    }}
+                                  >
+                                    {getCategoryEmoji(event.category)}
+                                  </div>
+                                </div>
+
+                                {/* Event Details */}
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-bold text-gray-900 text-lg mb-2">{event.title}</h3>
+
+                                  <div className="space-y-1.5 mb-3">
+                                    {event.eventTime && (
+                                      <div className="flex items-center gap-2 text-gray-700">
+                                        <span className="text-lg">🕐</span>
+                                        <span className="font-medium">{formatTime12Hour(event.eventTime)}</span>
+                                      </div>
+                                    )}
+                                    {event.location && (
+                                      <div className="flex items-center gap-2 text-gray-700">
+                                        <span className="text-lg">📍</span>
+                                        <span className="truncate">{event.location}</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Tags Row */}
+                                  {event.childName && (
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {(() => {
+                                        const names = event.childName.split(",").map((n: string) => n.trim());
+                                        return names.map((name: string, idx: number) => {
+                                          const member = familyMembers?.find((m: any) => m.name === name);
+                                          const color = member?.color || "#6366f1";
+                                          return (
+                                            <span
+                                              key={idx}
+                                              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-white shadow-sm"
+                                              style={{ backgroundColor: color }}
+                                            >
+                                              {name}
+                                            </span>
+                                          );
+                                        });
+                                      })()}
+                                    </div>
                                   )}
                                 </div>
                               </div>
                             </div>
-                            <div className="sm:ml-4 flex flex-col gap-2 items-end">
-                              {event.childName && (
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent-100 text-accent-800">
-                                  {event.childName}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ))
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
