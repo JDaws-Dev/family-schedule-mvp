@@ -89,10 +89,10 @@ export async function POST(request: NextRequest) {
     const existingEvents = await convex.query(api.events.getConfirmedEvents, { familyId });
 
     // Create a map of existing events by their Google Calendar Event ID
-    const existingEventsMap = new Map(
+    const existingEventsMap = new Map<string, typeof existingEvents[0]>(
       existingEvents
         .filter(e => e.googleCalendarEventId)
-        .map(e => [e.googleCalendarEventId, e])
+        .map(e => [e.googleCalendarEventId!, e])
     );
 
     let addedCount = 0;
