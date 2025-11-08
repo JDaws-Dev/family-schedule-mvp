@@ -251,7 +251,7 @@ function CalendarContent() {
 
   // Format last sync timestamp
   const formatLastSync = (timestamp: number | undefined): string => {
-    if (!timestamp) return "Never synced";
+    if (!timestamp) return "Never saved to calendar";
 
     const now = Date.now();
     const diff = now - timestamp;
@@ -320,17 +320,17 @@ function CalendarContent() {
       }
 
       if (successCount > 0) {
-        showToast(`Synced ${successCount} event${successCount !== 1 ? "s" : ""} to Google Calendar!`, "success");
+        showToast(`Saved ${successCount} event${successCount !== 1 ? "s" : ""} to your phone's calendar!`, "success");
       }
       if (errorCount > 0) {
-        showToast(`Failed to sync ${errorCount} event${errorCount !== 1 ? "s" : ""}. Please try again.`, "error");
+        showToast(`Oops! Couldn't save ${errorCount} event${errorCount !== 1 ? "s" : ""}. Want to try again?`, "error");
       }
       if (successCount === 0 && errorCount === 0) {
-        showToast("All events are already synced to Google Calendar!", "info");
+        showToast("All events are already saved to Google Calendar!", "info");
       }
     } catch (error) {
       console.error("Error syncing to Google Calendar:", error);
-      showToast("Failed to sync events. Please try again.", "error");
+      showToast("Oops! Couldn't save events. Want to try again?", "error");
     } finally {
       setSyncing(false);
     }
@@ -357,16 +357,16 @@ function CalendarContent() {
           const parts: string[] = [];
           if (addedCount > 0) parts.push(`${addedCount} new event${addedCount !== 1 ? "s" : ""} added`);
           if (updatedCount > 0) parts.push(`${updatedCount} event${updatedCount !== 1 ? "s" : ""} updated`);
-          showToast(`Synced from Google Calendar: ${parts.join(", ")}!`, "success");
+          showToast(`✓ Added from your phone's calendar: ${parts.join(", ")}!`, "success");
         } else {
           showToast("All events are already up to date!", "info");
         }
       } else {
-        showToast(data.error || "Failed to sync from Google Calendar", "error");
+        showToast(data.error || "Oops! Couldn't connect to your phone's calendar", "error");
       }
     } catch (error) {
       console.error("Error syncing from Google Calendar:", error);
-      showToast("Failed to sync from Google Calendar. Please try again.", "error");
+      showToast("Oops! Couldn't connect to your phone's calendar. Want to try again?", "error");
     } finally {
       setSyncingFrom(false);
     }
@@ -426,7 +426,7 @@ function CalendarContent() {
       window.history.replaceState({}, "", "/calendar");
 
       // Show success message (10 seconds for important connection status)
-      showToast("Google account reconnected successfully! Your events will sync automatically.", "success", undefined, 10000);
+      showToast("✓ Connected! Your events will automatically save to your phone's calendar.", "success", undefined, 10000);
     }
   }, [searchParams, showToast]);
 
@@ -597,10 +597,10 @@ function CalendarContent() {
                   {syncingFrom ? (
                     <span className="flex items-center gap-1">
                       <span className="animate-spin">⏳</span>
-                      Syncing...
+                      Checking for updates...
                     </span>
                   ) : (
-                    <>Last synced with Google Calendar: {formatLastSync(family.lastCalendarSyncAt)}</>
+                    <>Last saved to Google Calendar: {formatLastSync(family.lastCalendarSyncAt)}</>
                   )}
                 </p>
               )}
@@ -617,7 +617,7 @@ function CalendarContent() {
               {syncingFrom ? (
                 <>
                   <span className="animate-spin">⏳</span>
-                  Syncing...
+                  Checking...
                 </>
               ) : (
                 <>
@@ -794,7 +794,7 @@ function CalendarContent() {
                   No events yet
                 </div>
                 <p className="text-gray-600 mb-4">
-                  Scan your emails or add events manually to get started
+                  Check your emails or type in events to get started
                 </p>
                 <div className="flex gap-3">
                   <Link
@@ -913,7 +913,7 @@ function CalendarContent() {
                   No events yet
                 </div>
                 <p className="text-gray-600 mb-4">
-                  Scan your emails or add events manually to get started
+                  Check your emails or type in events to get started
                 </p>
                 <div className="flex gap-3">
                   <Link
@@ -1470,7 +1470,7 @@ function CalendarContent() {
                       } catch (error) {
                         console.error("Error updating Google Calendar:", error);
                         // Show warning but don't fail the entire operation
-                        showToast("Event updated in app, but Google Calendar sync failed", "info");
+                        showToast("Event updated here, but couldn't save to your phone's calendar", "info");
                       }
                     }
 

@@ -39,12 +39,12 @@ function SettingsContent() {
     }
 
     if (error === 'oauth_failed') {
-      showToast('Failed to connect Gmail. Please try again.', 'error');
+      showToast('Oops! Couldn\'t connect Gmail. Want to try again?', 'error');
       window.history.replaceState({}, '', '/settings?tab=apps');
     }
 
     if (error === 'missing_params' || error === 'missing_user') {
-      showToast('Connection error. Please try again.', 'error');
+      showToast('Oops! Couldn\'t connect. Want to try again?', 'error');
       window.history.replaceState({}, '', '/settings?tab=apps');
     }
   }, [searchParams, showToast]);
@@ -245,7 +245,7 @@ function SettingsContent() {
       await deleteFamilyMember({ memberId: memberId as any });
     } catch (error) {
       console.error("Error deleting family member:", error);
-      alert("Failed to delete family member. Please try again.");
+      alert("Oops! Couldn't remove family member. Want to try again?");
     }
   };
 
@@ -339,7 +339,7 @@ function SettingsContent() {
       alert("Preferences saved successfully!");
     } catch (error) {
       console.error("Error saving preferences:", error);
-      alert("Failed to save preferences. Please try again.");
+      alert("Oops! Couldn't save preferences. Want to try again?");
     }
   };
 
@@ -363,11 +363,11 @@ function SettingsContent() {
       if (response.ok) {
         alert("Test reminder sent! Check your email.");
       } else {
-        alert(`Failed to send test reminder: ${data.error}`);
+        alert(`Oops! Couldn't send test reminder: ${data.error}`);
       }
     } catch (error) {
       console.error("Error sending test reminder:", error);
-      alert("Failed to send test reminder. Please try again.");
+      alert("Oops! Couldn't send test reminder. Want to try again?");
     }
   };
 
@@ -393,11 +393,11 @@ function SettingsContent() {
       if (response.ok) {
         alert("Test SMS sent! Check your phone.");
       } else {
-        alert(`Failed to send test SMS: ${data.error}`);
+        alert(`Oops! Couldn't send test text: ${data.error}`);
       }
     } catch (error) {
       console.error("Error sending test SMS:", error);
-      alert("Failed to send test SMS. Please try again.");
+      alert("Oops! Couldn't send test text. Want to try again?");
     }
   };
 
@@ -408,13 +408,13 @@ function SettingsContent() {
     }
 
     setIsScanning(true);
-    setScanMessage("Scanning all accounts...");
+    setScanMessage("Checking all accounts...");
 
     let totalEventsFound = 0;
     let totalMessagesScanned = 0;
 
     try {
-      // Scan each Gmail account
+      // Check each Gmail account
       for (const account of gmailAccounts) {
         const response = await fetch("/api/scan-emails", {
           method: "POST",
@@ -435,12 +435,12 @@ function SettingsContent() {
       }
 
       setScanMessage(
-        `Scan complete! Found ${totalEventsFound} event(s) from ${totalMessagesScanned} messages across ${gmailAccounts.length} account(s).`
+        `Done! Found ${totalEventsFound} event(s) from ${totalMessagesScanned} messages across ${gmailAccounts.length} account(s).`
       );
       setTimeout(() => setScanMessage(""), 8000);
     } catch (error) {
       console.error("Scan error:", error);
-      setScanMessage("Failed to scan emails. Please try again.");
+      setScanMessage("Oops! Couldn't check emails. Want to try again?");
       setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);
@@ -453,12 +453,12 @@ function SettingsContent() {
       return;
     }
 
-    if (!confirm("This will clear the scan history so you can re-scan all emails. Continue?")) {
+    if (!confirm("This will clear the history so you can check all emails again. Continue?")) {
       return;
     }
 
     setIsScanning(true);
-    setScanMessage("Resetting scan history...");
+    setScanMessage("Resetting history...");
 
     try {
       for (const account of gmailAccounts) {
@@ -473,11 +473,11 @@ function SettingsContent() {
         });
       }
 
-      setScanMessage("Scan history reset! You can now re-scan your emails.");
+      setScanMessage("History reset! You can now check your emails again.");
       setTimeout(() => setScanMessage(""), 5000);
     } catch (error) {
       console.error("Reset error:", error);
-      setScanMessage("Failed to reset. Please try again.");
+      setScanMessage("Oops! Couldn't reset. Want to try again?");
       setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);
@@ -516,12 +516,12 @@ function SettingsContent() {
         }
       } else {
         console.error("[handleFetchCalendars] Error response:", data);
-        showToast(data.error || "Failed to fetch calendars", "error");
+        showToast(data.error || "Couldn't connect to calendars", "error");
       }
     } catch (error) {
       console.error("[handleFetchCalendars] Exception:", error);
       console.error("[handleFetchCalendars] Error stack:", error instanceof Error ? error.stack : "No stack");
-      showToast("Failed to fetch calendars. Please try again.", "error");
+      showToast("Oops! Couldn't connect to calendars. Want to try again?", "error");
     } finally {
       setLoadingCalendars(false);
       console.log("[handleFetchCalendars] Finished");
@@ -537,10 +537,10 @@ function SettingsContent() {
         googleCalendarId: calendarId,
         calendarName,
       });
-      showToast(`Selected "${calendarName}" for syncing family events`, "success");
+      showToast(`Selected "${calendarName}" for saving family events`, "success");
     } catch (error) {
       console.error("Error selecting calendar:", error);
-      showToast("Failed to save calendar selection. Please try again.", "error");
+      showToast("Oops! Couldn't save calendar choice. Want to try again?", "error");
     }
   };
 
@@ -570,11 +570,11 @@ function SettingsContent() {
         // Refresh the calendar list
         handleFetchCalendars();
       } else {
-        showToast(data.error || "Failed to create calendar", "error");
+        showToast(data.error || "Couldn't create calendar", "error");
       }
     } catch (error) {
       console.error("Error creating calendar:", error);
-      showToast("Failed to create calendar. Please try again.", "error");
+      showToast("Oops! Couldn't create calendar. Want to try again?", "error");
     } finally {
       setCreatingCalendar(false);
     }
@@ -1470,8 +1470,8 @@ function SettingsContent() {
                         <div className="text-sm text-gray-600">{account.gmailEmail}</div>
                         <div className="text-xs text-gray-500 mt-1">
                           {account.lastSyncAt
-                            ? `Last scan: ${new Date(account.lastSyncAt).toLocaleDateString()}`
-                            : "Never scanned"}{" "}
+                            ? `Last checked: ${new Date(account.lastSyncAt).toLocaleDateString()}`
+                            : "Not checked yet"}{" "}
                           • Connected by {account.connectedByName}
                         </div>
                       </div>
@@ -1530,14 +1530,14 @@ function SettingsContent() {
                   disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isScanning ? "Scanning..." : "Scan All Active Accounts Now"}
+                  {isScanning ? "Checking..." : "Check All Active Accounts Now"}
                 </button>
                 <button
                   onClick={handleResetScanHistory}
                   disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Reset Scan History
+                  Reset History
                 </button>
               </div>
               {scanMessage && (

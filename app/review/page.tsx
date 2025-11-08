@@ -732,7 +732,7 @@ export default function ReviewPage() {
                   Add Event
                 </div>
                 <div className="text-xs text-white/80">
-                  Manually add an event
+                  Type in an event yourself
                 </div>
               </div>
             </div>
@@ -782,10 +782,10 @@ export default function ReviewPage() {
               </div>
               <div className="flex-1">
                 <div className="font-semibold text-white">
-                  {isScanning ? "Scanning..." : "Scan Email"}
+                  {isScanning ? "Checking..." : "Find Events in My Emails"}
                 </div>
                 <div className="text-xs text-white/80">
-                  {scanMessage || "Check for new events"}
+                  {scanMessage || "We'll look for schedules automatically"}
                 </div>
               </div>
             </div>
@@ -970,8 +970,8 @@ export default function ReviewPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">Manual Entry</p>
-                    <p className="text-xs text-gray-600 mt-0.5">Events you create manually go straight to your calendar</p>
+                    <p className="font-medium text-gray-900 text-sm">Type It In</p>
+                    <p className="text-xs text-gray-600 mt-0.5">Events you type in go straight to your calendar</p>
                   </div>
                 </div>
               </div>
@@ -994,7 +994,7 @@ export default function ReviewPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Add Event Manually
+                Add Event
               </button>
             </div>
           </div>
@@ -1490,7 +1490,7 @@ export default function ReviewPage() {
                       : "bg-white/20 text-white hover:bg-white/30"
                   }`}
                 >
-                  Manual Entry
+                  Type It In
                 </button>
                 <button
                   type="button"
@@ -1581,7 +1581,7 @@ Example:
               </div>
             )}
 
-            {/* Manual Entry Tab */}
+            {/* Type It In Tab */}
             {addEventTab === "manual" && (
               <form onSubmit={handleAddEvent}>
               <div className="p-6 space-y-4">
