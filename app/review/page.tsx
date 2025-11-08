@@ -576,7 +576,7 @@ export default function ReviewPage() {
     }
 
     setIsScanning(true);
-    setScanMessage("Scanning emails...");
+    setScanMessage("Checking your emails for schedules...");
 
     try {
       const response = await fetch("/api/scan-emails", {
@@ -593,16 +593,16 @@ export default function ReviewPage() {
 
       if (response.ok) {
         setScanMessage(
-          `Scan complete! Found ${data.eventsFound} event(s) from ${data.messagesScanned} messages.`
+          `✓ Done! Found ${data.eventsFound} event(s) from ${data.messagesScanned} emails.`
         );
         setTimeout(() => setScanMessage(""), 5000);
       } else {
-        setScanMessage(`Error: ${data.error}`);
+        setScanMessage(`Oops! ${data.error}`);
         setTimeout(() => setScanMessage(""), 5000);
       }
     } catch (error) {
       console.error("Scan error:", error);
-      setScanMessage("Failed to scan emails. Please try again.");
+      setScanMessage("Couldn't check your emails. Want to try again?");
       setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);
@@ -630,16 +630,16 @@ export default function ReviewPage() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-              Dashboard
+              Home
             </Link>
             <Link href="/calendar" className="text-gray-600 hover:text-gray-900">
               Calendar
             </Link>
             <Link href="/review" className="text-primary-600 font-medium">
-              Review
+              Review Events
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
-              Discover
+              Find Activities
             </Link>
             <Link href="/settings" className="text-gray-600 hover:text-gray-900">
               Settings
@@ -708,8 +708,8 @@ export default function ReviewPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-primary-900">Scanning your inbox...</p>
-                <p className="text-sm text-primary-700 mt-0.5">Looking for events in your recent emails. This may take a moment.</p>
+                <p className="font-semibold text-primary-900">Checking your emails...</p>
+                <p className="text-sm text-primary-700 mt-0.5">Looking for schedules in your recent emails. This may take a moment.</p>
               </div>
             </div>
           </div>

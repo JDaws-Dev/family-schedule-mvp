@@ -592,10 +592,10 @@ function SettingsContent() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Home</Link>
             <Link href="/calendar" className="text-gray-600 hover:text-gray-900">Calendar</Link>
-            <Link href="/review" className="text-gray-600 hover:text-gray-900">Review</Link>
-            <Link href="/discover" className="text-gray-600 hover:text-gray-900">Discover</Link>
+            <Link href="/review" className="text-gray-600 hover:text-gray-900">Review Events</Link>
+            <Link href="/discover" className="text-gray-600 hover:text-gray-900">Find Activities</Link>
             <Link href="/settings" className="text-primary-600 font-medium">Settings</Link>
             <button
               onClick={() => signOut()}

@@ -201,10 +201,10 @@ export default function DiscoverPage() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Home</Link>
             <Link href="/calendar" className="text-gray-600 hover:text-gray-900">Calendar</Link>
-            <Link href="/review" className="text-gray-600 hover:text-gray-900">Review</Link>
-            <Link href="/discover" className="text-primary-600 font-medium">Discover</Link>
+            <Link href="/review" className="text-gray-600 hover:text-gray-900">Review Events</Link>
+            <Link href="/discover" className="text-primary-600 font-medium">Find Activities</Link>
             <Link href="/settings" className="text-gray-600 hover:text-gray-900">Settings</Link>
             <button onClick={() => signOut()} className="text-gray-600 hover:text-gray-900">Log Out</button>
           </nav>
@@ -219,10 +219,10 @@ export default function DiscoverPage() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <nav className="flex flex-col py-2">
-              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Dashboard</Link>
+              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Home</Link>
               <Link href="/calendar" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Calendar</Link>
-              <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Review</Link>
-              <Link href="/discover" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">Discover</Link>
+              <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Review Events</Link>
+              <Link href="/discover" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">Find Activities</Link>
               <Link href="/settings" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Settings</Link>
               <button onClick={() => signOut()} className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50">Log Out</button>
             </nav>

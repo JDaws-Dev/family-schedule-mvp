@@ -354,7 +354,7 @@ function CalendarContent() {
       if (response.ok) {
         const { addedCount, updatedCount } = data;
         if (addedCount > 0 || updatedCount > 0) {
-          const parts = [];
+          const parts: string[] = [];
           if (addedCount > 0) parts.push(`${addedCount} new event${addedCount !== 1 ? "s" : ""} added`);
           if (updatedCount > 0) parts.push(`${updatedCount} event${updatedCount !== 1 ? "s" : ""} updated`);
           showToast(`Synced from Google Calendar: ${parts.join(", ")}!`, "success");
@@ -547,16 +547,16 @@ function CalendarContent() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-              Dashboard
+              Home
             </Link>
             <Link href="/calendar" className="text-primary-600 font-medium">
               Calendar
             </Link>
             <Link href="/review" className="text-gray-600 hover:text-gray-900">
-              Review
+              Review Events
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
-              Discover
+              Find Activities
             </Link>
             <Link href="/settings" className="text-gray-600 hover:text-gray-900">
               Settings
