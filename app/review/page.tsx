@@ -680,6 +680,13 @@ export default function ReviewPage() {
         childName: newEventForm.childName.trim() || undefined,
         description: newEventForm.description.trim() || undefined,
         isConfirmed: true, // Manually added events are auto-confirmed
+        isRecurring: newEventForm.isRecurring || false,
+        recurrencePattern: newEventForm.isRecurring ? newEventForm.recurrencePattern : undefined,
+        recurrenceInterval: newEventForm.isRecurring ? newEventForm.recurrenceInterval : undefined,
+        recurrenceDaysOfWeek: newEventForm.isRecurring && newEventForm.recurrenceDaysOfWeek.length > 0 ? newEventForm.recurrenceDaysOfWeek : undefined,
+        recurrenceEndType: newEventForm.isRecurring ? newEventForm.recurrenceEndType : undefined,
+        recurrenceEndDate: newEventForm.isRecurring && newEventForm.recurrenceEndType === "date" ? newEventForm.recurrenceEndDate : undefined,
+        recurrenceEndCount: newEventForm.isRecurring && newEventForm.recurrenceEndType === "count" ? newEventForm.recurrenceEndCount : undefined,
       });
 
       console.log("Event created successfully with ID:", eventId);
@@ -697,6 +704,13 @@ export default function ReviewPage() {
         requiresAction: false,
         actionDescription: "",
         actionDeadline: "",
+        isRecurring: false,
+        recurrencePattern: "weekly",
+        recurrenceInterval: 1,
+        recurrenceDaysOfWeek: [],
+        recurrenceEndType: "never",
+        recurrenceEndDate: "",
+        recurrenceEndCount: 10,
       });
 
       // Close modal

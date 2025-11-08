@@ -1508,7 +1508,7 @@ function CalendarContent() {
       {/* Floating Action Button - Mobile Only */}
       <Link
         href="/review"
-        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
+        className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
