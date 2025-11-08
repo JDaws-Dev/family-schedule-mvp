@@ -11,6 +11,7 @@ import { SyncStatus } from "../components/SyncStatus";
 import { EventCardSkeleton, StatCardSkeleton } from "../components/LoadingSkeleton";
 import { useSearchParams } from "next/navigation";
 import { useGuidedTour, GuidedTourButton } from "../components/GuidedTour";
+import WelcomePopup from "../components/WelcomePopup";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -688,27 +689,16 @@ function DashboardContent() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Guide - Shows after onboarding */}
+        {/* Welcome Popup - Shows after onboarding */}
         {showWelcomeGuide && (
-          <div className="bg-primary-50 border-l-4 border-primary-400 rounded-lg p-4 mb-6 relative">
-            <button
-              onClick={() => setShowWelcomeGuide(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close welcome guide"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <div className="pr-8">
-              <h3 className="text-sm font-bold text-gray-900 mb-1">Welcome! Get started in 3 steps:</h3>
-              <p className="text-xs text-gray-700">
-                1. <Link href="/settings" className="text-primary-600 font-semibold hover:underline">Connect Gmail</Link> to find events  •
-                2. <Link href="/review" className="text-primary-600 font-semibold hover:underline ml-1">Review events</Link>  •
-                3. <Link href="/calendar" className="text-primary-600 font-semibold hover:underline ml-1">View calendar</Link>
-              </p>
-            </div>
-          </div>
+          <WelcomePopup
+            onClose={() => {
+              setShowWelcomeGuide(false);
+              // Clear the URL parameter
+              window.history.replaceState({}, "", "/dashboard");
+            }}
+            userFirstName={clerkUser?.firstName || undefined}
+          />
         )}
 
         {/* Personalized Greeting with Family Branding */}
