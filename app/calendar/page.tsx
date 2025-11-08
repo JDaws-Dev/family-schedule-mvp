@@ -7,10 +7,14 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import MobileNav from "@/app/components/MobileNav";
+import BottomNav from "@/app/components/BottomNav";
 import { useToast } from "@/app/components/Toast";
 import { CalendarSkeleton } from "@/app/components/LoadingSkeleton";
+import AddEventChoiceModal from "@/app/components/AddEventChoiceModal";
+import PhotoUploadModal from "@/app/components/PhotoUploadModal";
+import VoiceRecordModal from "@/app/components/VoiceRecordModal";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -60,6 +64,40 @@ function getCategoryColor(category: string): string {
   return colors[category] || "#6b7280";
 }
 
+// Helper function to get category emoji
+function getCategoryEmoji(category: string): string {
+  const emojis: Record<string, string> = {
+    "Sports": "⚽",
+    "Soccer": "⚽",
+    "Basketball": "🏀",
+    "Football": "🏈",
+    "Baseball": "⚾",
+    "School": "🎒",
+    "Music": "🎵",
+    "Music Lessons": "🎹",
+    "Dance": "💃",
+    "Arts & Crafts": "🎨",
+    "Art": "🎨",
+    "Tutoring": "📚",
+    "Medical": "🏥",
+    "Doctor Appointment": "👨‍⚕️",
+    "Birthday Party": "🎂",
+    "Play Date": "🤸",
+    "Playdate": "🤸",
+    "Field Trip": "🚌",
+    "Club Meeting": "👥",
+    "Religious": "⛪",
+    "Swimming": "🏊",
+    "Gymnastics": "🤸",
+    "Martial Arts": "🥋",
+    "Theater": "🎭",
+    "Social": "🍽️",
+    "Family Event": "👨‍👩‍👧‍👦",
+    "Other": "🎈"
+  };
+  return emojis[category] || "🎈";
+}
+
 // Helper function to format date in mom-friendly format
 function formatMomFriendlyDate(dateString: string): string {
   const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
@@ -106,8 +144,9 @@ type ExtendedView = View | "list";
 
 function CalendarContent() {
   const { showToast } = useToast();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [view, setView] = useState<ExtendedView>("month");
+  const [view, setView] = useState<ExtendedView>("list");
   const [date, setDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
@@ -120,6 +159,10 @@ function CalendarContent() {
   const [filterMember, setFilterMember] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showUpcomingOnly, setShowUpcomingOnly] = useState(true);
+  const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
+  const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
+  const [isEnhancingEvent, setIsEnhancingEvent] = useState(false);
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
@@ -127,6 +170,7 @@ function CalendarContent() {
   // Mutations
   const deleteEvent = useMutation(api.events.deleteEvent);
   const updateEvent = useMutation(api.events.updateEvent);
+  const createUnconfirmedEvent = useMutation(api.events.createUnconfirmedEvent);
 
   // Get user from Convex
   const convexUser = useQuery(
@@ -251,7 +295,7 @@ function CalendarContent() {
 
   // Format last sync timestamp
   const formatLastSync = (timestamp: number | undefined): string => {
-    if (!timestamp) return "Never synced";
+    if (!timestamp) return "Never saved to calendar";
 
     const now = Date.now();
     const diff = now - timestamp;
@@ -320,17 +364,17 @@ function CalendarContent() {
       }
 
       if (successCount > 0) {
-        showToast(`Synced ${successCount} event${successCount !== 1 ? "s" : ""} to Google Calendar!`, "success");
+        showToast(`Saved ${successCount} event${successCount !== 1 ? "s" : ""} to your phone's calendar!`, "success");
       }
       if (errorCount > 0) {
-        showToast(`Failed to sync ${errorCount} event${errorCount !== 1 ? "s" : ""}. Please try again.`, "error");
+        showToast(`Oops! Couldn't save ${errorCount} event${errorCount !== 1 ? "s" : ""}. Want to try again?`, "error");
       }
       if (successCount === 0 && errorCount === 0) {
-        showToast("All events are already synced to Google Calendar!", "info");
+        showToast("All events are already saved to Google Calendar!", "info");
       }
     } catch (error) {
       console.error("Error syncing to Google Calendar:", error);
-      showToast("Failed to sync events. Please try again.", "error");
+      showToast("Oops! Couldn't save events. Want to try again?", "error");
     } finally {
       setSyncing(false);
     }
@@ -357,16 +401,16 @@ function CalendarContent() {
           const parts: string[] = [];
           if (addedCount > 0) parts.push(`${addedCount} new event${addedCount !== 1 ? "s" : ""} added`);
           if (updatedCount > 0) parts.push(`${updatedCount} event${updatedCount !== 1 ? "s" : ""} updated`);
-          showToast(`Synced from Google Calendar: ${parts.join(", ")}!`, "success");
+          showToast(`✓ Added from your phone's calendar: ${parts.join(", ")}!`, "success");
         } else {
           showToast("All events are already up to date!", "info");
         }
       } else {
-        showToast(data.error || "Failed to sync from Google Calendar", "error");
+        showToast(data.error || "Oops! Couldn't connect to your phone's calendar", "error");
       }
     } catch (error) {
       console.error("Error syncing from Google Calendar:", error);
-      showToast("Failed to sync from Google Calendar. Please try again.", "error");
+      showToast("Oops! Couldn't connect to your phone's calendar. Want to try again?", "error");
     } finally {
       setSyncingFrom(false);
     }
@@ -426,7 +470,7 @@ function CalendarContent() {
       window.history.replaceState({}, "", "/calendar");
 
       // Show success message (10 seconds for important connection status)
-      showToast("Google account reconnected successfully! Your events will sync automatically.", "success", undefined, 10000);
+      showToast("✓ Connected! Your events will automatically save to your phone's calendar.", "success", undefined, 10000);
     }
   }, [searchParams, showToast]);
 
@@ -535,8 +579,189 @@ function CalendarContent() {
     setSelectedEvent(event.resource);
   };
 
+  // Handle clicking on empty calendar slot to add new event
+  const handleSelectSlot = (slotInfo: any) => {
+    // Format the selected date as YYYY-MM-DD
+    const selectedDate = new Date(slotInfo.start);
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    // Navigate to review page with the date pre-filled
+    router.push(`/review?addEvent=true&date=${formattedDate}`);
+  };
+
+  // Handle photo upload for event extraction
+  const handlePhotoUpload = async (file: File) => {
+    if (!convexUser?.familyId) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      setShowPhotoUploadModal(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      formData.append("familyMembers", JSON.stringify(familyMembers || []));
+      formData.append("currentUserName", convexUser?.fullName || "Unknown");
+
+      const response = await fetch("/api/photo/extract-event", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event from photo");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event information found in the photo. " + (data.explanation || ""), "info", undefined, 7000);
+        setShowPhotoUploadModal(false);
+        return;
+      }
+
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      for (const event of data.events) {
+        await createUnconfirmedEvent({
+          familyId: convexUser.familyId,
+          createdByUserId: convexUser._id,
+          title: event.title || "Untitled Event",
+          eventDate: event.date || "",
+          eventTime: event.time || undefined,
+          endTime: event.endTime || undefined,
+          location: event.location || undefined,
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || "",
+        });
+      }
+
+      setShowPhotoUploadModal(false);
+      showToast(`✓ Found ${data.events.length} event(s) from photo! Go to Review page to approve them.`, "success", undefined, 7000);
+    } catch (error: any) {
+      console.error("Error extracting event from photo:", error);
+      showToast("Failed to extract event from photo. Please try again.", "error");
+      setShowPhotoUploadModal(false);
+    }
+  };
+
+  // Handle voice recording for event extraction
+  const handleVoiceRecording = async (audioBlob: Blob) => {
+    if (!convexUser?.familyId) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      setShowVoiceRecordModal(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+      formData.append("familyMembers", JSON.stringify(familyMembers || []));
+      formData.append("currentUserName", convexUser?.fullName || "Unknown");
+
+      const response = await fetch("/api/voice/extract-event", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event from voice recording");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event information found in the recording. " + (data.explanation || ""), "info", undefined, 7000);
+        setShowVoiceRecordModal(false);
+        return;
+      }
+
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      for (const event of data.events) {
+        await createUnconfirmedEvent({
+          familyId: convexUser.familyId,
+          createdByUserId: convexUser._id,
+          title: event.title || "Untitled Event",
+          eventDate: event.date || "",
+          eventTime: event.time || undefined,
+          endTime: event.endTime || undefined,
+          location: event.location || undefined,
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || "",
+        });
+      }
+
+      setShowVoiceRecordModal(false);
+      showToast(`✓ Found ${data.events.length} event(s) from recording! Go to Review page to approve them.`, "success", undefined, 7000);
+    } catch (error: any) {
+      console.error("Error extracting event from voice:", error);
+      showToast("Failed to extract event from voice recording. Please try again.", "error");
+      setShowVoiceRecordModal(false);
+    }
+  };
+
+  // Handle AI enhancement for edit event modal
+  const handleEnhanceEditEvent = async () => {
+    if (!editFormData?.title) return;
+
+    setIsEnhancingEvent(true);
+    try {
+      const response = await fetch("/api/enhance-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editFormData.title,
+          description: editFormData.description || "",
+          location: editFormData.location || "",
+          date: editFormData.eventDate || "",
+          time: editFormData.eventTime || "",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Enhancement failed");
+
+      const data = await response.json();
+
+      // Update editing event with all enhanced details
+      setEditFormData({
+        ...editFormData,
+        description: data.description || editFormData.description,
+        location: data.location || editFormData.location,
+        category: data.category || editFormData.category,
+        childName: data.childName || editFormData.childName,
+      });
+
+      showToast("✨ Event enhanced! AI filled in smart suggestions - review and adjust as needed.", "success");
+    } catch (error) {
+      console.error("Error enhancing event:", error);
+      showToast("Failed to enhance event. Please try again.", "error");
+    } finally {
+      setIsEnhancingEvent(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -547,16 +772,16 @@ function CalendarContent() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-              Dashboard
+              Home
             </Link>
             <Link href="/calendar" className="text-primary-600 font-medium">
               Calendar
             </Link>
             <Link href="/review" className="text-gray-600 hover:text-gray-900">
-              Review
+              Events
             </Link>
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">
-              Discover
+              Find Activities
             </Link>
             <Link href="/settings" className="text-gray-600 hover:text-gray-900">
               Settings
@@ -583,51 +808,21 @@ function CalendarContent() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Family Calendar</h1>
-              <p className="text-gray-600 mt-1">
-                {confirmedEvents === undefined
-                  ? "Loading events..."
-                  : `Showing ${calendarEvents.length} of ${confirmedEvents.length} confirmed event${confirmedEvents.length !== 1 ? "s" : ""}`}
-              </p>
-              {family?.lastCalendarSyncAt && (
-                <p className="text-sm text-gray-500 mt-1">
-                  {syncingFrom ? (
-                    <span className="flex items-center gap-1">
-                      <span className="animate-spin">⏳</span>
-                      Syncing...
-                    </span>
-                  ) : (
-                    <>Last synced with Google Calendar: {formatLastSync(family.lastCalendarSyncAt)}</>
-                  )}
-                </p>
-              )}
+        <div className="mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-3xl">📅</span>
             </div>
-            <button
-              onClick={() => {
-                hasSyncedFromRef.current = false; // Reset to allow manual sync
-                handleSyncFromGoogleCalendar();
-              }}
-              disabled={syncingFrom}
-              className="px-4 py-2 bg-white border-2 border-primary-600 text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Refresh events from Google Calendar"
-            >
-              {syncingFrom ? (
-                <>
-                  <span className="animate-spin">⏳</span>
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  🔄 Refresh
-                </>
-              )}
-            </button>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Family Calendar</h1>
+              <p className="text-gray-600 text-lg mt-1">
+                Your master schedule - everything confirmed and ready to go
+              </p>
+            </div>
           </div>
+        </div>
 
-          {/* Enhanced Calendar Controls */}
+        {/* Enhanced Calendar Controls */}
           {confirmedEvents && confirmedEvents.length > 0 && (
             <div className="bg-white rounded-lg shadow-soft p-4 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -635,7 +830,7 @@ function CalendarContent() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-700 mr-2">View:</span>
                   <div className="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-1">
-                    {(['month', 'week', 'day', 'list', 'agenda'] as ExtendedView[]).map((v) => (
+                    {(['month', 'week', 'day', 'list'] as ExtendedView[]).map((v) => (
                       <button
                         key={v}
                         onClick={() => setView(v)}
@@ -696,13 +891,11 @@ function CalendarContent() {
                     {view === 'month' && format(date, 'MMMM yyyy')}
                     {view === 'week' && `Week of ${format(date, 'MMM d, yyyy')}`}
                     {view === 'day' && format(date, 'MMMM d, yyyy')}
-                    {view === 'agenda' && 'Upcoming Events'}
                   </span>
                 </div>
               </div>
             </div>
           )}
-        </div>
 
         {/* Search and Filters */}
         {confirmedEvents && confirmedEvents.length > 0 && (
@@ -790,11 +983,12 @@ function CalendarContent() {
               <CalendarSkeleton />
             ) : sortedEvents.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
+                <div className="text-6xl mb-4">☕</div>
                 <div className="text-xl font-semibold text-gray-900 mb-2">
-                  No events yet
+                  Nothing scheduled yet!
                 </div>
                 <p className="text-gray-600 mb-4">
-                  Scan your emails or add events manually to get started
+                  Enjoy the free time or add your first event to get started.
                 </p>
                 <div className="flex gap-3">
                   <Link
@@ -807,90 +1001,110 @@ function CalendarContent() {
               </div>
             ) : (
               <>
-                {/* Filter Toggle */}
+                {/* Filter Toggle and Add Event Button */}
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                        showUpcomingOnly ? 'bg-primary-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <span className="sr-only">Toggle upcoming only</span>
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          showUpcomingOnly ? 'translate-x-6' : 'translate-x-1'
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                          showUpcomingOnly ? 'bg-primary-600' : 'bg-gray-300'
                         }`}
-                      />
+                      >
+                        <span className="sr-only">Toggle upcoming only</span>
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            showUpcomingOnly ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <span className="text-sm font-medium text-gray-700">
+                        {showUpcomingOnly ? 'Showing upcoming events only' : 'Showing all events'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowAddEventChoiceModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span>Add Event</span>
                     </button>
-                    <span className="text-sm font-medium text-gray-700">
-                      {showUpcomingOnly ? 'Showing upcoming events only' : 'Showing all events'}
-                    </span>
                   </div>
                 </div>
 
                 {/* Events List - Grouped by date */}
-                <div>
+                <div className="space-y-6 p-4">
                   {groupEventsByDate(sortedEvents).map(({ date, events }) => (
                     <div key={date}>
-                      {/* Date Header */}
-                      <div className="px-6 py-3 bg-gray-50 border-y border-gray-200 sticky top-0 z-10">
-                        <h3 className="font-semibold text-gray-900 text-sm">
+                      {/* Date Header - More playful */}
+                      <div className="mb-3">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                          <span className="text-2xl">📅</span>
                           {formatMomFriendlyDate(date)}
                         </h3>
                       </div>
-                      {/* Events for this day */}
-                      <div className="divide-y divide-gray-100">
+                      {/* Events for this day - Card style */}
+                      <div className="space-y-3">
                         {events.map((event: any) => (
                           <div
                             key={event._id}
-                            className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-l-4"
+                            className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-all cursor-pointer border-2 border-gray-100 hover:border-primary-200"
                             onClick={() => setSelectedEvent(event)}
-                            style={{ borderLeftColor: event.category ? getCategoryColor(event.category) : '#6b7280' }}
                           >
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-gray-900 text-base mb-1 truncate">{event.title}</h3>
-                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-gray-600">
-                                    {event.eventTime && (
+                            <div className="flex gap-4">
+                              {/* Category Emoji Icon */}
+                              <div className="flex-shrink-0">
+                                <div
+                                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm"
+                                  style={{
+                                    backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
+                                  }}
+                                >
+                                  {getCategoryEmoji(event.category)}
+                                </div>
+                              </div>
+
+                              {/* Event Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <h3 className="font-bold text-gray-900 text-lg">{event.title}</h3>
+                                </div>
+
+                                {/* Description if available */}
+                                {event.description && (
+                                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                                    {event.description}
+                                  </p>
+                                )}
+
+                                <div className="space-y-1.5 mb-3">
+                                  {event.eventTime && (
+                                    <div className="flex items-center gap-2 text-gray-700">
+                                      <span className="text-lg">🕐</span>
                                       <span className="font-medium">
                                         {formatTime12Hour(event.eventTime)}
                                         {event.endTime && ` - ${formatTime12Hour(event.endTime)}`}
                                       </span>
-                                    )}
-                                    {event.location && (
-                                      <span>{event.location}</span>
-                                    )}
-                                  </div>
+                                    </div>
+                                  )}
+                                  {event.location && (
+                                    <div className="flex items-center gap-2 text-gray-700">
+                                      <span className="text-lg">📍</span>
+                                      <span className="truncate">{event.location}</span>
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-                                {event.childName && (
-                                  <div className="flex gap-1">
-                                    {(() => {
-                                      const names = event.childName.split(",").map((n: string) => n.trim());
-                                      return names.map((name: string, idx: number) => {
-                                        const member = familyMembers?.find(m => m.name === name);
-                                        const color = member?.color || "#6366f1";
-                                        return (
-                                          <span
-                                            key={idx}
-                                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium text-white"
-                                            style={{ backgroundColor: color }}
-                                          >
-                                            {name}
-                                          </span>
-                                        );
-                                      });
-                                    })()}
-                                  </div>
-                                )}
-                                {event.requiresAction && !event.actionCompleted && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-secondary-100 text-secondary-800">
-                                    ⚠️ Action
-                                  </span>
-                                )}
+
+                                {/* Tags Row */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {event.requiresAction && !event.actionCompleted && (
+                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 shadow-sm">
+                                      ⚠️ {event.actionDescription || 'Action Needed'}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -910,10 +1124,10 @@ function CalendarContent() {
             ) : calendarEvents.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="text-xl font-semibold text-gray-900 mb-2">
-                  No events yet
+                  Your calendar is empty
                 </div>
                 <p className="text-gray-600 mb-4">
-                  Scan your emails or add events manually to get started
+                  Let's add your first event! Check your emails or type one in yourself.
                 </p>
                 <div className="flex gap-3">
                   <Link
@@ -932,12 +1146,14 @@ function CalendarContent() {
                 endAccessor="end"
                 style={{ height: "100%" }}
                 onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                selectable
                 eventPropGetter={eventStyleGetter}
                 view={view as View}
                 onView={(newView) => setView(newView)}
                 date={date}
                 onNavigate={(newDate) => setDate(newDate)}
-                views={["month", "week", "day", "agenda"]}
+                views={["month", "week", "day"]}
                 popup
                 min={new Date(2025, 0, 1, 6, 0, 0)} // Show from 6am
                 max={new Date(2025, 0, 1, 23, 59, 59)} // Show until 11:59pm
@@ -1172,6 +1388,16 @@ function CalendarContent() {
                     childName: selectedEvent.childName || "",
                     category: selectedEvent.category || "",
                     description: selectedEvent.description || "",
+                    requiresAction: selectedEvent.requiresAction || false,
+                    actionDescription: selectedEvent.actionDescription || "",
+                    actionDeadline: selectedEvent.actionDeadline || "",
+                    actionCompleted: selectedEvent.actionCompleted || false,
+                    isRecurring: selectedEvent.isRecurring || false,
+                    recurrencePattern: selectedEvent.recurrencePattern || "weekly",
+                    recurrenceDaysOfWeek: selectedEvent.recurrenceDaysOfWeek || [],
+                    recurrenceEndType: selectedEvent.recurrenceEndType || "never",
+                    recurrenceEndDate: selectedEvent.recurrenceEndDate || "",
+                    recurrenceEndCount: selectedEvent.recurrenceEndCount || 10,
                   });
                   setEditingEvent(true);
                 }}
@@ -1381,7 +1607,8 @@ function CalendarContent() {
                       ...editFormData,
                       requiresAction: e.target.checked,
                       actionDescription: e.target.checked ? (editFormData?.actionDescription || "") : "",
-                      actionDeadline: e.target.checked ? (editFormData?.actionDeadline || "") : ""
+                      actionDeadline: e.target.checked ? (editFormData?.actionDeadline || "") : "",
+                      actionCompleted: e.target.checked ? (editFormData?.actionCompleted || false) : false
                     })}
                     className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
                   />
@@ -1435,10 +1662,162 @@ function CalendarContent() {
                   </div>
                 )}
               </div>
+
+              {/* Recurring Event Section */}
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-start gap-3 mb-4">
+                  <input
+                    type="checkbox"
+                    id="editIsRecurring"
+                    checked={editFormData?.isRecurring || false}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      isRecurring: e.target.checked,
+                      recurrenceDaysOfWeek: e.target.checked ? (editFormData?.recurrenceDaysOfWeek || []) : []
+                    })}
+                    className="w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-400 mt-0.5"
+                  />
+                  <label htmlFor="editIsRecurring" className="flex-1 cursor-pointer">
+                    <span className="block text-sm font-semibold text-gray-900">
+                      This is a recurring event
+                    </span>
+                    <span className="block text-xs text-gray-600 mt-0.5">
+                      Event repeats on a regular schedule
+                    </span>
+                  </label>
+                </div>
+
+                {editFormData?.isRecurring && (
+                  <div className="space-y-3 pl-8">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Repeats
+                      </label>
+                      <select
+                        value={editFormData?.recurrencePattern || "weekly"}
+                        onChange={(e) => setEditFormData({
+                          ...editFormData,
+                          recurrencePattern: e.target.value as "daily" | "weekly" | "monthly" | "yearly"
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                    </div>
+
+                    {editFormData?.recurrencePattern === "weekly" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Repeat on
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => {
+                            const recurrenceDays = editFormData?.recurrenceDaysOfWeek || [];
+                            const isSelected = recurrenceDays.includes(day);
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => {
+                                  const days = isSelected
+                                    ? recurrenceDays.filter(d => d !== day)
+                                    : [...recurrenceDays, day];
+                                  setEditFormData({
+                                    ...editFormData,
+                                    recurrenceDaysOfWeek: days
+                                  });
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                  isSelected
+                                    ? "bg-primary-500 text-white"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                              >
+                                {day.substring(0, 3)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ends
+                      </label>
+                      <select
+                        value={editFormData?.recurrenceEndType || "never"}
+                        onChange={(e) => setEditFormData({
+                          ...editFormData,
+                          recurrenceEndType: e.target.value as "date" | "count" | "never"
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                      >
+                        <option value="never">Never</option>
+                        <option value="date">On a specific date</option>
+                        <option value="count">After a number of occurrences</option>
+                      </select>
+                    </div>
+
+                    {editFormData?.recurrenceEndType === "date" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          End date
+                        </label>
+                        <input
+                          type="date"
+                          value={editFormData?.recurrenceEndDate || ""}
+                          onChange={(e) => setEditFormData({ ...editFormData, recurrenceEndDate: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        />
+                      </div>
+                    )}
+
+                    {editFormData?.recurrenceEndType === "count" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Number of occurrences
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="365"
+                          value={editFormData?.recurrenceEndCount || 10}
+                          onChange={(e) => setEditFormData({ ...editFormData, recurrenceEndCount: parseInt(e.target.value) || 10 })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Action Buttons */}
             <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={handleEnhanceEditEvent}
+                disabled={isEnhancingEvent || !editFormData?.title?.trim()}
+                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isEnhancingEvent ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Enhancing...
+                  </>
+                ) : (
+                  <>
+                    ✨ Enhance with AI
+                  </>
+                )}
+              </button>
               <button
                 onClick={async () => {
                   try {
@@ -1454,9 +1833,16 @@ function CalendarContent() {
                       category: editFormData.category || undefined,
                       description: editFormData.description || undefined,
                       requiresAction: editFormData.requiresAction || undefined,
-                      actionDescription: editFormData.actionDescription || undefined,
-                      actionDeadline: editFormData.actionDeadline || undefined,
-                      actionCompleted: editFormData.actionCompleted || undefined,
+                      actionDescription: editFormData.requiresAction ? editFormData.actionDescription || undefined : undefined,
+                      actionDeadline: editFormData.requiresAction ? editFormData.actionDeadline || undefined : undefined,
+                      actionCompleted: editFormData.requiresAction ? editFormData.actionCompleted || undefined : undefined,
+                      // Recurring event fields
+                      isRecurring: editFormData.isRecurring || undefined,
+                      recurrencePattern: editFormData.isRecurring ? editFormData.recurrencePattern : undefined,
+                      recurrenceDaysOfWeek: (editFormData.isRecurring && editFormData.recurrencePattern === "weekly" && editFormData.recurrenceDaysOfWeek && editFormData.recurrenceDaysOfWeek.length > 0) ? editFormData.recurrenceDaysOfWeek : undefined,
+                      recurrenceEndType: editFormData.isRecurring ? editFormData.recurrenceEndType : undefined,
+                      recurrenceEndDate: (editFormData.isRecurring && editFormData.recurrenceEndType === "date") ? editFormData.recurrenceEndDate || undefined : undefined,
+                      recurrenceEndCount: (editFormData.isRecurring && editFormData.recurrenceEndType === "count") ? editFormData.recurrenceEndCount : undefined,
                     });
 
                     // Update in Google Calendar if it was synced
@@ -1470,7 +1856,7 @@ function CalendarContent() {
                       } catch (error) {
                         console.error("Error updating Google Calendar:", error);
                         // Show warning but don't fail the entire operation
-                        showToast("Event updated in app, but Google Calendar sync failed", "info");
+                        showToast("Event updated here, but couldn't save to your phone's calendar", "info");
                       }
                     }
 
@@ -1507,12 +1893,51 @@ function CalendarContent() {
       {/* Floating Action Button - Mobile Only */}
       <Link
         href="/review"
-        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
+        className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       </Link>
+
+      {/* Add Event Choice Modal */}
+      {showAddEventChoiceModal && (
+        <AddEventChoiceModal
+          onClose={() => setShowAddEventChoiceModal(false)}
+          onCheckEmails={() => router.push('/review')}
+          onTypeManually={() => router.push('/review')}
+          onPasteText={() => router.push('/review')}
+          onUploadPhoto={() => {
+            setShowAddEventChoiceModal(false);
+            setShowPhotoUploadModal(true);
+          }}
+          onVoiceRecord={() => {
+            setShowAddEventChoiceModal(false);
+            setShowVoiceRecordModal(true);
+          }}
+          onSearchSpecific={() => router.push('/review')}
+          isGmailConnected={!!gmailAccounts && gmailAccounts.length > 0}
+        />
+      )}
+
+      {/* Photo Upload Modal */}
+      {showPhotoUploadModal && (
+        <PhotoUploadModal
+          onClose={() => setShowPhotoUploadModal(false)}
+          onExtract={handlePhotoUpload}
+        />
+      )}
+
+      {/* Voice Record Modal */}
+      {showVoiceRecordModal && (
+        <VoiceRecordModal
+          onClose={() => setShowVoiceRecordModal(false)}
+          onTranscribe={handleVoiceRecording}
+        />
+      )}
+
+      {/* Bottom Navigation for Mobile */}
+      <BottomNav />
     </div>
   );
 }

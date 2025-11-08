@@ -132,7 +132,7 @@ Extract ALL relevant details from the email. Return JSON with this structure:
       "time": "HH:MM in 24-hour format (optional)",
       "endTime": "HH:MM in 24-hour format (optional)",
       "location": "Full address or venue name (optional)",
-      "description": "Important details (optional)",
+      "description": "Write a friendly, helpful 1-2 sentence summary that provides context and important details. Make it warm and conversational, not just copied text. Include what to bring, dress code, or other useful info if mentioned. (optional)",
       "familyMemberName": "EXACTLY one of these names: ${familyMemberList.split(';').map(m => m.split('(')[0].trim()).join(', ')} (OPTIONAL - include only if explicitly mentioned or strongly implied)",
       "category": "sports/lessons/school/appointment/party/etc (optional)",
       "requiresRSVP": true/false (optional),
@@ -142,17 +142,23 @@ Extract ALL relevant details from the email. Return JSON with this structure:
   ]
 }
 
-Date parsing rules (VERY IMPORTANT - today is ${currentDate}):
-  * "October 14" or "Oct 14" with no year mentioned -> ${currentYear}-10-14
-  * "tomorrow" -> calculate from ${currentDate}
-  * Days of the week (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday):
-    - "Friday at 3pm" or "Friday night" or "on Friday" -> find the NEXT occurrence of Friday after ${currentDate}
-    - "Sunday night" -> find the NEXT Sunday after ${currentDate}
+Date parsing rules (CRITICAL - today is ${currentDate}, current year is ${currentYear}):
+  * NEVER EVER use dates in the past - ALL events must be in the future (>= ${currentDate})
+  * If a specific month and day is mentioned without a year (e.g., "October 14", "Nov 8", "December 25"):
+    - Use ${currentYear} if that date hasn't passed yet this year
+    - Use ${currentYear + 1} if that date already passed this year
+    - Example: "November 8" today (${currentDate}) -> use ${currentYear}-11-08 if >= ${currentDate}, otherwise ${currentYear + 1}-11-08
+  * IGNORE day-of-week names if they conflict with the month/day:
+    - If email says "Wednesday, November 8" but Nov 8 ${currentYear} is NOT a Wednesday, still use ${currentYear}-11-08 (the sender probably made a mistake)
+    - Day names are less reliable than specific dates
+  * Days of the week WITHOUT specific dates:
+    - "Friday at 3pm" or "Friday night" -> find the NEXT Friday after ${currentDate}
     - "this Friday" -> NEXT Friday after ${currentDate}
     - "next Monday" -> the Monday in the following week (8+ days from ${currentDate})
-  * CRITICAL: When parsing day names, always find the NEXT occurrence of that day AFTER ${currentDate}
-  * If a specific date with year is mentioned (e.g., "October 14, 2025"), use exactly that date
-  * Never use dates in the past unless explicitly stated (e.g., "last Tuesday")
+  * CRITICAL: When parsing day names alone, always find the NEXT occurrence AFTER ${currentDate}
+  * "tomorrow" -> calculate from ${currentDate}
+  * If a date with year is explicitly mentioned (e.g., "October 14, 2025"), use exactly that date
+  * ABSOLUTE RULE: No date should ever be before ${currentDate} unless the email explicitly says "last week" or "already happened"
 
 Time parsing rules:
   * "3pm" or "3:00pm" -> "15:00"
@@ -175,7 +181,7 @@ Return JSON with this structure:
       "time": "HH:MM in 24-hour format (optional)",
       "endTime": "HH:MM in 24-hour format (optional)",
       "location": "Full address or venue name (optional)",
-      "description": "Important details (optional)",
+      "description": "Write a friendly, helpful 1-2 sentence summary that provides context and important details. Make it warm and conversational, not just copied text. Include what to bring, dress code, or other useful info if mentioned. (optional)",
       "familyMemberName": "Name of family member if mentioned (optional)",
       "category": "sports/lessons/school/appointment/party/etc (optional)",
       "requiresRSVP": true/false (optional),
@@ -185,7 +191,13 @@ Return JSON with this structure:
   ]
 }
 
-Date parsing: "October 14" with no year -> ${currentYear}-10-14, "Friday at 3pm" -> find NEXT Friday after ${currentDate}, "tomorrow" -> calculate from ${currentDate}
+Date parsing (CRITICAL - today is ${currentDate}, current year is ${currentYear}):
+  * NEVER use dates in the past - ALL events must be >= ${currentDate}
+  * "October 14" with no year -> ${currentYear}-10-14 if >= ${currentDate}, otherwise ${currentYear + 1}-10-14
+  * IGNORE day-of-week if it conflicts with specific month/day (day names are unreliable)
+  * "Friday at 3pm" -> find NEXT Friday after ${currentDate}
+  * "tomorrow" -> calculate from ${currentDate}
+
 Time parsing: "3pm" -> "15:00", "9am" -> "09:00", "3:30 PM" -> "15:30"
 
 If no clear events with dates, return {"events": []}.`;
@@ -317,7 +329,7 @@ export async function POST(request: NextRequest) {
 
     // Get recent emails (last 30 days) with broad keyword filtering
     const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
-    const query = `after:${thirtyDaysAgo} (class OR practice OR game OR tournament OR recital OR performance OR meeting OR conference OR party OR birthday OR celebration OR dinner OR lunch OR appointment OR reservation OR event OR activity OR lesson OR session OR camp OR trip OR visit OR playdate OR gathering OR invitation OR invite OR rsvp OR reminder OR schedule OR calendar)`;
+    const query = `after:${thirtyDaysAgo} (class OR practice OR game OR tournament OR recital OR performance OR meeting OR conference OR party OR birthday OR celebration OR dinner OR lunch OR appointment OR reservation OR event OR activity OR lesson OR session OR camp OR trip OR visit OR playdate OR gathering OR invitation OR invite OR rsvp OR reminder OR schedule OR calendar OR wedding OR rehearsal OR ceremony OR reception OR concert OR show OR festival OR fair OR banquet OR potluck OR barbecue OR picnic OR sleepover OR field trip)`;
 
     const messagesResponse = await gmail.users.messages.list({
       userId: "me",

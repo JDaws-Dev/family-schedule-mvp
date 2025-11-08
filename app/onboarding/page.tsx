@@ -179,7 +179,7 @@ export default function Onboarding() {
       return true;
     } catch (error) {
       console.error("Error saving onboarding data:", error);
-      alert("Failed to save your information. Please try again.");
+      alert("Oops! We couldn't save that. Want to try again?");
       return false;
     }
   };
@@ -246,7 +246,7 @@ export default function Onboarding() {
       } else if (selectedCalendarId) {
         // Use selected calendar
         setCompletionMessage("Setting up your calendar...");
-        const selectedCal = availableCalendars?.find(cal => cal.id === selectedCalendarId);
+        const selectedCal = calendars?.find(cal => cal.id === selectedCalendarId);
         await setFamilyCalendar({
           familyId: currentUser.familyId,
           googleCalendarId: selectedCalendarId,
@@ -594,7 +594,7 @@ export default function Onboarding() {
                           <span className="text-lg">💡</span>
                           <span>
                             <strong>Pro tip:</strong> Be specific! Instead of just "sports," try "soccer practice, basketball games, swim team."
-                            We'll scan your emails for schedules related to these specific activities and automatically add them to your calendar!
+                            We'll check your emails for schedules related to these specific activities and automatically add them to your calendar!
                           </span>
                         </p>
                       </div>
@@ -611,7 +611,7 @@ export default function Onboarding() {
                     <ul className="text-base text-gray-700 space-y-3">
                       <li className="flex items-start gap-3">
                         <span className="text-green-600 text-2xl font-bold">•</span>
-                        <span><strong>Smart email scanning</strong> - We'll look for emails about "soccer practice" or "piano recital" and catch schedules you might have missed</span>
+                        <span><strong>Smart email checking</strong> - We'll look for emails about "soccer practice" or "piano recital" and catch schedules you might have missed</span>
                       </li>
                       <li className="flex items-start gap-3">
                         <span className="text-green-600 text-2xl font-bold">•</span>
@@ -679,7 +679,7 @@ export default function Onboarding() {
 
               <div className="space-y-4">
                 <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white">
-                  <h3 className="font-bold text-lg mb-2">What we'll scan for:</h3>
+                  <h3 className="font-bold text-lg mb-2">What we'll look for:</h3>
                   <ul className="space-y-2">
                     <li className="flex items-start gap-3">
                       <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -873,7 +873,7 @@ export default function Onboarding() {
                           <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span>We'll scan your connected emails for activity-related messages</span>
+                          <span>We'll check your connected emails for activity-related messages</span>
                         </li>
                         <li className="flex items-start gap-3">
                           <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

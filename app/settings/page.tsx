@@ -6,13 +6,25 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import MobileNav from "@/app/components/MobileNav";
+import BottomNav from "@/app/components/BottomNav";
 import { useToast } from "@/app/components/Toast";
 import { useSearchParams } from "next/navigation";
+import PrivacyBadge from "@/app/components/PrivacyBadge";
 
 function SettingsContent() {
   const searchParams = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'account' | 'family' | 'apps'>('account');
+  const [expandedSections, setExpandedSections] = useState({
+    yourInfo: true,
+    notifications: false,
+    billing: false,
+    familyDetails: true,
+    familyMembers: false,
+    trackedMembers: true,
+    gmail: true,
+    googleCalendar: false,
+  });
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const { showToast } = useToast();
@@ -39,12 +51,12 @@ function SettingsContent() {
     }
 
     if (error === 'oauth_failed') {
-      showToast('Failed to connect Gmail. Please try again.', 'error');
+      showToast('Oops! Couldn\'t connect Gmail. Want to try again?', 'error');
       window.history.replaceState({}, '', '/settings?tab=apps');
     }
 
     if (error === 'missing_params' || error === 'missing_user') {
-      showToast('Connection error. Please try again.', 'error');
+      showToast('Oops! Couldn\'t connect. Want to try again?', 'error');
       window.history.replaceState({}, '', '/settings?tab=apps');
     }
   }, [searchParams, showToast]);
@@ -245,7 +257,7 @@ function SettingsContent() {
       await deleteFamilyMember({ memberId: memberId as any });
     } catch (error) {
       console.error("Error deleting family member:", error);
-      alert("Failed to delete family member. Please try again.");
+      alert("Oops! Couldn't remove family member. Want to try again?");
     }
   };
 
@@ -339,7 +351,7 @@ function SettingsContent() {
       alert("Preferences saved successfully!");
     } catch (error) {
       console.error("Error saving preferences:", error);
-      alert("Failed to save preferences. Please try again.");
+      alert("Oops! Couldn't save preferences. Want to try again?");
     }
   };
 
@@ -363,11 +375,11 @@ function SettingsContent() {
       if (response.ok) {
         alert("Test reminder sent! Check your email.");
       } else {
-        alert(`Failed to send test reminder: ${data.error}`);
+        alert(`Oops! Couldn't send test reminder: ${data.error}`);
       }
     } catch (error) {
       console.error("Error sending test reminder:", error);
-      alert("Failed to send test reminder. Please try again.");
+      alert("Oops! Couldn't send test reminder. Want to try again?");
     }
   };
 
@@ -393,11 +405,11 @@ function SettingsContent() {
       if (response.ok) {
         alert("Test SMS sent! Check your phone.");
       } else {
-        alert(`Failed to send test SMS: ${data.error}`);
+        alert(`Oops! Couldn't send test text: ${data.error}`);
       }
     } catch (error) {
       console.error("Error sending test SMS:", error);
-      alert("Failed to send test SMS. Please try again.");
+      alert("Oops! Couldn't send test text. Want to try again?");
     }
   };
 
@@ -408,13 +420,13 @@ function SettingsContent() {
     }
 
     setIsScanning(true);
-    setScanMessage("Scanning all accounts...");
+    setScanMessage("Checking all your emails for schedules...");
 
     let totalEventsFound = 0;
     let totalMessagesScanned = 0;
 
     try {
-      // Scan each Gmail account
+      // Check each Gmail account
       for (const account of gmailAccounts) {
         const response = await fetch("/api/scan-emails", {
           method: "POST",
@@ -435,12 +447,12 @@ function SettingsContent() {
       }
 
       setScanMessage(
-        `Scan complete! Found ${totalEventsFound} event(s) from ${totalMessagesScanned} messages across ${gmailAccounts.length} account(s).`
+        `✓ Done! Found ${totalEventsFound} event(s) from ${totalMessagesScanned} emails across ${gmailAccounts.length} account(s).`
       );
       setTimeout(() => setScanMessage(""), 8000);
     } catch (error) {
       console.error("Scan error:", error);
-      setScanMessage("Failed to scan emails. Please try again.");
+      setScanMessage("Oops! Couldn't check emails. Want to try again?");
       setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);
@@ -453,12 +465,12 @@ function SettingsContent() {
       return;
     }
 
-    if (!confirm("This will clear the scan history so you can re-scan all emails. Continue?")) {
+    if (!confirm("This will clear the history so you can check all emails again. Continue?")) {
       return;
     }
 
     setIsScanning(true);
-    setScanMessage("Resetting scan history...");
+    setScanMessage("Resetting history...");
 
     try {
       for (const account of gmailAccounts) {
@@ -473,11 +485,11 @@ function SettingsContent() {
         });
       }
 
-      setScanMessage("Scan history reset! You can now re-scan your emails.");
+      setScanMessage("History reset! You can now check your emails again.");
       setTimeout(() => setScanMessage(""), 5000);
     } catch (error) {
       console.error("Reset error:", error);
-      setScanMessage("Failed to reset. Please try again.");
+      setScanMessage("Oops! Couldn't reset. Want to try again?");
       setTimeout(() => setScanMessage(""), 5000);
     } finally {
       setIsScanning(false);
@@ -516,12 +528,12 @@ function SettingsContent() {
         }
       } else {
         console.error("[handleFetchCalendars] Error response:", data);
-        showToast(data.error || "Failed to fetch calendars", "error");
+        showToast(data.error || "Couldn't connect to calendars", "error");
       }
     } catch (error) {
       console.error("[handleFetchCalendars] Exception:", error);
       console.error("[handleFetchCalendars] Error stack:", error instanceof Error ? error.stack : "No stack");
-      showToast("Failed to fetch calendars. Please try again.", "error");
+      showToast("Oops! Couldn't connect to calendars. Want to try again?", "error");
     } finally {
       setLoadingCalendars(false);
       console.log("[handleFetchCalendars] Finished");
@@ -537,10 +549,10 @@ function SettingsContent() {
         googleCalendarId: calendarId,
         calendarName,
       });
-      showToast(`Selected "${calendarName}" for syncing family events`, "success");
+      showToast(`Selected "${calendarName}" for saving family events`, "success");
     } catch (error) {
       console.error("Error selecting calendar:", error);
-      showToast("Failed to save calendar selection. Please try again.", "error");
+      showToast("Oops! Couldn't save calendar choice. Want to try again?", "error");
     }
   };
 
@@ -570,19 +582,25 @@ function SettingsContent() {
         // Refresh the calendar list
         handleFetchCalendars();
       } else {
-        showToast(data.error || "Failed to create calendar", "error");
+        showToast(data.error || "Couldn't create calendar", "error");
       }
     } catch (error) {
       console.error("Error creating calendar:", error);
-      showToast("Failed to create calendar. Please try again.", "error");
+      showToast("Oops! Couldn't create calendar. Want to try again?", "error");
     } finally {
       setCreatingCalendar(false);
     }
   };
 
+  const toggleSection = (section: 'yourInfo' | 'notifications' | 'billing' | 'familyDetails' | 'familyMembers' | 'trackedMembers' | 'gmail' | 'googleCalendar') => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -592,10 +610,10 @@ function SettingsContent() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Dashboard</Link>
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Home</Link>
             <Link href="/calendar" className="text-gray-600 hover:text-gray-900">Calendar</Link>
-            <Link href="/review" className="text-gray-600 hover:text-gray-900">Review</Link>
-            <Link href="/discover" className="text-gray-600 hover:text-gray-900">Discover</Link>
+            <Link href="/review" className="text-gray-600 hover:text-gray-900">Events</Link>
+            <Link href="/discover" className="text-gray-600 hover:text-gray-900">Find Activities</Link>
             <Link href="/settings" className="text-primary-600 font-medium">Settings</Link>
             <button
               onClick={() => signOut()}
@@ -619,11 +637,31 @@ function SettingsContent() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-3xl">⚙️</span>
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                Settings
+              </h1>
+              <p className="text-gray-600 text-lg mt-1">
+                Customize your experience and manage connections
+              </p>
+            </div>
+          </div>
+          <p className="text-gray-600 max-w-3xl">
+            Connect your email to automatically find events, add your family members to track everyone's schedule,
+            and manage your account preferences - all in one place.
+          </p>
+        </div>
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-2 mb-6">
-          <div className="flex flex-wrap gap-2">
+        {/* Tab Navigation with Descriptions */}
+        <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-4 mb-6">
+          <div className="flex flex-wrap gap-2 mb-3">
             <button
               onClick={() => setActiveTab('account')}
               className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
@@ -632,7 +670,7 @@ function SettingsContent() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              My Account
+              Your Info
             </button>
             <button
               onClick={() => setActiveTab('family')}
@@ -642,7 +680,7 @@ function SettingsContent() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Family
+              Family Members
             </button>
             <button
               onClick={() => setActiveTab('apps')}
@@ -652,8 +690,27 @@ function SettingsContent() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              Connected Apps
+              Email Connection
             </button>
+          </div>
+
+          {/* Tab Descriptions */}
+          <div className="px-2">
+            {activeTab === 'account' && (
+              <p className="text-sm text-gray-600">
+                Manage your personal information and account preferences
+              </p>
+            )}
+            {activeTab === 'family' && (
+              <p className="text-sm text-gray-600">
+                Add and manage the people in your family to track their schedules
+              </p>
+            )}
+            {activeTab === 'apps' && (
+              <p className="text-sm text-gray-600">
+                Connect your email so we can automatically find events for you
+              </p>
+            )}
           </div>
         </div>
 
@@ -662,11 +719,24 @@ function SettingsContent() {
         <div>
         {/* Your Info */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Your Info</h2>
-            <p className="text-sm text-gray-600 mt-1">Your personal information and contact details</p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('yourInfo')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Your Info</h2>
+              <p className="text-sm text-gray-600 mt-1">Your personal information and contact details</p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.yourInfo ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.yourInfo ? 'block' : 'hidden md:block'}`}>
             {!convexUser ? (
               <div className="text-center py-4 text-gray-500">Loading...</div>
             ) : (
@@ -740,13 +810,26 @@ function SettingsContent() {
 
         {/* Reminders & Notifications */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Reminders & Notifications</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Get reminders about upcoming events and important actions
-            </p>
-          </div>
-          <div className="p-6 space-y-6">
+          <button
+            onClick={() => toggleSection('notifications')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Reminders & Notifications</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Get reminders about upcoming events and important actions
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.notifications ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 space-y-6 ${expandedSections.notifications ? 'block' : 'hidden md:block'}`}>
             {/* Email Section */}
             <div className="border-l-4 border-blue-500 pl-4">
               <div className="flex items-start justify-between mb-3">
@@ -949,13 +1032,26 @@ function SettingsContent() {
 
         {/* Subscription & Payment */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Subscription & Payment</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Manage your plan and billing
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('billing')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Subscription & Payment</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage your plan and billing
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.billing ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.billing ? 'block' : 'hidden md:block'}`}>
             <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
               <div>
                 <h3 className="font-semibold text-gray-900">Standard Plan</h3>
@@ -1026,13 +1122,26 @@ function SettingsContent() {
         <div>
         {/* Family Details */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Family Details</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Manage your family's basic information and contact preferences
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('familyDetails')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Family Details</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage your family's basic information and contact preferences
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.familyDetails ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.familyDetails ? 'block' : 'hidden md:block'}`}>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1105,13 +1214,26 @@ function SettingsContent() {
 
         {/* Family Members */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Family Members</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Share your family calendar with your spouse. One subscription, two logins.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('familyMembers')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Family Members</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Share your family calendar with your spouse. One subscription, two logins.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.familyMembers ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.familyMembers ? 'block' : 'hidden md:block'}`}>
             {/* Current Family Members */}
             {!familyMembers ? (
               <div className="text-center py-4 text-gray-500">Loading...</div>
@@ -1195,13 +1317,26 @@ function SettingsContent() {
 
         {/* Tracked Family Members */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Tracked Family Members</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Add family members whose calendars you want to track. This helps our AI identify and organize everyone's activities, appointments, and events.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('trackedMembers')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Tracked Family Members</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Add family members whose calendars you want to track. This helps our AI identify and organize everyone's activities, appointments, and events.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.trackedMembers ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.trackedMembers ? 'block' : 'hidden md:block'}`}>
             {/* Tracked Members List */}
             <div className="space-y-4 mb-6">
               {!trackedMembers || trackedMembers.length === 0 ? (
@@ -1318,13 +1453,26 @@ function SettingsContent() {
         <div>
         {/* Google Calendar */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Google Calendar</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Choose where to sync your events. They'll appear on your phone, computer, and anywhere else you use Google Calendar.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('googleCalendar')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Google Calendar</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Choose where to sync your events. They'll appear on your phone, computer, and anywhere else you use Google Calendar.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.googleCalendar ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.googleCalendar ? 'block' : 'hidden md:block'}`}>
             {/* Current Selection */}
             {family?.googleCalendarId && family?.calendarName && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -1440,13 +1588,30 @@ function SettingsContent() {
 
         {/* Gmail Connections - Multiple Accounts */}
         <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Gmail</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Connect your Gmail to automatically find events in your inbox - sports schedules, school emails, medical appointments, and more.
-            </p>
-          </div>
-          <div className="p-6">
+          <button
+            onClick={() => toggleSection('gmail')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Gmail</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Connect your Gmail to automatically find events in your inbox - sports schedules, school emails, medical appointments, and more.
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.gmail ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.gmail ? 'block' : 'hidden md:block'}`}>
+            {/* Privacy Reassurance */}
+            <div className="mb-6">
+              <PrivacyBadge variant="email" />
+            </div>
             {/* Connected Gmail Accounts */}
             {!gmailAccounts ? (
               <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -1470,8 +1635,8 @@ function SettingsContent() {
                         <div className="text-sm text-gray-600">{account.gmailEmail}</div>
                         <div className="text-xs text-gray-500 mt-1">
                           {account.lastSyncAt
-                            ? `Last scan: ${new Date(account.lastSyncAt).toLocaleDateString()}`
-                            : "Never scanned"}{" "}
+                            ? `Last checked: ${new Date(account.lastSyncAt).toLocaleDateString()}`
+                            : "Not checked yet"}{" "}
                           • Connected by {account.connectedByName}
                         </div>
                       </div>
@@ -1530,14 +1695,14 @@ function SettingsContent() {
                   disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isScanning ? "Scanning..." : "Scan All Active Accounts Now"}
+                  {isScanning ? "Checking..." : "Check All Active Accounts Now"}
                 </button>
                 <button
                   onClick={handleResetScanHistory}
                   disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Reset Scan History
+                  Reset History
                 </button>
               </div>
               {scanMessage && (
@@ -1552,7 +1717,7 @@ function SettingsContent() {
         )}
 
         {/* Notifications Tab - MOVED TO PROFILE TAB */}
-        {false && activeTab === 'profile' && (
+        {false && activeTab === 'account' && (
         <div>
         {/* Notification Preferences */}
         <div className="bg-white rounded-lg shadow mb-6">
@@ -1999,6 +2164,9 @@ function SettingsContent() {
           </div>
         </div>
       )}
+
+      {/* Bottom Navigation for Mobile */}
+      <BottomNav />
     </div>
   );
 }

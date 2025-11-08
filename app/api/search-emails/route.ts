@@ -112,6 +112,9 @@ export async function POST(request: NextRequest) {
             body = getBody(msgData.data.payload);
 
             // Use OpenAI to extract event information
+            const currentYear = new Date().getFullYear();
+            const currentDate = new Date().toISOString().split('T')[0];
+
             const completion = await openai.chat.completions.create({
               model: "gpt-4o-mini",
               messages: [
@@ -129,7 +132,7 @@ Return a JSON object with:
       "eventTime": "HH:MM" (24-hour format, optional),
       "endTime": "HH:MM" (optional),
       "location": "Location name" (optional),
-      "description": "Brief description" (optional),
+      "description": "Write a friendly, helpful 1-2 sentence summary with context and important details. Make it warm and conversational. (optional)",
       "category": "Sports|School|Medical|Social|Other" (optional),
       "requiresAction": boolean (if RSVP, payment, or response needed),
       "actionDescription": "What action is needed" (optional),
@@ -137,6 +140,18 @@ Return a JSON object with:
     }
   ]
 }
+
+DATE PARSING RULES (CRITICAL - today is ${currentDate}, current year is ${currentYear}):
+  * NEVER use dates in the past - ALL events must be >= ${currentDate}
+  * If month/day without year (e.g., "November 8", "Dec 25"):
+    - Use ${currentYear} if that date >= ${currentDate}
+    - Use ${currentYear + 1} if that date already passed this year
+  * IGNORE day-of-week if it conflicts with specific month/day
+    - If email says "Wednesday, November 8" but Nov 8 ${currentYear} is NOT Wednesday, still use ${currentYear}-11-08
+    - Day names are unreliable, prioritize the actual date
+  * "Friday at 3pm" (no specific date) -> find NEXT Friday after ${currentDate}
+  * "tomorrow" -> calculate from ${currentDate}
+  * ABSOLUTE RULE: No date before ${currentDate} unless email says "last week" or "already happened"
 
 IMPORTANT: Extract ALL events, schedules, and dates mentioned. If it's a full season schedule, extract every game/practice date.`
                 },

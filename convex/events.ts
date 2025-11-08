@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 // Create a new event (family-based)
 export const createEvent = mutation({
@@ -20,6 +21,31 @@ export const createEvent = mutation({
     actionDescription: v.optional(v.string()),
     actionCompleted: v.optional(v.boolean()),
     isConfirmed: v.optional(v.boolean()),
+    // Recurring event fields
+    isRecurring: v.optional(v.boolean()),
+    recurrencePattern: v.optional(v.union(
+      v.literal("daily"),
+      v.literal("weekly"),
+      v.literal("monthly"),
+      v.literal("yearly")
+    )),
+    recurrenceInterval: v.optional(v.number()),
+    recurrenceDaysOfWeek: v.optional(v.array(v.union(
+      v.literal("Sunday"),
+      v.literal("Monday"),
+      v.literal("Tuesday"),
+      v.literal("Wednesday"),
+      v.literal("Thursday"),
+      v.literal("Friday"),
+      v.literal("Saturday")
+    ))),
+    recurrenceEndType: v.optional(v.union(
+      v.literal("date"),
+      v.literal("count"),
+      v.literal("never")
+    )),
+    recurrenceEndDate: v.optional(v.string()),
+    recurrenceEndCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Get user's family ID
@@ -28,7 +54,7 @@ export const createEvent = mutation({
       throw new Error("User not found");
     }
 
-    return await ctx.db.insert("events", {
+    const eventId = await ctx.db.insert("events", {
       familyId: user.familyId,
       createdByUserId: args.createdByUserId,
       title: args.title,
@@ -46,7 +72,25 @@ export const createEvent = mutation({
       actionDescription: args.actionDescription,
       actionCompleted: args.actionCompleted ?? false,
       isConfirmed: args.isConfirmed ?? false,
+      // Recurring fields
+      isRecurring: args.isRecurring,
+      recurrencePattern: args.recurrencePattern,
+      recurrenceInterval: args.recurrenceInterval,
+      recurrenceDaysOfWeek: args.recurrenceDaysOfWeek,
+      recurrenceEndType: args.recurrenceEndType,
+      recurrenceEndDate: args.recurrenceEndDate,
+      recurrenceEndCount: args.recurrenceEndCount,
     });
+
+    // Generate recurring instances if this is a recurring event
+    if (args.isRecurring) {
+      // Schedule instance generation (don't await to avoid timeout)
+      ctx.scheduler.runAfter(0, internal.recurringEvents.generateRecurringInstances, {
+        parentEventId: eventId,
+      });
+    }
+
+    return eventId;
   },
 });
 

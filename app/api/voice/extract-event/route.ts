@@ -1,30 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Extract event information from pasted SMS text
- * Uses OpenAI to intelligently parse event details from any text format
+ * Extract event information from voice recording
+ * Uses OpenAI Whisper for transcription, then GPT for event extraction
  */
 export async function POST(request: NextRequest) {
   try {
-    const { smsText, familyMembers, currentUserName } = await request.json();
+    const formData = await request.formData();
+    const audio = formData.get('audio') as File;
+    const familyMembersJson = formData.get('familyMembers') as string;
+    const currentUserName = formData.get('currentUserName') as string;
 
-    if (!smsText || smsText.trim().length === 0) {
+    if (!audio) {
       return NextResponse.json(
-        { error: 'Please provide SMS text to analyze' },
+        { error: 'Please provide an audio recording to analyze' },
         { status: 400 }
       );
     }
 
-    // Build family member context for AI
+    // Parse family members
+    const familyMembers = familyMembersJson ? JSON.parse(familyMembersJson) : [];
     const familyMemberNames = familyMembers?.map((m: any) => m.name).join(", ") || "";
     const familyContext = familyMemberNames
       ? `\n\nFAMILY MEMBERS: ${familyMemberNames}\nCURRENT USER: ${currentUserName || "Unknown"}`
       : "";
 
-    // Use OpenAI to extract event information from SMS
-    const systemPrompt = `You are an AI assistant that extracts event information from text messages.
+    // Step 1: Transcribe audio using Whisper
+    const whisperFormData = new FormData();
+    whisperFormData.append('file', audio);
+    whisperFormData.append('model', 'whisper-1');
+    whisperFormData.append('language', 'en');
 
-Analyze the following text and extract ALL event details you can find. If there are multiple events mentioned, extract each one separately.
+    const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: whisperFormData,
+    });
+
+    if (!whisperResponse.ok) {
+      console.error('[Voice Extract] Whisper API error:', await whisperResponse.text());
+      return NextResponse.json(
+        { error: 'Failed to transcribe audio' },
+        { status: 500 }
+      );
+    }
+
+    const whisperData = await whisperResponse.json();
+    const transcribedText = whisperData.text;
+
+    console.log('[Voice Extract] Transcribed text:', transcribedText);
+
+    if (!transcribedText || transcribedText.trim().length === 0) {
+      return NextResponse.json({
+        success: true,
+        hasEvents: false,
+        events: [],
+        explanation: 'No speech detected in the recording',
+      });
+    }
+
+    // Step 2: Extract event information from transcribed text using the same prompt as SMS
+    const systemPrompt = `You are an AI assistant that extracts event information from spoken descriptions.
+
+Analyze the following transcribed speech and extract ALL event details you can find. If multiple events are mentioned, extract each one separately.
 
 Return a JSON object with this structure:
 {
@@ -32,7 +72,7 @@ Return a JSON object with this structure:
   "events": [
     {
       "title": "Event name",
-      "description": "Brief description with helpful context - what to bring, dress code, special notes, etc. DO NOT repeat the category name or family member names here as they are shown separately. Always try to provide some useful description when possible.",
+      "description": "Brief description with helpful context - what to bring, dress code, special notes, etc. DO NOT repeat the category name or family member names here as they are shown separately.",
       "date": "YYYY-MM-DD (if you can determine it)",
       "time": "HH:MM in 24-hour format (if mentioned)",
       "endTime": "HH:MM (if mentioned)",
@@ -56,7 +96,7 @@ Return a JSON object with this structure:
   "explanation": "Brief explanation of what you extracted and why"
 }${familyContext}
 
-If the message doesn't contain event information, set hasEvents to false and return an empty events array.
+If the speech doesn't contain event information, set hasEvents to false and return an empty events array.
 IMPORTANT: If multiple events are mentioned (e.g., "Soccer on Monday and dance class on Wednesday"), create separate event objects for each one.
 
 IMPORTANT CONTEXT - Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -67,58 +107,46 @@ When parsing dates:
 - "tomorrow" = add 1 day to current date
 - "next week" = add 7 days
 - "this [day of week]" = the NEXT occurrence of that day in the current week (if it hasn't passed) OR next week (if it has passed)
-  Example: If today is Wednesday and text says "this Friday", that means the Friday coming up in 2 days
-  Example: If today is Wednesday and text says "this Monday", that means next Monday (5 days away)
 - "next [day of week]" = the occurrence of that day in the following week (7+ days away)
 - Day names alone (Monday, Tuesday, etc) = find the next occurrence from today
 - Month/day with no year = use current year if in future, otherwise next year
-- Be very careful with "this" vs "next" - "this Friday" means the upcoming Friday in the current week cycle
 
 IMPORTANT - Category Guidelines:
-Create descriptive, specific category names that help families organize their events. BE VERY SPECIFIC about the category:
+Create descriptive, specific category names that help families organize their events. BE VERY SPECIFIC:
 
 SPORTS & ACTIVITIES:
-- Basketball game/practice → "Basketball"
-- Soccer game/practice → "Soccer"
-- Football game/practice → "Football"
+- Basketball → "Basketball"
+- Soccer → "Soccer"
+- Football → "Football"
 - Baseball/softball → "Baseball"
 - Swimming → "Swimming"
-- Dance class/recital/performance → "Dance"
+- Dance → "Dance"
 - Gymnastics → "Gymnastics"
-- Karate/martial arts → "Martial Arts"
-- Generic sports → "Sports"
+- Martial arts → "Martial Arts"
 
 ARTS & EDUCATION:
-- Piano/guitar/music lessons → "Music Lessons"
+- Music lessons → "Music Lessons"
 - Art class → "Art"
-- Theater/drama → "Theater"
+- Theater → "Theater"
 - Tutoring → "Tutoring"
-- School events/conferences → "School Event"
+- School events → "School Event"
 
 SOCIAL & FAMILY:
-- Dinners, lunches, breakfasts with friends/family → "Social"
+- Dinners, lunches → "Social"
 - Playdates → "Playdate"
 - Birthday parties → "Birthday Party"
 - Family gatherings → "Family Event"
 
-HEALTH & APPOINTMENTS:
-- Doctor, dentist, medical appointments → "Doctor Appointment"
+HEALTH:
+- Doctor/dentist → "Doctor Appointment"
 
-RELIGIOUS & COMMUNITY:
-- Church, temple, religious events → "Religious"
-- Men's/women's groups, bible studies → "Religious"
-- Community service → "Community"
+RELIGIOUS:
+- Church, religious events → "Religious"
 
-OTHER:
-- Only use "Other" if the event truly doesn't fit any category above
-
-Rules:
-- Use Title Case (e.g., "Soccer Practice", "Piano Lessons", "Birthday Party")
-- Keep categories concise (1-3 words max)
-- Be SPECIFIC - "Basketball" not "Sports", "Dance" not "Other", "Social" not "Other"
+Use "Other" only if truly doesn't fit any category.
 
 IMPORTANT - Extract Names:
-- If the text mentions a specific child's name (e.g., "Emma's soccer practice" or "dance class for Sarah"), extract that name in the childName field
+- If the speech mentions a specific child's name (e.g., "Emma's soccer practice" or "dance class for Sarah"), extract that name in the childName field
 - Look for possessive forms ("Emma's", "Sarah's") or "for [name]" patterns
 - If multiple children are mentioned for the same event, separate names with ", " (e.g., "Emma, Sarah")
 
@@ -145,17 +173,11 @@ IMPORTANT - Detect Recurring Events:
   - "Tutoring every other week" → isRecurring: true, recurrencePattern: "weekly" (interval would be 2, but we'll handle that in UI)
 
 Examples:
-- "Soccer practice Saturday at 9am at City Park" → title="Soccer Practice", date=(next Saturday), time="09:00", location="City Park", category="Soccer"
-- "Basketball game tonight at 6pm" → title="Basketball Game", category="Basketball", time="18:00"
-- "Dance recital Friday 5pm" → title="Dance Recital", category="Dance", time="17:00"
-- "Dinner at Lee's house Saturday 7pm" → title="Dinner at Lee's House", category="Social", time="19:00", location="Lee's house"
-- "Men's breakfast this Sunday at 8am" → title="Men's Breakfast", category="Religious", time="08:00"
-- "Don't forget - Emily's birthday party next Sunday 2pm at Chuck E Cheese!" → title="Birthday Party", childName="Emily", category="Birthday Party", date=(next Sunday), time="14:00", location="Chuck E Cheese"
-- "Parent-teacher conferences Nov 15-17, sign up at www.school.com" → category="School Event", requiresAction=true, actionDescription="Sign up at www.school.com"
-- "Emma's piano lesson Monday at 4pm" → title="Piano Lesson", childName="Emma", category="Music Lessons", time="16:00"
-- "Basketball practice for Jake and Emma Wednesday at 6pm" → title="Basketball Practice", childName="Jake, Emma", category="Basketball", time="18:00"
-- "Dentist appointment for Sarah Thursday at 2:30pm" → title="Dentist Appointment", childName="Sarah", category="Doctor Appointment", time="14:30"
-- "Lunch with the Smiths tomorrow at noon" → title="Lunch with the Smiths", category="Social", time="12:00"
+- "Soccer practice Saturday at 9am at City Park" → title="Soccer Practice", category="Soccer"
+- "Emma has piano lesson Monday at 4pm" → title="Piano Lesson", childName="Emma", category="Music Lessons", attendees: ["Emma"]
+- "Basketball practice for Jake and Emma Wednesday at 6" → childName="Jake, Emma", category="Basketball", attendees: ["Jake", "Emma"]
+- "I'm taking Sara to dance class every Thursday at 5" → title="Dance Class", childName="Sara", category="Dance", attendees: [CURRENT USER, "Sara"], isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Thursday"]
+- "We have soccer practice every Tuesday and Thursday" → category="Soccer", attendees: [CURRENT USER, spouse], isRecurring: true, recurrencePattern: "weekly", recurrenceDaysOfWeek: ["Tuesday", "Thursday"]
 `;
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -170,9 +192,9 @@ Examples:
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Extract event information from this text message:
+            content: `Extract event information from this transcribed speech:
 
-${smsText}`,
+${transcribedText}`,
           },
         ],
         response_format: { type: 'json_object' },
@@ -181,9 +203,9 @@ ${smsText}`,
     });
 
     if (!openaiResponse.ok) {
-      console.error('[SMS Extract] OpenAI API error:', await openaiResponse.text());
+      console.error('[Voice Extract] OpenAI API error:', await openaiResponse.text());
       return NextResponse.json(
-        { error: 'Failed to analyze text message' },
+        { error: 'Failed to analyze transcribed speech' },
         { status: 500 }
       );
     }
@@ -191,18 +213,19 @@ ${smsText}`,
     const openaiData = await openaiResponse.json();
     const result = JSON.parse(openaiData.choices[0].message.content);
 
-    console.log('[SMS Extract] Result:', result);
+    console.log('[Voice Extract] Result:', result);
 
     return NextResponse.json({
       success: true,
+      transcription: transcribedText,
       ...result,
     });
   } catch (error: any) {
-    console.error('[SMS Extract] Error:', error);
+    console.error('[Voice Extract] Error:', error);
     return NextResponse.json(
-      { error: 'Failed to extract event information', details: error.message },
+      { error: 'Failed to extract event information from voice recording', details: error.message },
       { status: 500 }
-    );
+      );
   }
 }
 
@@ -211,8 +234,8 @@ ${smsText}`,
  */
 export async function GET() {
   return NextResponse.json({
-    message: 'SMS event extraction endpoint',
+    message: 'Voice event extraction endpoint',
     status: 'operational',
-    instructions: 'POST with { "smsText": "your text message here" }',
+    instructions: 'POST with FormData containing "audio" file (webm, mp3, mp4, etc.)',
   });
 }
