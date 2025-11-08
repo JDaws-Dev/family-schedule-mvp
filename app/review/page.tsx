@@ -1058,11 +1058,22 @@ export default function ReviewPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Events
-          </h1>
-          <p className="text-gray-600">
-            Add new events or review events found in your emails
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-3xl">✨</span>
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                Events
+              </h1>
+              <p className="text-gray-600 text-lg mt-1">
+                Your command center for everything happening
+              </p>
+            </div>
+          </div>
+          <p className="text-gray-600 max-w-3xl">
+            Add events yourself, let us find them in your emails, or search for specific activities.
+            Review new events we discover and approve the ones you want on your calendar - no more missed sign-ups or forgotten game days!
           </p>
         </div>
 

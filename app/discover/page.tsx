@@ -14,6 +14,7 @@ export default function DiscoverPage() {
   const { showToast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "event" | "place">("all"); // NEW: filter by type
   const [searchKeyword, setSearchKeyword] = useState("");
   const [discoveryKeyword, setDiscoveryKeyword] = useState(""); // Keyword for AI discovery
   const [isDiscovering, setIsDiscovering] = useState(false);
@@ -234,12 +235,23 @@ export default function DiscoverPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Find Activities
-          </h1>
-          <p className="text-gray-600">
-            We'll search local parks, libraries, museums, and event sites for you
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-3xl">🔍</span>
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                Find Activities
+              </h1>
+              <p className="text-gray-600 text-lg mt-1">
+                Discover new adventures and experiences for your family
+              </p>
+            </div>
+          </div>
+          <p className="text-gray-600 max-w-3xl">
+            We'll search local parks, libraries, museums, and event sites to find activities your kids will love.
+            Perfect for discovering summer camps, sports leagues, art classes, story times, and more - all in one place!
           </p>
         </div>
 
@@ -413,6 +425,19 @@ export default function DiscoverPage() {
             </div>
           </div>
 
+          {/* Type Filter */}
+          <div className="sm:w-56">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as "all" | "event" | "place")}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white font-medium"
+            >
+              <option value="all">🎯 All Types</option>
+              <option value="event">📅 Events Only</option>
+              <option value="place">📍 Places Only</option>
+            </select>
+          </div>
+
           {/* Category Dropdown */}
           <div className="sm:w-64">
             <select
@@ -434,6 +459,9 @@ export default function DiscoverPage() {
         {suggestedActivities.length > 0 ? (
           (() => {
             const filteredActivities = suggestedActivities.filter(activity => {
+              // Filter by type (event vs place)
+              const matchesType = typeFilter === "all" || activity.type === typeFilter;
+
               // Filter by category
               const matchesCategory = filter === "all" || activity.category?.toLowerCase() === filter;
 
@@ -443,7 +471,7 @@ export default function DiscoverPage() {
                 activity.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
                 activity.category?.toLowerCase().includes(searchKeyword.toLowerCase());
 
-              return matchesCategory && matchesSearch;
+              return matchesType && matchesCategory && matchesSearch;
             });
 
             // Show empty state if filter returns no results
@@ -486,8 +514,16 @@ export default function DiscoverPage() {
                 {filteredActivities.map((activity) => (
                 <div key={activity._id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-2 border-gray-100">
                   <div className="p-6">
-                    {/* Header with Category Badge */}
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* Header with Type and Category Badges */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      {/* Type Badge - Event or Place */}
+                      <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${
+                        activity.type === 'place'
+                          ? 'bg-purple-100 text-purple-800 border-2 border-purple-300'
+                          : 'bg-blue-100 text-blue-800 border-2 border-blue-300'
+                      }`}>
+                        {activity.type === 'place' ? '📍 Place to Visit' : '📅 Scheduled Event'}
+                      </span>
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getCategoryColor(activity.category)}`}>
                         {activity.category}
                       </span>
@@ -503,9 +539,49 @@ export default function DiscoverPage() {
                       {activity.title}
                     </h3>
 
-                    {/* Date, Time, and Location - Prominent Display */}
+                    {/* Conditional Display: Events show date/time, Places show hours */}
                     <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
-                      {(activity.date || activity.time) && (
+                      {activity.type === 'place' ? (
+                        /* Place Information: Hours, Admission, Amenities */
+                        <>
+                          {activity.hoursOfOperation && (
+                            <div className="flex items-center gap-2 text-base font-medium text-gray-900">
+                              <span className="text-xl">🕒</span>
+                              <div>
+                                <span className="font-semibold text-gray-700">Hours: </span>
+                                {activity.hoursOfOperation}
+                              </div>
+                            </div>
+                          )}
+                          {activity.admission && (
+                            <div className="flex items-center gap-2 text-base text-gray-700">
+                              <span className="text-xl">🎫</span>
+                              <div>
+                                <span className="font-semibold">Admission: </span>
+                                {activity.admission}
+                              </div>
+                            </div>
+                          )}
+                          {activity.amenities && activity.amenities.length > 0 && (
+                            <div className="flex items-start gap-2 text-sm text-gray-700">
+                              <span className="text-xl">✨</span>
+                              <div>
+                                <span className="font-semibold">Features: </span>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {activity.amenities.map((amenity, idx) => (
+                                    <span key={idx} className="px-2 py-1 bg-gray-200 text-gray-700 rounded-md text-xs font-medium">
+                                      {amenity}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        /* Event Information: Date, Time, Location */
+                        <>
+                          {(activity.date || activity.time) && (
                         <div className="flex items-center gap-2 text-base font-medium text-gray-900">
                           <span className="text-xl">📅</span>
                           <div>
@@ -540,6 +616,10 @@ export default function DiscoverPage() {
                           </div>
                         </div>
                       )}
+                        </>
+                      )}
+
+                      {/* Location - shown for both events and places */}
                       {activity.location && (
                         <div className="flex items-start gap-2 text-base text-gray-700">
                           <span className="text-xl">📍</span>
@@ -549,7 +629,9 @@ export default function DiscoverPage() {
                           )}
                         </div>
                       )}
-                      {activity.priceRange && (
+
+                      {/* Price Range - shown for both if applicable */}
+                      {activity.priceRange && !activity.admission && (
                         <div className="flex items-center gap-2">
                           <span className="text-xl">💰</span>
                           <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">

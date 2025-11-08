@@ -637,7 +637,26 @@ function SettingsContent() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-3xl">⚙️</span>
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                Settings
+              </h1>
+              <p className="text-gray-600 text-lg mt-1">
+                Customize your experience and manage connections
+              </p>
+            </div>
+          </div>
+          <p className="text-gray-600 max-w-3xl">
+            Connect your email to automatically find events, add your family members to track everyone's schedule,
+            and manage your account preferences - all in one place.
+          </p>
+        </div>
 
         {/* Tab Navigation */}
         {/* Tab Navigation with Descriptions */}

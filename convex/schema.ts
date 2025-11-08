@@ -219,6 +219,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     category: v.string(), // "sports", "arts", "education", "entertainment", etc.
+    type: v.optional(v.union(v.literal("event"), v.literal("place"))), // NEW: distinguish events from ongoing places
     ageRange: v.optional(v.string()), // e.g., "5-12 years"
     location: v.optional(v.string()),
     address: v.optional(v.string()),
@@ -232,13 +233,18 @@ export default defineSchema({
     sourceName: v.optional(v.string()), // Name of the source (e.g., "Library", "Parks Dept")
     sourceLocation: v.optional(v.string()), // Location of the source (e.g., "30519")
     aiSummary: v.optional(v.string()), // AI-generated summary of why this is good for their family
-    // Event date/time information
+    // Event date/time information (for type="event")
     date: v.optional(v.string()), // YYYY-MM-DD
     time: v.optional(v.string()), // HH:MM (24-hour format)
     endTime: v.optional(v.string()), // HH:MM (24-hour format)
     recurring: v.optional(v.boolean()),
     registrationRequired: v.optional(v.boolean()),
     registrationDeadline: v.optional(v.string()), // YYYY-MM-DD
+    // Place information (for type="place")
+    hoursOfOperation: v.optional(v.string()), // e.g., "Mon-Fri 9am-5pm, Sat-Sun 10am-6pm"
+    admission: v.optional(v.string()), // e.g., "Free", "$15 adults, $10 children"
+    amenities: v.optional(v.array(v.string())), // e.g., ["playground", "splash pad", "parking"]
+    // Metadata
     scrapedAt: v.optional(v.string()), // Timestamp when the event was scraped
     sourceCategories: v.optional(v.array(v.string())), // Categories from the source
     targetMembers: v.optional(v.array(v.string())), // Family member names who would enjoy this

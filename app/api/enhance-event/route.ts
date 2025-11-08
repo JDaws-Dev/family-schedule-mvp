@@ -76,7 +76,7 @@ Return a JSON object with this structure:
 {
   "enhancedTitle": "Improved title",
   "description": "Practical, helpful reminder note",
-  "category": "Best matching category from this list: Soccer, Basketball, Football, Baseball, Swimming, Dance, Gymnastics, Martial Arts, Music Lessons, Art, Theater, Tutoring, School Event, Playdate, Birthday Party, Doctor Appointment, Religious, Social, Family Event, Other",
+  "category": "Best matching category from this list: Soccer, Basketball, Football, Baseball, Swimming, Dance, Gymnastics, Martial Arts, Music Lessons, Art, Theater, Tutoring, School Event, Playdate, Birthday Party, Doctor Appointment, Religious, Social, Family Event, Movie Night, Other",
   "attendees": ["Array of family member names who would typically attend this type of event based on context"],
   "isRecurring": true/false,
   "recurrencePattern": "weekly" | "daily" | "monthly" (if recurring),

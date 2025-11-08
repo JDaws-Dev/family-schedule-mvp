@@ -162,6 +162,7 @@ function CalendarContent() {
   const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
+  const [isEnhancingEvent, setIsEnhancingEvent] = useState(false);
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
@@ -719,6 +720,46 @@ function CalendarContent() {
     }
   };
 
+  // Handle AI enhancement for edit event modal
+  const handleEnhanceEditEvent = async () => {
+    if (!editFormData?.title) return;
+
+    setIsEnhancingEvent(true);
+    try {
+      const response = await fetch("/api/enhance-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editFormData.title,
+          description: editFormData.description || "",
+          location: editFormData.location || "",
+          date: editFormData.eventDate || "",
+          time: editFormData.eventTime || "",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Enhancement failed");
+
+      const data = await response.json();
+
+      // Update editing event with all enhanced details
+      setEditFormData({
+        ...editFormData,
+        description: data.description || editFormData.description,
+        location: data.location || editFormData.location,
+        category: data.category || editFormData.category,
+        childName: data.childName || editFormData.childName,
+      });
+
+      showToast("✨ Event enhanced! AI filled in smart suggestions - review and adjust as needed.", "success");
+    } catch (error) {
+      console.error("Error enhancing event:", error);
+      showToast("Failed to enhance event. Please try again.", "error");
+    } finally {
+      setIsEnhancingEvent(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
@@ -767,51 +808,21 @@ function CalendarContent() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Family Calendar</h1>
-              <p className="text-gray-600 mt-1">
-                {confirmedEvents === undefined
-                  ? "Loading events..."
-                  : `Showing ${calendarEvents.length} of ${confirmedEvents.length} confirmed event${confirmedEvents.length !== 1 ? "s" : ""}`}
-              </p>
-              {family?.lastCalendarSyncAt && (
-                <p className="text-sm text-gray-500 mt-1">
-                  {syncingFrom ? (
-                    <span className="flex items-center gap-1">
-                      <span className="animate-spin">⏳</span>
-                      Checking for updates...
-                    </span>
-                  ) : (
-                    <>Last saved to Google Calendar: {formatLastSync(family.lastCalendarSyncAt)}</>
-                  )}
-                </p>
-              )}
+        <div className="mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-3xl">📅</span>
             </div>
-            <button
-              onClick={() => {
-                hasSyncedFromRef.current = false; // Reset to allow manual sync
-                handleSyncFromGoogleCalendar();
-              }}
-              disabled={syncingFrom}
-              className="px-4 py-2 bg-white border-2 border-primary-600 text-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Refresh events from Google Calendar"
-            >
-              {syncingFrom ? (
-                <>
-                  <span className="animate-spin">⏳</span>
-                  Checking...
-                </>
-              ) : (
-                <>
-                  🔄 Refresh
-                </>
-              )}
-            </button>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Family Calendar</h1>
+              <p className="text-gray-600 text-lg mt-1">
+                Your master schedule - everything confirmed and ready to go
+              </p>
+            </div>
           </div>
+        </div>
 
-          {/* Enhanced Calendar Controls */}
+        {/* Enhanced Calendar Controls */}
           {confirmedEvents && confirmedEvents.length > 0 && (
             <div className="bg-white rounded-lg shadow-soft p-4 mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -885,7 +896,6 @@ function CalendarContent() {
               </div>
             </div>
           )}
-        </div>
 
         {/* Search and Filters */}
         {confirmedEvents && confirmedEvents.length > 0 && (
@@ -1060,14 +1070,6 @@ function CalendarContent() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2 mb-2">
                                   <h3 className="font-bold text-gray-900 text-lg">{event.title}</h3>
-                                  {event.category && (
-                                    <span
-                                      className="px-2.5 py-1 rounded-lg text-xs font-bold text-white whitespace-nowrap shadow-sm"
-                                      style={{ backgroundColor: getCategoryColor(event.category) }}
-                                    >
-                                      {event.category}
-                                    </span>
-                                  )}
                                 </div>
 
                                 {/* Description if available */}
@@ -1097,26 +1099,6 @@ function CalendarContent() {
 
                                 {/* Tags Row */}
                                 <div className="flex flex-wrap items-center gap-2">
-                                  {event.childName && (
-                                    <div className="flex gap-1.5">
-                                      {(() => {
-                                        const names = event.childName.split(",").map((n: string) => n.trim());
-                                        return names.map((name: string, idx: number) => {
-                                          const member = familyMembers?.find(m => m.name === name);
-                                          const color = member?.color || "#6366f1";
-                                          return (
-                                            <span
-                                              key={idx}
-                                              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold text-white shadow-sm"
-                                              style={{ backgroundColor: color }}
-                                            >
-                                              {name}
-                                            </span>
-                                          );
-                                        });
-                                      })()}
-                                    </div>
-                                  )}
                                   {event.requiresAction && !event.actionCompleted && (
                                     <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 shadow-sm">
                                       ⚠️ {event.actionDescription || 'Action Needed'}
@@ -1406,6 +1388,16 @@ function CalendarContent() {
                     childName: selectedEvent.childName || "",
                     category: selectedEvent.category || "",
                     description: selectedEvent.description || "",
+                    requiresAction: selectedEvent.requiresAction || false,
+                    actionDescription: selectedEvent.actionDescription || "",
+                    actionDeadline: selectedEvent.actionDeadline || "",
+                    actionCompleted: selectedEvent.actionCompleted || false,
+                    isRecurring: selectedEvent.isRecurring || false,
+                    recurrencePattern: selectedEvent.recurrencePattern || "weekly",
+                    recurrenceDaysOfWeek: selectedEvent.recurrenceDaysOfWeek || [],
+                    recurrenceEndType: selectedEvent.recurrenceEndType || "never",
+                    recurrenceEndDate: selectedEvent.recurrenceEndDate || "",
+                    recurrenceEndCount: selectedEvent.recurrenceEndCount || 10,
                   });
                   setEditingEvent(true);
                 }}
@@ -1615,7 +1607,8 @@ function CalendarContent() {
                       ...editFormData,
                       requiresAction: e.target.checked,
                       actionDescription: e.target.checked ? (editFormData?.actionDescription || "") : "",
-                      actionDeadline: e.target.checked ? (editFormData?.actionDeadline || "") : ""
+                      actionDeadline: e.target.checked ? (editFormData?.actionDeadline || "") : "",
+                      actionCompleted: e.target.checked ? (editFormData?.actionCompleted || false) : false
                     })}
                     className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
                   />
@@ -1669,10 +1662,162 @@ function CalendarContent() {
                   </div>
                 )}
               </div>
+
+              {/* Recurring Event Section */}
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-start gap-3 mb-4">
+                  <input
+                    type="checkbox"
+                    id="editIsRecurring"
+                    checked={editFormData?.isRecurring || false}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      isRecurring: e.target.checked,
+                      recurrenceDaysOfWeek: e.target.checked ? (editFormData?.recurrenceDaysOfWeek || []) : []
+                    })}
+                    className="w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-400 mt-0.5"
+                  />
+                  <label htmlFor="editIsRecurring" className="flex-1 cursor-pointer">
+                    <span className="block text-sm font-semibold text-gray-900">
+                      This is a recurring event
+                    </span>
+                    <span className="block text-xs text-gray-600 mt-0.5">
+                      Event repeats on a regular schedule
+                    </span>
+                  </label>
+                </div>
+
+                {editFormData?.isRecurring && (
+                  <div className="space-y-3 pl-8">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Repeats
+                      </label>
+                      <select
+                        value={editFormData?.recurrencePattern || "weekly"}
+                        onChange={(e) => setEditFormData({
+                          ...editFormData,
+                          recurrencePattern: e.target.value as "daily" | "weekly" | "monthly" | "yearly"
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                    </div>
+
+                    {editFormData?.recurrencePattern === "weekly" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Repeat on
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => {
+                            const recurrenceDays = editFormData?.recurrenceDaysOfWeek || [];
+                            const isSelected = recurrenceDays.includes(day);
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => {
+                                  const days = isSelected
+                                    ? recurrenceDays.filter(d => d !== day)
+                                    : [...recurrenceDays, day];
+                                  setEditFormData({
+                                    ...editFormData,
+                                    recurrenceDaysOfWeek: days
+                                  });
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                  isSelected
+                                    ? "bg-primary-500 text-white"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                              >
+                                {day.substring(0, 3)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ends
+                      </label>
+                      <select
+                        value={editFormData?.recurrenceEndType || "never"}
+                        onChange={(e) => setEditFormData({
+                          ...editFormData,
+                          recurrenceEndType: e.target.value as "date" | "count" | "never"
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                      >
+                        <option value="never">Never</option>
+                        <option value="date">On a specific date</option>
+                        <option value="count">After a number of occurrences</option>
+                      </select>
+                    </div>
+
+                    {editFormData?.recurrenceEndType === "date" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          End date
+                        </label>
+                        <input
+                          type="date"
+                          value={editFormData?.recurrenceEndDate || ""}
+                          onChange={(e) => setEditFormData({ ...editFormData, recurrenceEndDate: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        />
+                      </div>
+                    )}
+
+                    {editFormData?.recurrenceEndType === "count" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Number of occurrences
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="365"
+                          value={editFormData?.recurrenceEndCount || 10}
+                          onChange={(e) => setEditFormData({ ...editFormData, recurrenceEndCount: parseInt(e.target.value) || 10 })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Action Buttons */}
             <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={handleEnhanceEditEvent}
+                disabled={isEnhancingEvent || !editFormData?.title?.trim()}
+                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isEnhancingEvent ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Enhancing...
+                  </>
+                ) : (
+                  <>
+                    ✨ Enhance with AI
+                  </>
+                )}
+              </button>
               <button
                 onClick={async () => {
                   try {
@@ -1688,9 +1833,16 @@ function CalendarContent() {
                       category: editFormData.category || undefined,
                       description: editFormData.description || undefined,
                       requiresAction: editFormData.requiresAction || undefined,
-                      actionDescription: editFormData.actionDescription || undefined,
-                      actionDeadline: editFormData.actionDeadline || undefined,
-                      actionCompleted: editFormData.actionCompleted || undefined,
+                      actionDescription: editFormData.requiresAction ? editFormData.actionDescription || undefined : undefined,
+                      actionDeadline: editFormData.requiresAction ? editFormData.actionDeadline || undefined : undefined,
+                      actionCompleted: editFormData.requiresAction ? editFormData.actionCompleted || undefined : undefined,
+                      // Recurring event fields
+                      isRecurring: editFormData.isRecurring || undefined,
+                      recurrencePattern: editFormData.isRecurring ? editFormData.recurrencePattern : undefined,
+                      recurrenceDaysOfWeek: (editFormData.isRecurring && editFormData.recurrencePattern === "weekly" && editFormData.recurrenceDaysOfWeek && editFormData.recurrenceDaysOfWeek.length > 0) ? editFormData.recurrenceDaysOfWeek : undefined,
+                      recurrenceEndType: editFormData.isRecurring ? editFormData.recurrenceEndType : undefined,
+                      recurrenceEndDate: (editFormData.isRecurring && editFormData.recurrenceEndType === "date") ? editFormData.recurrenceEndDate || undefined : undefined,
+                      recurrenceEndCount: (editFormData.isRecurring && editFormData.recurrenceEndType === "count") ? editFormData.recurrenceEndCount : undefined,
                     });
 
                     // Update in Google Calendar if it was synced

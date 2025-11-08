@@ -43,33 +43,44 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lon: nu
 // Function to dynamically discover event sources for any location
 async function discoverEventSources(location: string): Promise<any[]> {
   // Use OpenAI to generate a list of relevant local event sources
-  const systemPrompt = `You are an expert at finding local event sources and community calendars for families with children.
+  const systemPrompt = `You are an expert at finding local event sources, activity calendars, and family-friendly places for families with children.
 
-For the location "${location}", provide a list of official websites that commonly list local events, activities, and programs for families and children.
+For the location "${location}", provide a list of official websites that list:
+A) SCHEDULED EVENTS (specific dates/times)
+B) ONGOING PLACES TO VISIT (museums, parks, entertainment venues with regular hours)
 
 Focus on:
+**Scheduled Events:**
 1. City/town official event calendars and recreation departments
 2. County parks and recreation departments
-3. Local library systems
+3. Local library systems and their event calendars
 4. Community centers
 5. School district calendars (for public events)
-6. Local museums and cultural institutions
-7. Local theaters and performing arts centers
-8. Sports facilities and youth leagues
-9. Nature centers and science museums
-10. Community festivals and seasonal events
+6. Community festivals and seasonal events
+7. Sports facilities and youth leagues (seasonal programs)
 
-Return a JSON array of event sources with this structure:
+**Ongoing Places:**
+8. Local museums, children's museums, science centers
+9. Zoos and aquariums
+10. Libraries (story times, maker spaces)
+11. Public parks, nature centers, botanical gardens
+12. Recreation centers with open swim/gym times
+13. Family entertainment venues (trampoline parks, bowling, mini golf)
+14. Art studios and theaters offering drop-in or ongoing programs
+15. Indoor playgrounds and play cafes
+
+Return a JSON array with this structure:
 [
   {
     "name": "Organization Name",
     "url": "https://...",
-    "categories": ["sports", "education", "arts", "community", "recreation", "family"]
+    "categories": ["sports", "education", "arts", "community", "recreation", "family", "entertainment"],
+    "type": "events" or "places" or "both"
   }
 ]
 
 IMPORTANT: Only return real, verifiable websites. Do not make up URLs. If you're not certain about a URL, omit it.
-IMPORTANT: Return at least 8-10 diverse sources if possible.`;
+IMPORTANT: Return at least 10-15 diverse sources if possible, mixing both event sources and ongoing places.`;
 
   try {
     const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -120,18 +131,25 @@ interface ExtractedEvent {
   title: string;
   description?: string;
   category: string;
+  type?: 'event' | 'place'; // NEW: distinguish events from ongoing places
+  // For EVENTS (specific dates/times):
   date?: string; // YYYY-MM-DD
   time?: string; // HH:MM
   endTime?: string;
+  recurring?: boolean;
+  registrationRequired?: boolean;
+  registrationDeadline?: string;
+  // For PLACES (ongoing venues with hours):
+  hoursOfOperation?: string; // e.g., "Mon-Fri 9am-5pm, Sat-Sun 10am-6pm"
+  admission?: string; // e.g., "Free", "$15 adults, $10 children", etc.
+  amenities?: string[]; // e.g., ["playground", "splash pad", "picnic area"]
+  // Common to both:
   location?: string;
   address?: string;
   website?: string;
   phoneNumber?: string;
   priceRange?: string;
   ageRange?: string;
-  recurring?: boolean;
-  registrationRequired?: boolean;
-  registrationDeadline?: string;
 }
 
 /**
@@ -254,32 +272,52 @@ export async function POST(request: NextRequest) {
       // Step 2: Use OpenAI to extract structured event data
       const currentYear = new Date().getFullYear();
 
-      const systemPrompt = `You are an expert at extracting event information from website content. Today's date is ${dateRangeStart}.
+      const systemPrompt = `You are an expert at extracting both SCHEDULED EVENTS and ONGOING PLACES from website content. Today's date is ${dateRangeStart}.
 
-Extract ONLY events occurring between ${dateRangeStart} and ${dateRangeEnd} from this webpage. For each event, provide:
+Extract TWO TYPES of family-friendly activities:
 
-- title (string, REQUIRED): Event name/title
-- description (string, optional): Brief description of what the event is about
-- category (string, REQUIRED): Choose from: "sports", "arts", "education", "entertainment", "community", "recreation", "family", "other"
-- date (YYYY-MM-DD, optional): Event date. Parse carefully:
-  * "November 15" with no year -> ${currentYear}-11-15
-  * "Nov 15-17" -> separate events for each date
-  * "Every Tuesday" -> mark as recurring, provide next occurrence
-- time (HH:MM in 24-hour format, optional): Start time
-- endTime (HH:MM, optional): End time if mentioned
+**TYPE A - SCHEDULED EVENTS** (specific dates/times between ${dateRangeStart} and ${dateRangeEnd}):
+Examples: concerts, festivals, workshops, classes with registration, sports games, story times
+
+**TYPE B - ONGOING PLACES** (venues/facilities with regular hours that families can visit anytime):
+Examples: museums, parks, libraries, playgrounds, zoos, recreation centers, entertainment venues
+
+For each item, provide:
+
+**REQUIRED FOR ALL:**
+- title (string, REQUIRED): Name of the event or place
+- type (string, REQUIRED): "event" or "place"
+- description (string, optional): Brief description
+- category (string, REQUIRED): "sports", "arts", "education", "entertainment", "community", "recreation", "family", "movie night", "other"
 - location (string, optional): Venue or facility name
 - address (string, optional): Full street address if provided
-- website (string, IMPORTANT): Event-specific URL or registration link. Extract the direct link to THIS SPECIFIC EVENT's detail page, not the general calendar page. Look for "More Info", "Details", "Register", "Learn More" links that are unique to this event.
+- website (string, IMPORTANT): Direct URL to details page
 - phoneNumber (string, optional): Contact number
 - priceRange (string, optional): "Free", "$" (under $25), "$$" ($25-75), "$$$" ($75+)
-- ageRange (string, optional): e.g., "5-12 years", "All ages", "Adults only"
+- ageRange (string, optional): e.g., "5-12 years", "All ages", "Toddlers"
+
+**FOR EVENTS ONLY (type="event"):**
+- date (YYYY-MM-DD, required for events): Parse carefully:
+  * "November 15" with no year -> ${currentYear}-11-15
+  * "Nov 15-17" -> create separate events for each date
+  * "Every Tuesday" -> mark as recurring, provide next occurrence
+- time (HH:MM in 24-hour format, optional): Start time
+- endTime (HH:MM, optional): End time
 - recurring (boolean, optional): Is this a recurring event?
-- registrationRequired (boolean, optional): Does it require registration?
+- registrationRequired (boolean, optional): Requires registration?
 - registrationDeadline (YYYY-MM-DD, optional): Deadline to register
 
-Return a JSON array of events. If no events found, return empty array [].
+**FOR PLACES ONLY (type="place"):**
+- hoursOfOperation (string, optional): e.g., "Mon-Fri 9am-5pm, Sat-Sun 10am-6pm" or "Open daily 9am-9pm"
+- admission (string, optional): Admission cost details, e.g., "Free", "$15 adults, $10 children under 12", "Suggested donation $5"
+- amenities (array of strings, optional): What's available, e.g., ["playground", "splash pad", "picnic tables", "restrooms", "cafe", "gift shop", "parking"]
 
-IMPORTANT: Only extract actual events with specific details. Skip general program descriptions unless they have specific dates/times.`;
+Return a JSON array mixing both events and places. If nothing found, return empty array [].
+
+IMPORTANT:
+- Events MUST have specific dates between ${dateRangeStart} and ${dateRangeEnd}
+- Places should be family-friendly venues that can be visited during the date range
+- Only extract items with enough detail to be useful to families`;
 
       try {
         const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {

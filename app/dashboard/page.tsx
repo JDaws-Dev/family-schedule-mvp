@@ -17,6 +17,35 @@ import PhotoUploadModal from "../components/PhotoUploadModal";
 import VoiceRecordModal from "../components/VoiceRecordModal";
 import BottomNav from "../components/BottomNav";
 
+// Bible verses - Family and Peace themed (ESV)
+const BIBLE_VERSES = [
+  // Family verses
+  { text: "As for me and my house, we will serve the Lord.", reference: "Joshua 24:15" },
+  { text: "Children are a heritage from the Lord, offspring a reward from him.", reference: "Psalm 127:3" },
+  { text: "Train up a child in the way he should go; even when he is old he will not depart from it.", reference: "Proverbs 22:6" },
+  { text: "Fathers, do not provoke your children to anger, but bring them up in the discipline and instruction of the Lord.", reference: "Ephesians 6:4" },
+  { text: "Honor your father and your mother, that your days may be long in the land that the Lord your God is giving you.", reference: "Exodus 20:12" },
+  { text: "Love is patient and kind; love does not envy or boast; it is not arrogant or rude.", reference: "1 Corinthians 13:4-5" },
+  { text: "Above all, keep loving one another earnestly, since love covers a multitude of sins.", reference: "1 Peter 4:8" },
+  { text: "And these words that I command you today shall be on your heart. You shall teach them diligently to your children.", reference: "Deuteronomy 6:6-7" },
+  { text: "Behold, children are a heritage from the Lord, the fruit of the womb a reward.", reference: "Psalm 127:3" },
+  { text: "May the Lord make you increase and abound in love for one another and for all.", reference: "1 Thessalonians 3:12" },
+
+  // Peace verses
+  { text: "Peace I leave with you; my peace I give to you. Not as the world gives do I give to you. Let not your hearts be troubled, neither let them be afraid.", reference: "John 14:27" },
+  { text: "You keep him in perfect peace whose mind is stayed on you, because he trusts in you.", reference: "Isaiah 26:3" },
+  { text: "And the peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus.", reference: "Philippians 4:7" },
+  { text: "Let the peace of Christ rule in your hearts, to which indeed you were called in one body. And be thankful.", reference: "Colossians 3:15" },
+  { text: "The Lord gives strength to his people; the Lord blesses his people with peace.", reference: "Psalm 29:11" },
+  { text: "For God is not a God of confusion but of peace.", reference: "1 Corinthians 14:33" },
+  { text: "Do not be anxious about anything, but in everything by prayer and supplication with thanksgiving let your requests be made known to God.", reference: "Philippians 4:6" },
+  { text: "Cast your burden on the Lord, and he will sustain you; he will never permit the righteous to be moved.", reference: "Psalm 55:22" },
+  { text: "Come to me, all who labor and are heavy laden, and I will give you rest.", reference: "Matthew 11:28" },
+  { text: "For I know the plans I have for you, declares the Lord, plans for welfare and not for evil, to give you a future and a hope.", reference: "Jeremiah 29:11" },
+  { text: "The Lord is my shepherd; I shall not want. He makes me lie down in green pastures. He leads me beside still waters. He restores my soul.", reference: "Psalm 23:1-3" },
+  { text: "Be still, and know that I am God.", reference: "Psalm 46:10" },
+];
+
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
   if (!time24) return "";
@@ -140,6 +169,7 @@ function DashboardContent() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [isEnhancingEvent, setIsEnhancingEvent] = useState(false);
   const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [addEventTab, setAddEventTab] = useState<"manual" | "paste" | "photo" | "voice">("manual");
@@ -168,7 +198,18 @@ function DashboardContent() {
     requiresAction: false,
     actionDescription: "",
     actionDeadline: "",
+    isRecurring: false,
+    recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+    recurrenceDaysOfWeek: [] as string[],
+    recurrenceEndType: "never" as "date" | "count" | "never",
+    recurrenceEndDate: "",
+    recurrenceEndCount: 10,
   });
+  const [dailyVerse, setDailyVerse] = useState(() => {
+    // Select a random verse on component mount
+    return BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
+  });
+
   const { user: clerkUser } = useUser();
   const { signOut} = useClerk();
   const { startTour, hasSeenTour } = useGuidedTour();
@@ -230,6 +271,58 @@ function DashboardContent() {
     });
     return Array.from(categories).sort();
   }, [allEvents]);
+
+  // Filter upcoming events for action items only
+  const actionRequiredEvents = React.useMemo(() => {
+    if (!upcomingEvents) return undefined;
+
+    // Combine upcoming events and unconfirmed events
+    const allEventsToCheck = upcomingEvents || [];
+    const unconfirmedToCheck = unconfirmedEvents || [];
+
+    // Create a set of IDs to avoid duplicates
+    const seenIds = new Set();
+    const combinedEvents = [];
+
+    // Filter for events that need attention:
+    // 1. Events with action required that hasn't been completed
+    // 2. Events with upcoming action deadlines (within 3 days)
+    // 3. Unconfirmed events (need review)
+    const today = new Date().toISOString().split("T")[0];
+    const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+    // Check all upcoming events for actions
+    allEventsToCheck.forEach((event: any) => {
+      if (seenIds.has(event._id)) return;
+
+      // Show events with uncompleted actions
+      if (event.requiresAction && !event.actionCompleted) {
+        combinedEvents.push(event);
+        seenIds.add(event._id);
+        return;
+      }
+
+      // Show events with action deadlines coming up soon (within 3 days)
+      if (event.actionDeadline && event.actionDeadline <= threeDaysFromNow && !event.actionCompleted) {
+        combinedEvents.push(event);
+        seenIds.add(event._id);
+        return;
+      }
+    });
+
+    // Add unconfirmed events (they need review - that's an action!)
+    unconfirmedToCheck.forEach((event: any) => {
+      if (!seenIds.has(event._id) && !event.isConfirmed) {
+        combinedEvents.push(event);
+        seenIds.add(event._id);
+      }
+    });
+
+    // Sort by date
+    return combinedEvents.sort((a: any, b: any) => {
+      return a.eventDate.localeCompare(b.eventDate);
+    });
+  }, [upcomingEvents, unconfirmedEvents]);
 
   // Standard preset categories
   const standardCategories = [
@@ -751,6 +844,13 @@ function DashboardContent() {
         actionDescription: newEventForm.requiresAction ? newEventForm.actionDescription.trim() || undefined : undefined,
         actionDeadline: newEventForm.requiresAction ? newEventForm.actionDeadline || undefined : undefined,
         isConfirmed: true,
+        // Recurring event fields
+        isRecurring: newEventForm.isRecurring || undefined,
+        recurrencePattern: newEventForm.isRecurring ? newEventForm.recurrencePattern : undefined,
+        recurrenceDaysOfWeek: (newEventForm.isRecurring && newEventForm.recurrencePattern === "weekly" && newEventForm.recurrenceDaysOfWeek.length > 0) ? newEventForm.recurrenceDaysOfWeek : undefined,
+        recurrenceEndType: newEventForm.isRecurring ? newEventForm.recurrenceEndType : undefined,
+        recurrenceEndDate: (newEventForm.isRecurring && newEventForm.recurrenceEndType === "date") ? newEventForm.recurrenceEndDate || undefined : undefined,
+        recurrenceEndCount: (newEventForm.isRecurring && newEventForm.recurrenceEndType === "count") ? newEventForm.recurrenceEndCount : undefined,
       });
 
       setNewEventForm({
@@ -765,6 +865,12 @@ function DashboardContent() {
         requiresAction: false,
         actionDescription: "",
         actionDeadline: "",
+        isRecurring: false,
+        recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+        recurrenceDaysOfWeek: [] as string[],
+        recurrenceEndType: "never" as "date" | "count" | "never",
+        recurrenceEndDate: "",
+        recurrenceEndCount: 10,
       });
 
       setShowAddEventModal(false);
@@ -787,6 +893,45 @@ function DashboardContent() {
     } catch (error) {
       console.error("Error creating event:", error);
       showToast("Unable to create event. Please try again.", "error");
+    }
+  };
+
+  const handleEnhanceEditEvent = async () => {
+    if (!editFormData?.title) return;
+
+    setIsEnhancingEvent(true);
+    try {
+      const response = await fetch("/api/enhance-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editFormData.title,
+          description: editFormData.description || "",
+          location: editFormData.location || "",
+          date: editFormData.eventDate || "",
+          time: editFormData.eventTime || "",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Enhancement failed");
+
+      const data = await response.json();
+
+      // Update editing event with all enhanced details
+      setEditFormData({
+        ...editFormData,
+        description: data.description || editFormData.description,
+        location: data.location || editFormData.location,
+        category: data.category || editFormData.category,
+        childName: data.childName || editFormData.childName,
+      });
+
+      showToast("✨ Event enhanced! AI filled in smart suggestions - review and adjust as needed.", "success");
+    } catch (error) {
+      console.error("Error enhancing event:", error);
+      showToast("Failed to enhance event. Please try again.", "error");
+    } finally {
+      setIsEnhancingEvent(false);
     }
   };
 
@@ -983,22 +1128,30 @@ function DashboardContent() {
         )}
 
         {/* Personalized Greeting with Family Branding */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              {clerkUser && (() => {
-                const hour = new Date().getHours();
-                const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-                const firstName = clerkUser.firstName || clerkUser.fullName?.split(' ')[0] || "there";
-                return `${greeting}, ${firstName}`;
-              })()}
-            </h1>
-            {family?.name && (
-              <div className="text-base sm:text-lg font-semibold text-primary-600">
-                {family.name} Family Hub
-              </div>
-            )}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-3xl">🏠</span>
+            </div>
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                {clerkUser && (() => {
+                  const hour = new Date().getHours();
+                  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+                  const firstName = clerkUser.firstName || clerkUser.fullName?.split(' ')[0] || "there";
+                  return `${greeting}, ${firstName}!`;
+                })()}
+              </h1>
+              {family?.name && (
+                <p className="text-lg text-primary-600 font-semibold mt-1">
+                  {family.name} Family Hub
+                </p>
+              )}
+            </div>
           </div>
+          <p className="text-gray-600 text-lg">
+            Never miss a practice, forget an RSVP, or lose track of what's happening this week
+          </p>
         </div>
 
         {/* Gmail Connection Banner */}
@@ -1035,8 +1188,8 @@ function DashboardContent() {
               </div>
               <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">7 days</span>
             </div>
-            <h3 className="text-white/90 font-medium mb-2 text-sm">This Week</h3>
-            <div className="mb-1">
+            <h3 className="text-white font-semibold mb-2 text-base">📅 Your Week Ahead</h3>
+            <div className="mb-2">
               {weekEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
               ) : (
@@ -1048,7 +1201,8 @@ function DashboardContent() {
                 </>
               )}
             </div>
-            <p className="text-sm text-white/80">Click to view calendar →</p>
+            <p className="text-sm text-white/90 mb-3">See what's coming up and when everyone needs to be where</p>
+            <p className="text-sm text-white/80 font-medium">View Full Calendar →</p>
           </Link>
 
           {/* Needs Action Card */}
@@ -1062,10 +1216,10 @@ function DashboardContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Action</span>
+              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">Urgent</span>
             </div>
-            <h3 className="text-white/90 font-medium mb-2 text-sm">Needs Action</h3>
-            <div className="mb-1">
+            <h3 className="text-white font-semibold mb-2 text-base">⚡ Action Needed</h3>
+            <div className="mb-2">
               {weekEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
               ) : (() => {
@@ -1081,14 +1235,15 @@ function DashboardContent() {
                     <>
                       <span className="text-4xl font-bold">{count}</span>
                       <span className="text-lg font-semibold ml-2 text-white/90">
-                        {count === 1 ? 'event' : 'events'}
+                        {count === 1 ? 'RSVP' : 'RSVPs'}
                       </span>
                     </>
                   );
                 })()
               }
             </div>
-            <p className="text-sm text-white/80">Click to view actions →</p>
+            <p className="text-sm text-white/90 mb-3">Deadlines coming up! Sign-up sheets, permission slips, and payments</p>
+            <p className="text-sm text-white/80 font-medium">Handle These →</p>
           </div>
 
           {/* To Review Card */}
@@ -1107,8 +1262,8 @@ function DashboardContent() {
                 <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full animate-pulse">New!</span>
               )}
             </div>
-            <h3 className="text-white/90 font-medium mb-2 text-sm">To Review</h3>
-            <div className="mb-1">
+            <h3 className="text-white font-semibold mb-2 text-base">✨ New Events Found</h3>
+            <div className="mb-2">
               {unconfirmedEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
               ) : (
@@ -1120,7 +1275,8 @@ function DashboardContent() {
                 </>
               )}
             </div>
-            <p className="text-sm text-white/80">Click to review events →</p>
+            <p className="text-sm text-white/90 mb-3">We found these in your emails - quick review to add to your calendar</p>
+            <p className="text-sm text-white/80 font-medium">Review & Add →</p>
           </Link>
         </div>
 
@@ -1184,10 +1340,11 @@ function DashboardContent() {
             <div className="bg-white rounded-lg shadow">
               <div className="p-6 border-b border-gray-200 flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Next 7 Days
+                  <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <span className="text-2xl">⚡</span>
+                    Action Dashboard
                   </h2>
-                  <p className="text-sm text-gray-500 mt-0.5">All upcoming events this week</p>
+                  <p className="text-sm text-gray-500 mt-0.5">Events requiring your attention this week</p>
                 </div>
                 <Link
                   href="/calendar"
@@ -1200,21 +1357,21 @@ function DashboardContent() {
                 </Link>
               </div>
               <div className="divide-y divide-gray-200">
-                {upcomingEvents === undefined ? (
+                {actionRequiredEvents === undefined ? (
                   <>
                     <EventCardSkeleton />
                     <EventCardSkeleton />
                     <EventCardSkeleton />
                   </>
-                ) : upcomingEvents.length === 0 ? (
+                ) : actionRequiredEvents.length === 0 ? (
                   <div className="p-8 sm:p-12 text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-green-200 to-green-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Let's get started!</h3>
-                    <p className="text-gray-600 mb-6">Add your first event and we'll help you stay organized.</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">You're all caught up! ✨</h3>
+                    <p className="text-gray-600 mb-6">No action items this week. Check the Calendar for your full schedule.</p>
 
                     <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left max-w-md mx-auto">
                       <h4 className="font-semibold text-gray-900 mb-3">Getting started:</h4>
@@ -1263,7 +1420,7 @@ function DashboardContent() {
                   </div>
                 ) : (
                   <div className="space-y-6 p-4">
-                    {groupEventsByDate(upcomingEvents).map(({ date, events }) => (
+                    {groupEventsByDate(actionRequiredEvents).map(({ date, events }) => (
                       <div key={date}>
                         {/* Date Header - More playful */}
                         <div className="mb-3">
@@ -1296,6 +1453,46 @@ function DashboardContent() {
                                 {/* Event Details */}
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-bold text-gray-900 text-lg mb-2">{event.title}</h3>
+
+                                  {/* Action Required Banner */}
+                                  {!event.isConfirmed ? (
+                                    <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-xl flex-shrink-0">📋</span>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-bold text-blue-900 text-sm mb-1">
+                                            Needs Review
+                                          </div>
+                                          <div className="text-blue-800 text-sm">
+                                            This event was found in your emails and needs confirmation
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : event.requiresAction && !event.actionCompleted && (
+                                    <div className="mb-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-orange-300 rounded-lg">
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-xl flex-shrink-0">⚠️</span>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-bold text-orange-900 text-sm mb-1">
+                                            Action Required
+                                          </div>
+                                          <div className="text-orange-800 text-sm">
+                                            {event.actionDescription || 'Action needed'}
+                                          </div>
+                                          {event.actionDeadline && (
+                                            <div className="text-orange-700 text-xs mt-1 font-semibold">
+                                              Due: {new Date(event.actionDeadline).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: new Date(event.actionDeadline).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                                              })}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
 
                                   <div className="space-y-1.5 mb-3">
                                     {event.eventTime && (
@@ -1348,6 +1545,41 @@ function DashboardContent() {
 
           {/* Add Event Button - Progressive Disclosure */}
           <div className="lg:col-span-1">
+            {/* Daily Bible Verse - Featured */}
+            <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-strong p-8 mb-6 relative overflow-hidden">
+              {/* Decorative background pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+              </div>
+
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <span className="text-3xl">📖</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Today's Verse</h3>
+                    <p className="text-sm text-white/80">Your daily encouragement</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/20 mb-4">
+                  <p className="text-white text-lg leading-relaxed mb-4 font-medium">
+                    "{dailyVerse.text}"
+                  </p>
+                  <p className="text-white/90 font-bold text-base">
+                    — {dailyVerse.reference}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-white/70">
+                  <span>English Standard Version</span>
+                  <span>✨ New verse each visit</span>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white rounded-lg shadow-soft p-6 mb-6">
               <button
                 onClick={() => setShowAddEventChoiceModal(true)}
@@ -1815,7 +2047,8 @@ function DashboardContent() {
                           ...editFormData,
                           requiresAction: e.target.checked,
                           actionDescription: e.target.checked ? editFormData?.actionDescription : "",
-                          actionDeadline: e.target.checked ? editFormData?.actionDeadline : ""
+                          actionDeadline: e.target.checked ? editFormData?.actionDeadline : "",
+                          actionCompleted: e.target.checked ? editFormData?.actionCompleted : false
                         })}
                         className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
                       />
@@ -1857,10 +2090,162 @@ function DashboardContent() {
                       </div>
                     )}
                   </div>
+
+                  {/* Recurring Event Section */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex items-start gap-3 mb-4">
+                      <input
+                        type="checkbox"
+                        id="editIsRecurring"
+                        checked={editFormData?.isRecurring || false}
+                        onChange={(e) => setEditFormData({
+                          ...editFormData,
+                          isRecurring: e.target.checked,
+                          recurrenceDaysOfWeek: e.target.checked ? (editFormData?.recurrenceDaysOfWeek || []) : []
+                        })}
+                        className="w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-400 mt-0.5"
+                      />
+                      <label htmlFor="editIsRecurring" className="flex-1 cursor-pointer">
+                        <span className="block text-sm font-semibold text-gray-900">
+                          This is a recurring event
+                        </span>
+                        <span className="block text-xs text-gray-600 mt-0.5">
+                          Event repeats on a regular schedule
+                        </span>
+                      </label>
+                    </div>
+
+                    {editFormData?.isRecurring && (
+                      <div className="space-y-3 pl-8">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Repeats
+                          </label>
+                          <select
+                            value={editFormData?.recurrencePattern || "weekly"}
+                            onChange={(e) => setEditFormData({
+                              ...editFormData,
+                              recurrencePattern: e.target.value as "daily" | "weekly" | "monthly" | "yearly"
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                          >
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                          </select>
+                        </div>
+
+                        {editFormData?.recurrencePattern === "weekly" && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Repeat on
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                              {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => {
+                                const recurrenceDays = editFormData?.recurrenceDaysOfWeek || [];
+                                const isSelected = recurrenceDays.includes(day);
+                                return (
+                                  <button
+                                    key={day}
+                                    type="button"
+                                    onClick={() => {
+                                      const days = isSelected
+                                        ? recurrenceDays.filter(d => d !== day)
+                                        : [...recurrenceDays, day];
+                                      setEditFormData({
+                                        ...editFormData,
+                                        recurrenceDaysOfWeek: days
+                                      });
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                      isSelected
+                                        ? "bg-primary-500 text-white"
+                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    }`}
+                                  >
+                                    {day.substring(0, 3)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Ends
+                          </label>
+                          <select
+                            value={editFormData?.recurrenceEndType || "never"}
+                            onChange={(e) => setEditFormData({
+                              ...editFormData,
+                              recurrenceEndType: e.target.value as "date" | "count" | "never"
+                            })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                          >
+                            <option value="never">Never</option>
+                            <option value="date">On a specific date</option>
+                            <option value="count">After a number of occurrences</option>
+                          </select>
+                        </div>
+
+                        {editFormData?.recurrenceEndType === "date" && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              End date
+                            </label>
+                            <input
+                              type="date"
+                              value={editFormData?.recurrenceEndDate || ""}
+                              onChange={(e) => setEditFormData({ ...editFormData, recurrenceEndDate: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                            />
+                          </div>
+                        )}
+
+                        {editFormData?.recurrenceEndType === "count" && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Number of occurrences
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="365"
+                              value={editFormData?.recurrenceEndCount || 10}
+                              onChange={(e) => setEditFormData({ ...editFormData, recurrenceEndCount: parseInt(e.target.value) || 10 })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={handleEnhanceEditEvent}
+                    disabled={isEnhancingEvent || !editFormData?.title?.trim()}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isEnhancingEvent ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Enhancing...
+                      </>
+                    ) : (
+                      <>
+                        ✨ Enhance with AI
+                      </>
+                    )}
+                  </button>
                   <button
                     onClick={async () => {
                       try {
@@ -1878,6 +2263,14 @@ function DashboardContent() {
                           requiresAction: editFormData.requiresAction || undefined,
                           actionDescription: editFormData.requiresAction ? editFormData.actionDescription || undefined : undefined,
                           actionDeadline: editFormData.requiresAction ? editFormData.actionDeadline || undefined : undefined,
+                          actionCompleted: editFormData.requiresAction ? editFormData.actionCompleted || undefined : undefined,
+                          // Recurring event fields
+                          isRecurring: editFormData.isRecurring || undefined,
+                          recurrencePattern: editFormData.isRecurring ? editFormData.recurrencePattern : undefined,
+                          recurrenceDaysOfWeek: (editFormData.isRecurring && editFormData.recurrencePattern === "weekly" && editFormData.recurrenceDaysOfWeek && editFormData.recurrenceDaysOfWeek.length > 0) ? editFormData.recurrenceDaysOfWeek : undefined,
+                          recurrenceEndType: editFormData.isRecurring ? editFormData.recurrenceEndType : undefined,
+                          recurrenceEndDate: (editFormData.isRecurring && editFormData.recurrenceEndType === "date") ? editFormData.recurrenceEndDate || undefined : undefined,
+                          recurrenceEndCount: (editFormData.isRecurring && editFormData.recurrenceEndType === "count") ? editFormData.recurrenceEndCount : undefined,
                         });
 
                         // Update in Google Calendar if it was synced
@@ -2006,10 +2399,18 @@ function DashboardContent() {
                         <button
                           onClick={async () => {
                             try {
+                              const newCompletedState = !selectedEvent.actionCompleted;
                               await updateEvent({
                                 eventId: selectedEvent._id,
-                                actionCompleted: !selectedEvent.actionCompleted,
+                                actionCompleted: newCompletedState,
                               });
+
+                              // Update the selectedEvent state so UI reflects the change immediately
+                              setSelectedEvent({
+                                ...selectedEvent,
+                                actionCompleted: newCompletedState,
+                              });
+
                               showToast(
                                 selectedEvent.actionCompleted
                                   ? "Action marked as incomplete"
@@ -2609,6 +3010,137 @@ Example:
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
                         />
                       </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Recurring Event Section */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-start gap-3 mb-4">
+                    <input
+                      type="checkbox"
+                      id="isRecurring"
+                      checked={newEventForm.isRecurring}
+                      onChange={(e) => setNewEventForm({
+                        ...newEventForm,
+                        isRecurring: e.target.checked,
+                        recurrenceDaysOfWeek: e.target.checked ? newEventForm.recurrenceDaysOfWeek : []
+                      })}
+                      className="w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-400 mt-0.5"
+                    />
+                    <label htmlFor="isRecurring" className="flex-1 cursor-pointer">
+                      <span className="block text-sm font-semibold text-gray-900">
+                        This is a recurring event
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">
+                        Event repeats on a regular schedule
+                      </span>
+                    </label>
+                  </div>
+
+                  {newEventForm.isRecurring && (
+                    <div className="space-y-3 pl-8">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Repeats
+                        </label>
+                        <select
+                          value={newEventForm.recurrencePattern}
+                          onChange={(e) => setNewEventForm({
+                            ...newEventForm,
+                            recurrencePattern: e.target.value as "daily" | "weekly" | "monthly" | "yearly"
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="yearly">Yearly</option>
+                        </select>
+                      </div>
+
+                      {newEventForm.recurrencePattern === "weekly" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Repeat on
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => {
+                              const isSelected = newEventForm.recurrenceDaysOfWeek.includes(day);
+                              return (
+                                <button
+                                  key={day}
+                                  type="button"
+                                  onClick={() => {
+                                    const days = isSelected
+                                      ? newEventForm.recurrenceDaysOfWeek.filter(d => d !== day)
+                                      : [...newEventForm.recurrenceDaysOfWeek, day];
+                                    setNewEventForm({
+                                      ...newEventForm,
+                                      recurrenceDaysOfWeek: days
+                                    });
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                    isSelected
+                                      ? "bg-primary-500 text-white"
+                                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  }`}
+                                >
+                                  {day.substring(0, 3)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ends
+                        </label>
+                        <select
+                          value={newEventForm.recurrenceEndType}
+                          onChange={(e) => setNewEventForm({
+                            ...newEventForm,
+                            recurrenceEndType: e.target.value as "date" | "count" | "never"
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        >
+                          <option value="never">Never</option>
+                          <option value="date">On a specific date</option>
+                          <option value="count">After a number of occurrences</option>
+                        </select>
+                      </div>
+
+                      {newEventForm.recurrenceEndType === "date" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            End date
+                          </label>
+                          <input
+                            type="date"
+                            value={newEventForm.recurrenceEndDate}
+                            onChange={(e) => setNewEventForm({ ...newEventForm, recurrenceEndDate: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                          />
+                        </div>
+                      )}
+
+                      {newEventForm.recurrenceEndType === "count" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Number of occurrences
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="365"
+                            value={newEventForm.recurrenceEndCount}
+                            onChange={(e) => setNewEventForm({ ...newEventForm, recurrenceEndCount: parseInt(e.target.value) || 10 })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
