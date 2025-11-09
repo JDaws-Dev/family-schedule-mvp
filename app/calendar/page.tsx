@@ -10,6 +10,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
 import MobileNav from "@/app/components/MobileNav";
 import BottomNav from "@/app/components/BottomNav";
+import FAB from "@/app/components/FAB";
 import { useToast } from "@/app/components/Toast";
 import { CalendarSkeleton } from "@/app/components/LoadingSkeleton";
 import AddEventChoiceModal from "@/app/components/AddEventChoiceModal";
@@ -149,7 +150,7 @@ function CalendarContent() {
   const { showToast } = useToast();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [view, setView] = useState<ExtendedView>("list");
+  const [view, setView] = useState<ExtendedView>("month");
   const [date, setDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
@@ -177,6 +178,7 @@ function CalendarContent() {
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
   const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [recentlyDeleted, setRecentlyDeleted] = useState<{eventId: string, event: any, timeout: NodeJS.Timeout} | null>(null);
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
@@ -233,23 +235,8 @@ function CalendarContent() {
     "Other"
   ];
 
-  // Extract unique categories from events
-  const existingCategories = useMemo(() => {
-    if (!confirmedEvents) return [];
-    const uniqueCategories = new Set<string>();
-    confirmedEvents.forEach((event: any) => {
-      if (event.category) uniqueCategories.add(event.category);
-    });
-    return Array.from(uniqueCategories).sort();
-  }, [confirmedEvents]);
-
-  // Combined categories for filter dropdown
-  const categories = useMemo(() => {
-    return Array.from(new Set([...standardCategories, ...existingCategories])).sort();
-  }, [existingCategories]);
-
-  // Filter events based on search and filters
-  const filteredEvents = useMemo(() => {
+  // First, filter events by search and family member (but not category yet)
+  const preFilteredEvents = useMemo(() => {
     if (!confirmedEvents) return [];
 
     return confirmedEvents.filter(event => {
@@ -276,6 +263,28 @@ function CalendarContent() {
         }
       }
 
+      return true;
+    });
+  }, [confirmedEvents, searchQuery, filterMember]);
+
+  // Extract unique categories from pre-filtered events (not all events)
+  const existingCategories = useMemo(() => {
+    if (!preFilteredEvents) return [];
+    const uniqueCategories = new Set<string>();
+    preFilteredEvents.forEach((event: any) => {
+      if (event.category) uniqueCategories.add(event.category);
+    });
+    return Array.from(uniqueCategories).sort();
+  }, [preFilteredEvents]);
+
+  // Categories available for filtering (only those in current view)
+  const categories = useMemo(() => {
+    return existingCategories;
+  }, [existingCategories]);
+
+  // Final filter that includes category
+  const filteredEvents = useMemo(() => {
+    return preFilteredEvents.filter(event => {
       // Category filter
       if (filterCategory !== "all" && event.category !== filterCategory) {
         return false;
@@ -283,7 +292,7 @@ function CalendarContent() {
 
       return true;
     });
-  }, [confirmedEvents, searchQuery, filterMember, filterCategory]);
+  }, [preFilteredEvents, filterCategory]);
 
   // Sort filtered events
   // Sort events by date (upcoming first) and optionally filter by date
@@ -430,12 +439,19 @@ function CalendarContent() {
         } else {
           showToast("All events are already up to date!", "info");
         }
+      } else if (response.status === 403 && data.needsReconnect) {
+        // Calendar permission error - need to reconnect
+        showToast("Google Calendar needs permission. Go to Settings to reconnect.", "error");
+      } else if (response.status === 404 && data.needsReconnect) {
+        // No Google account connected  - silently skip for background sync
+        console.log("No Gmail account connected for calendar sync");
       } else {
-        showToast(data.error || "Oops! Couldn't connect to your phone's calendar", "error");
+        showToast(data.error || "Couldn't sync with Google Calendar", "error");
       }
     } catch (error) {
       console.error("Error syncing from Google Calendar:", error);
-      showToast("Oops! Couldn't connect to your phone's calendar. Want to try again?", "error");
+      // Silently log errors for background sync - don't alarm the user
+      console.log("Background sync failed, will retry later");
     } finally {
       setSyncingFrom(false);
     }
@@ -452,6 +468,13 @@ function CalendarContent() {
     // Don't sync if already syncing
     if (syncingFrom) return;
 
+    // Check if Gmail account is connected before attempting sync
+    if (!gmailAccounts || gmailAccounts.length === 0) {
+      console.log("Skipping auto-sync: No Gmail account connected");
+      hasSyncedFromRef.current = true;
+      return;
+    }
+
     // Check if enough time has passed since last sync (5 minutes)
     const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
     const now = Date.now();
@@ -463,7 +486,7 @@ function CalendarContent() {
       hasSyncedFromRef.current = true; // Mark as synced to prevent retries
       handleSyncFromGoogleCalendar();
     }
-  }, [convexUser?.familyId, family, syncingFrom, handleSyncFromGoogleCalendar]);
+  }, [convexUser?.familyId, family, syncingFrom, gmailAccounts, handleSyncFromGoogleCalendar]);
 
   // Automatic background sync TO Google Calendar (push unsynced events once when loaded)
   useEffect(() => {
@@ -825,6 +848,66 @@ function CalendarContent() {
     }
   };
 
+  // Handle swipe delete with confirmation
+  const handleSwipeDelete = async (event: any) => {
+    // Show confirmation dialog
+    setConfirmDialogConfig({
+      title: 'Delete Event?',
+      message: `Are you sure you want to delete "${event.title}"?`,
+      variant: 'danger',
+      onConfirm: () => {
+        // Clear any existing undo timeout
+        if (recentlyDeleted) {
+          clearTimeout(recentlyDeleted.timeout);
+        }
+
+        // Set up undo timeout (10 seconds to undo)
+        const timeout = setTimeout(async () => {
+          // Actually delete the event after 10 seconds
+          if (recentlyDeleted?.eventId) {
+            await deleteEvent({ eventId: recentlyDeleted.eventId as any });
+          }
+          setRecentlyDeleted(null);
+        }, 10000);
+
+        setRecentlyDeleted({
+          eventId: event._id,
+          event: event,
+          timeout
+        });
+
+        setShowConfirmDialog(false);
+        setConfirmDialogConfig(null);
+      }
+    });
+    setShowConfirmDialog(true);
+  };
+
+  // Handle undo delete
+  const handleUndoDelete = () => {
+    if (recentlyDeleted) {
+      clearTimeout(recentlyDeleted.timeout);
+      setRecentlyDeleted(null);
+    }
+  };
+
+  const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
+    switch (action) {
+      case "manual":
+        setShowAddEventChoiceModal(true);
+        break;
+      case "paste":
+        setShowAddEventChoiceModal(true);
+        break;
+      case "photo":
+        setShowPhotoUploadModal(true);
+        break;
+      case "voice":
+        setShowVoiceRecordModal(true);
+        break;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
@@ -879,7 +962,9 @@ function CalendarContent() {
               <span className="text-3xl">📅</span>
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Family Calendar</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                {family?.calendarName || "Family Calendar"}
+              </h1>
               <p className="text-gray-600 text-lg mt-1">
                 Your master schedule - everything confirmed and ready to go
               </p>
@@ -887,162 +972,259 @@ function CalendarContent() {
           </div>
         </div>
 
-        {/* Enhanced Calendar Controls */}
+        {/* Simplified Calendar Controls */}
           {confirmedEvents && confirmedEvents.length > 0 && (
-            <div className="bg-white rounded-lg shadow-soft p-4 mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                {/* View Selector */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700 mr-2">View:</span>
-                  <div className="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-1">
-                    {(['month', 'week', 'day', 'list'] as ExtendedView[]).map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setView(v)}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                          view === v
-                            ? 'bg-primary-600 text-white shadow-soft'
-                            : 'text-gray-700 hover:text-gray-900 hover:bg-white'
-                        }`}
-                      >
-                        {v === 'list' ? '📋 List' : v.charAt(0).toUpperCase() + v.slice(1)}
-                      </button>
-                    ))}
+            <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+              {/* Mobile Layout */}
+              <div className="lg:hidden space-y-3">
+                {/* View Toggle and Date */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex gap-2 flex-1">
+                    <button
+                      onClick={() => setView("month")}
+                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        view === "month"
+                          ? "bg-primary-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      Calendar
+                    </button>
+                    <button
+                      onClick={() => setView("list")}
+                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        view === "list"
+                          ? "bg-primary-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      List
+                    </button>
                   </div>
                 </div>
 
                 {/* Date Navigation */}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => {
-                      const newDate = new Date(date);
-                      if (view === 'month') newDate.setMonth(date.getMonth() - 1);
-                      else if (view === 'week') newDate.setDate(date.getDate() - 7);
-                      else if (view === 'day') newDate.setDate(date.getDate() - 1);
-                      setDate(newDate);
-                    }}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition"
-                    title="Previous"
-                  >
-                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
+                {view !== 'list' && (
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        const newDate = new Date(date);
+                        if (view === 'month') newDate.setMonth(date.getMonth() - 1);
+                        else if (view === 'week') newDate.setDate(date.getDate() - 7);
+                        else if (view === 'day') newDate.setDate(date.getDate() - 1);
+                        setDate(newDate);
+                      }}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
 
-                  <button
-                    onClick={() => setDate(new Date())}
-                    className="px-4 py-2 text-sm font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition"
-                  >
-                    Today
-                  </button>
+                    <div className="flex flex-col items-center">
+                      <span className="text-sm font-bold text-gray-900">
+                        {view === 'month' && format(date, 'MMMM yyyy')}
+                        {view === 'week' && format(date, 'MMM d, yyyy')}
+                        {view === 'day' && format(date, 'MMMM d, yyyy')}
+                      </span>
+                      <button
+                        onClick={() => setDate(new Date())}
+                        className="text-xs text-primary-600 hover:text-primary-700 font-medium mt-1"
+                      >
+                        Go to Today
+                      </button>
+                    </div>
 
-                  <button
-                    onClick={() => {
-                      const newDate = new Date(date);
-                      if (view === 'month') newDate.setMonth(date.getMonth() + 1);
-                      else if (view === 'week') newDate.setDate(date.getDate() + 7);
-                      else if (view === 'day') newDate.setDate(date.getDate() + 1);
-                      setDate(newDate);
-                    }}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition"
-                    title="Next"
-                  >
-                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                    <button
+                      onClick={() => {
+                        const newDate = new Date(date);
+                        if (view === 'month') newDate.setMonth(date.getMonth() + 1);
+                        else if (view === 'week') newDate.setDate(date.getDate() + 7);
+                        else if (view === 'day') newDate.setDate(date.getDate() + 1);
+                        setDate(newDate);
+                      }}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
 
-                  <span className="text-sm font-semibold text-gray-900 ml-2">
-                    {view === 'month' && format(date, 'MMMM yyyy')}
-                    {view === 'week' && `Week of ${format(date, 'MMM d, yyyy')}`}
-                    {view === 'day' && format(date, 'MMMM d, yyyy')}
-                  </span>
+              {/* Desktop Layout - Horizontal */}
+              <div className="hidden lg:flex items-center justify-between">
+                {/* View Selector */}
+                <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                  <button
+                    onClick={() => setView('month')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                      view === 'month'
+                        ? 'bg-primary-600 text-white shadow-sm'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-white'
+                    }`}
+                  >
+                    Calendar
+                  </button>
+                  <button
+                    onClick={() => setView('list')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                      view === 'list'
+                        ? 'bg-primary-600 text-white shadow-sm'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-white'
+                    }`}
+                  >
+                    List
+                  </button>
                 </div>
+
+                {/* Date Navigation */}
+                {view !== 'list' && (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        const newDate = new Date(date);
+                        if (view === 'month') newDate.setMonth(date.getMonth() - 1);
+                        else if (view === 'week') newDate.setDate(date.getDate() - 7);
+                        else if (view === 'day') newDate.setDate(date.getDate() - 1);
+                        setDate(newDate);
+                      }}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={() => setDate(new Date())}
+                      className="px-4 py-2 text-sm font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                    >
+                      Today
+                    </button>
+
+                    <span className="text-base font-bold text-gray-900 min-w-[180px] text-center">
+                      {view === 'month' && format(date, 'MMMM yyyy')}
+                      {view === 'week' && `Week of ${format(date, 'MMM d')}`}
+                      {view === 'day' && format(date, 'MMMM d, yyyy')}
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        const newDate = new Date(date);
+                        if (view === 'month') newDate.setMonth(date.getMonth() + 1);
+                        else if (view === 'week') newDate.setDate(date.getDate() + 7);
+                        else if (view === 'day') newDate.setDate(date.getDate() + 1);
+                        setDate(newDate);
+                      }}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-        {/* Search and Filters */}
+        {/* Compact Search and Filters */}
         {confirmedEvents && confirmedEvents.length > 0 && (
-          <div className="mb-6 bg-white rounded-lg shadow p-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search input */}
-              <div>
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-                  Search
-                </label>
-                <input
-                  id="search"
-                  type="text"
-                  placeholder="Search events..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
+          <div className="mb-4 bg-white rounded-xl shadow-sm p-3">
+            {/* Mobile Layout */}
+            <div className="lg:hidden space-y-2">
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
 
-              {/* Date Range Filter */}
-              <div>
-                <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date Range
-                </label>
+              <div className="grid grid-cols-2 gap-2">
                 <select
-                  id="dateRange"
-                  value={dateRangeFilter}
-                  onChange={(e) => setDateRangeFilter(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="all">All Dates</option>
-                  <option value="today">Today</option>
-                  <option value="week">Next 7 Days</option>
-                  <option value="month">Next 30 Days</option>
-                </select>
-              </div>
-
-              {/* Family member filter */}
-              <div>
-                <label htmlFor="member" className="block text-sm font-medium text-gray-700 mb-1">
-                  Family Member
-                </label>
-                <select
-                  id="member"
                   value={filterMember}
                   onChange={(e) => setFilterMember(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                 >
                   <option value="all">All Members</option>
                   {familyMembers?.map((member) => (
-                    <option key={member._id} value={member.name}>
-                      {member.name}
-                    </option>
+                    <option key={member._id} value={member.name}>{member.name}</option>
                   ))}
                 </select>
-              </div>
 
-              {/* Category filter */}
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
                 <select
-                  id="category"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
                 >
                   <option value="all">All Categories</option>
                   {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
+                    <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
               </div>
+
+              {(searchQuery || filterMember !== "all" || filterCategory !== "all") && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterMember("all");
+                    setFilterCategory("all");
+                  }}
+                  className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
 
-            {/* Clear filters button */}
-            {(searchQuery || filterMember !== "all" || filterCategory !== "all" || dateRangeFilter !== "all") && (
-              <div className="mt-3 flex justify-end">
+            {/* Desktop Layout - Single Row */}
+            <div className="hidden lg:flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+
+              <select
+                value={dateRangeFilter}
+                onChange={(e) => setDateRangeFilter(e.target.value as any)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="week">Next 7 Days</option>
+                <option value="month">Next 30 Days</option>
+              </select>
+
+              <select
+                value={filterMember}
+                onChange={(e) => setFilterMember(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">All Members</option>
+                {familyMembers?.map((member) => (
+                  <option key={member._id} value={member.name}>{member.name}</option>
+                ))}
+              </select>
+
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="all">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+
+              {(searchQuery || filterMember !== "all" || filterCategory !== "all" || dateRangeFilter !== "all") && (
                 <button
                   onClick={() => {
                     setSearchQuery("");
@@ -1050,14 +1232,15 @@ function CalendarContent() {
                     setFilterCategory("all");
                     setDateRangeFilter("all");
                   }}
-                  className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+                  className="px-3 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap"
                 >
-                  Clear all filters
+                  Clear
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
+
 
         {/* Calendar or List View */}
         {view === "list" ? (
@@ -1171,9 +1354,9 @@ function CalendarContent() {
 
                   <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-3">
-                      {/* Select All Checkbox */}
+                      {/* Select All Checkbox - Hidden on mobile */}
                       {sortedEvents && sortedEvents.length > 0 && (
-                        <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+                        <label className="hidden lg:flex items-center gap-2 cursor-pointer flex-shrink-0">
                           <input
                             type="checkbox"
                             checked={sortedEvents.every((e: any) => selectedEventIds.has(e._id))}
@@ -1199,8 +1382,8 @@ function CalendarContent() {
                       >
                         <span className="sr-only">Toggle upcoming only</span>
                         <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            showUpcomingOnly ? 'translate-x-6' : 'translate-x-1'
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                            showUpcomingOnly ? 'translate-x-6' : 'translate-x-0.5'
                           }`}
                         />
                       </button>
@@ -1210,7 +1393,7 @@ function CalendarContent() {
                     </div>
                     <button
                       onClick={() => setShowAddEventChoiceModal(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
+                      className="hidden lg:flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-all shadow-sm hover:shadow-md"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1231,20 +1414,35 @@ function CalendarContent() {
                           {formatMomFriendlyDate(date)}
                         </h3>
                       </div>
-                      {/* Events for this day - Card style */}
-                      <div className="space-y-3">
-                        {events.map((event: any) => (
-                          <div
+                      {/* Events for this day - Simplified card style */}
+                      <div className="space-y-2">
+                        {events
+                          .filter((event: any) => event._id !== recentlyDeleted?.eventId)
+                          .map((event: any) => (
+                          <SwipeableCard
                             key={event._id}
-                            className={`bg-white rounded-2xl p-5 shadow-card hover:shadow-card-hover transition-all border-2 ${
-                              selectedEventIds.has(event._id)
-                                ? 'border-primary-500 bg-primary-50'
-                                : 'border-gray-100 hover:border-primary-200'
-                            }`}
+                            onSwipeLeft={() => handleSwipeDelete(event)}
+                            leftAction={{
+                              label: 'Delete',
+                              icon: (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              ),
+                              color: '#ef4444', // red-500
+                            }}
                           >
-                            <div className="flex gap-4">
-                              {/* Checkbox for bulk selection */}
-                              <div className="flex-shrink-0 flex items-start pt-1">
+                          <div
+                            onClick={() => setSelectedEvent(event)}
+                            className={`bg-white rounded-xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all border ${
+                              selectedEventIds.has(event._id)
+                                ? 'border-primary-400 bg-primary-50'
+                                : 'border-gray-200 hover:border-primary-300'
+                            } cursor-pointer active:scale-[0.99]`}
+                          >
+                            <div className="flex gap-3 items-start">
+                              {/* Checkbox for bulk selection - Hidden on mobile */}
+                              <div className="hidden lg:flex flex-shrink-0 pt-0.5">
                                 <input
                                   type="checkbox"
                                   checked={selectedEventIds.has(event._id)}
@@ -1258,65 +1456,66 @@ function CalendarContent() {
                                     }
                                     setSelectedEventIds(newSet);
                                   }}
-                                  className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
                                   aria-label={`Select ${event.title}`}
                                 />
                               </div>
 
-                              {/* Category Emoji Icon */}
-                              <div className="flex-shrink-0 cursor-pointer" onClick={() => setSelectedEvent(event)}>
-                                <div
-                                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm"
-                                  style={{
-                                    backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
-                                  }}
-                                >
-                                  {getCategoryEmoji(event.category)}
-                                </div>
-                              </div>
-
-                              {/* Event Details */}
+                              {/* Event Details - Compact */}
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <h3 className="font-bold text-gray-900 text-lg">{event.title}</h3>
-                                </div>
-
-                                {/* Description if available */}
-                                {event.description && (
-                                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                    {event.description}
-                                  </p>
-                                )}
-
-                                <div className="space-y-1.5 mb-3">
-                                  {event.eventTime && (
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                      <span className="text-lg">🕐</span>
-                                      <span className="font-medium">
-                                        {formatTime12Hour(event.eventTime)}
-                                        {event.endTime && ` - ${formatTime12Hour(event.endTime)}`}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {event.location && (
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                      <span className="text-lg">📍</span>
-                                      <span className="truncate">{event.location}</span>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Tags Row */}
-                                <div className="flex flex-wrap items-center gap-2">
-                                  {event.requiresAction && !event.actionCompleted && (
-                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 shadow-sm">
-                                      ⚠️ {event.actionDescription || 'Action Needed'}
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <h3 className="font-semibold text-gray-900 text-base">{event.title}</h3>
+                                  {event.category && (
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 whitespace-nowrap">
+                                      {event.category}
                                     </span>
                                   )}
                                 </div>
+
+                                {/* Family Members */}
+                                {event.childName && (
+                                  <div className="flex flex-wrap gap-1 mb-1">
+                                    {event.childName.split(',').map((name: string, idx: number) => (
+                                      <span key={idx} className="text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-800">
+                                        {name.trim()}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
+                                  {event.eventTime && (
+                                    <span className="flex items-center gap-1">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                      {formatTime12Hour(event.eventTime)}
+                                    </span>
+                                  )}
+                                  {event.location && (
+                                    <span className="flex items-center gap-1 truncate">
+                                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      </svg>
+                                      <span className="truncate">{event.location}</span>
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Action tag if needed */}
+                                {event.requiresAction && !event.actionCompleted && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 mt-2 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    {event.actionDescription || 'Action Needed'}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
+                          </SwipeableCard>
                         ))}
                       </div>
                     </div>
@@ -1326,48 +1525,34 @@ function CalendarContent() {
             )}
           </div>
         ) : (
-          /* Calendar View */
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6" style={{ height: "700px" }}>
-            {confirmedEvents === undefined ? (
-              <CalendarSkeleton />
-            ) : calendarEvents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full">
+          /* Calendar View - Google Calendar Embed */
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            {!family?.googleCalendarId ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="text-6xl mb-4">📅</div>
                 <div className="text-xl font-semibold text-gray-900 mb-2">
-                  Your calendar is empty
+                  Google Calendar Not Connected
                 </div>
-                <p className="text-gray-600 mb-4">
-                  Let's add your first event! Check your emails or type one in yourself.
+                <p className="text-gray-600 mb-6 text-center max-w-md">
+                  Connect your Google Calendar in Settings to see your calendar here.
                 </p>
-                <div className="flex gap-3">
-                  <Link
-                    href="/review"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
-                  >
-                    Add Events
-                  </Link>
-                </div>
+                <Link
+                  href="/settings"
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
+                >
+                  Go to Settings
+                </Link>
               </div>
             ) : (
-              <Calendar
-                localizer={localizer}
-                events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: "100%" }}
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
-                selectable
-                eventPropGetter={eventStyleGetter}
-                view={view as View}
-                onView={(newView) => setView(newView)}
-                date={date}
-                onNavigate={(newDate) => setDate(newDate)}
-                views={["month", "week", "day"]}
-                popup
-                min={new Date(2025, 0, 1, 6, 0, 0)} // Show from 6am
-                max={new Date(2025, 0, 1, 23, 59, 59)} // Show until 11:59pm
-                scrollToTime={new Date(2025, 0, 1, 8, 0, 0)} // Scroll to 8am
-              />
+              <div className="relative w-full" style={{ paddingBottom: '85%', minHeight: '800px' }}>
+                <iframe
+                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=MONTH&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff`}
+                  className="absolute top-0 left-0 w-full h-full border-0"
+                  frameBorder="0"
+                  scrolling="no"
+                  title="Family Calendar"
+                />
+              </div>
             )}
           </div>
         )}
@@ -2099,16 +2284,6 @@ function CalendarContent() {
         </div>
       )}
 
-      {/* Floating Action Button - Mobile Only */}
-      <Link
-        href="/review"
-        className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-primary-400 to-primary-500 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-      </Link>
-
       {/* Add Event Choice Modal */}
       {showAddEventChoiceModal && (
         <AddEventChoiceModal
@@ -2144,6 +2319,22 @@ function CalendarContent() {
           onTranscribe={handleVoiceRecording}
         />
       )}
+
+      {/* FAB for Mobile */}
+      {/* Undo Notification */}
+      {recentlyDeleted && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-4 z-50 animate-slide-up">
+          <span className="text-sm font-medium">Event deleted</span>
+          <button
+            onClick={handleUndoDelete}
+            className="px-4 py-1 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition font-semibold text-sm"
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
+      <FAB onAction={handleFABAction} />
 
       {/* Bottom Navigation for Mobile */}
       <BottomNav />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, ReactNode } from 'react';
+import { useRef, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface SwipeableCardProps {
   children: ReactNode;
@@ -25,34 +25,92 @@ export default function SwipeableCard({
   onSwipeRight,
   leftAction,
   rightAction,
-  threshold = 80,
+  threshold = 40,
 }: SwipeableCardProps) {
   const [startX, setStartX] = useState(0);
   const [currentX, setCurrentX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Use refs to track current values for event handlers
+  const startXRef = useRef(0);
+  const currentXRef = useRef(0);
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    setStartX(e.touches[0].clientX);
+    e.stopPropagation();
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    setStartX(x);
+    startXRef.current = x;
     setIsSwiping(true);
+    // Store starting Y position to detect vertical vs horizontal swipes
+    (e.currentTarget as any)._startY = y;
+    console.log('Swipe started at X:', x);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isSwiping) return;
-    const deltaX = e.touches[0].clientX - startX;
+    e.stopPropagation();
+    const deltaX = e.touches[0].clientX - startXRef.current;
+    const deltaY = e.touches[0].clientY - ((e.currentTarget as any)._startY || 0);
+
+    // If horizontal movement is greater than vertical, prevent default to stop scrolling
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      e.preventDefault();
+    }
+
     setCurrentX(deltaX);
+    currentXRef.current = deltaX;
+    console.log('Swiping - deltaX:', deltaX);
   };
 
   const handleTouchEnd = () => {
     if (!isSwiping) return;
+
+    const finalX = currentXRef.current;
+    setIsSwiping(false);
+
+    console.log('Touch end - finalX:', finalX, 'threshold:', threshold);
+
+    // Check if swipe threshold is met
+    if (Math.abs(finalX) >= threshold) {
+      console.log('Threshold met!');
+      if (finalX > 0 && onSwipeRight) {
+        // Swiped right
+        console.log('Calling onSwipeRight');
+        onSwipeRight();
+      } else if (finalX < 0 && onSwipeLeft) {
+        // Swiped left
+        console.log('Calling onSwipeLeft');
+        onSwipeLeft();
+      }
+    } else {
+      console.log('Threshold NOT met - swipe too short');
+    }
+
+    // Reset position
+    setCurrentX(0);
+    setStartX(0);
+    currentXRef.current = 0;
+    startXRef.current = 0;
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const deltaX = e.clientX - startXRef.current;
+    setCurrentX(deltaX);
+    currentXRef.current = deltaX;
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    const finalX = currentXRef.current;
     setIsSwiping(false);
 
     // Check if swipe threshold is met
-    if (Math.abs(currentX) >= threshold) {
-      if (currentX > 0 && onSwipeRight) {
+    if (Math.abs(finalX) >= threshold) {
+      if (finalX > 0 && onSwipeRight) {
         // Swiped right
         onSwipeRight();
-      } else if (currentX < 0 && onSwipeLeft) {
+      } else if (finalX < 0 && onSwipeLeft) {
         // Swiped left
         onSwipeLeft();
       }
@@ -61,50 +119,29 @@ export default function SwipeableCard({
     // Reset position
     setCurrentX(0);
     setStartX(0);
-  };
+    currentXRef.current = 0;
+    startXRef.current = 0;
+  }, [threshold, onSwipeLeft, onSwipeRight]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    setStartX(e.clientX);
+    const x = e.clientX;
+    setStartX(x);
+    startXRef.current = x;
     setIsSwiping(true);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isSwiping) return;
-    const deltaX = e.clientX - startX;
-    setCurrentX(deltaX);
-  };
+  // Mouse event listeners using useEffect
+  useEffect(() => {
+    if (isSwiping) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
 
-  const handleMouseUp = () => {
-    if (!isSwiping) return;
-    setIsSwiping(false);
-
-    // Check if swipe threshold is met
-    if (Math.abs(currentX) >= threshold) {
-      if (currentX > 0 && onSwipeRight) {
-        // Swiped right
-        onSwipeRight();
-      } else if (currentX < 0 && onSwipeLeft) {
-        // Swiped left
-        onSwipeLeft();
-      }
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
     }
-
-    // Reset position
-    setCurrentX(0);
-    setStartX(0);
-  };
-
-  // Mouse event listeners
-  if (isSwiping && typeof window !== 'undefined') {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-  }
-
-  // Cleanup
-  if (!isSwiping && typeof window !== 'undefined') {
-    window.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('mouseup', handleMouseUp);
-  }
+  }, [isSwiping, handleMouseMove, handleMouseUp]);
 
   // Calculate opacity and position of action indicators
   const swipeProgress = Math.min(Math.abs(currentX) / threshold, 1);
@@ -150,10 +187,11 @@ export default function SwipeableCard({
       {/* Swipeable Card Content */}
       <div
         ref={cardRef}
-        className="relative transition-transform touch-pan-y"
+        className="relative transition-transform"
         style={{
           transform: `translateX(${currentX}px)`,
           transition: isSwiping ? 'none' : 'transform 0.3s ease-out',
+          touchAction: 'pan-y',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}

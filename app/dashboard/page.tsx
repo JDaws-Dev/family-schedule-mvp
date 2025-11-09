@@ -888,8 +888,10 @@ function DashboardContent() {
         actionDeadline: event.actionDeadline || "",
       });
 
-      showToast("✨ AI filled the form! Review and adjust as needed.", "success");
+      showToast("✨ Event extracted! Review and save.", "success");
       setConversationalInput(""); // Clear the input
+      setAddEventTab("manual"); // Make sure we're on the manual tab
+      setShowAddEventModal(true); // Open the modal with pre-filled data
     } catch (error: any) {
       console.error("Error parsing conversational input:", error);
       showToast("Failed to parse your description. Please try again or fill manually.", "error");
@@ -899,7 +901,7 @@ function DashboardContent() {
   };
 
   // Handle FAB actions
-  const handleFABAction = (action: "manual" | "paste" | "photo" | "voice" | "discover") => {
+  const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
     switch (action) {
       case "manual":
         setShowAddEventModal(true);
@@ -913,9 +915,6 @@ function DashboardContent() {
         break;
       case "voice":
         setShowVoiceRecordModal(true);
-        break;
-      case "discover":
-        window.location.href = "/discover";
         break;
     }
   };
@@ -1117,7 +1116,7 @@ function DashboardContent() {
             {/* Slide-out Menu */}
             <div className="md:hidden fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white z-50 shadow-strong transform transition-transform duration-300 ease-in-out">
               {/* Menu Header */}
-              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-primary-500 to-primary-600">
+              <div className="p-6 border-b border-gray-200 bg-primary-600">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-white">Menu</h2>
                   <button
@@ -1178,17 +1177,7 @@ function DashboardContent() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                   </svg>
-                  Events
-                </Link>
-                <Link
-                  href="/discover"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors mb-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Find Activities
+                  Review
                 </Link>
                 <Link
                   href="/settings"
@@ -1196,10 +1185,9 @@ function DashboardContent() {
                   className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors mb-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  Settings
+                  You
                 </Link>
 
                 <div className="border-t border-gray-200 my-4"></div>
@@ -1238,7 +1226,7 @@ function DashboardContent() {
         {/* Personalized Greeting with Family Branding - Desktop Only */}
         <div className="hidden lg:block mb-8">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 bg-primary-600 rounded-xl flex items-center justify-center shadow-md">
               <span className="text-3xl">🏠</span>
             </div>
             <div className="flex-1">
@@ -1247,7 +1235,8 @@ function DashboardContent() {
                   const hour = new Date().getHours();
                   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
                   const firstName = clerkUser.firstName || clerkUser.fullName?.split(' ')[0] || "there";
-                  return `${greeting}, ${firstName}!`;
+                  const lastName = clerkUser.lastName || clerkUser.fullName?.split(' ')[1] || "";
+                  return `${greeting}, ${firstName}${lastName ? ' ' + lastName : ''}!`;
                 })()}
               </h1>
               {family?.name && (
@@ -1286,7 +1275,7 @@ function DashboardContent() {
           {/* This Week Card */}
           <Link
             href="/calendar"
-            className="bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+            className="bg-primary-600 rounded-xl shadow-md p-6 text-white hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -1316,7 +1305,7 @@ function DashboardContent() {
           {/* Needs Action Card */}
           <div
             onClick={() => setShowActionsModal(true)}
-            className="bg-gradient-to-br from-secondary-400 to-secondary-600 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+            className="bg-amber-500 rounded-xl shadow-md p-6 text-white hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -1357,7 +1346,7 @@ function DashboardContent() {
           {/* To Review Card */}
           <Link
             href="/review"
-            className="bg-gradient-to-br from-accent-400 to-accent-600 rounded-xl shadow-medium p-6 text-white hover:shadow-strong transition-all duration-200 transform hover:-translate-y-1 cursor-pointer"
+            className="bg-teal-500 rounded-xl shadow-md p-6 text-white hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -1443,33 +1432,205 @@ function DashboardContent() {
 
         {/* Mobile-First Layout */}
         <div className="block lg:hidden">
-          {/* Main Content - Mobile First */}
-          <div className="flex-1">
-            <div className="max-w-2xl mx-auto">
+          <PullToRefresh onRefresh={async () => {
+            // Trigger a refetch of events
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            window.location.reload(); // Simple reload for now
+          }}>
+            {/* Main Content - Mobile First */}
+            <div className="flex-1">
+              <div className="max-w-2xl mx-auto">
 
-              {/* Notification Banner - Only show if unconfirmed events exist */}
-              {unconfirmedEvents && unconfirmedEvents.length > 0 && (
-                <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-2xl p-4 shadow-soft">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="text-2xl">📧</div>
-                      <div>
-                        <p className="font-bold text-gray-900">
-                          {unconfirmedEvents.length} event{unconfirmedEvents.length !== 1 ? 's' : ''} need review
-                        </p>
-                        <p className="text-sm text-gray-600">From your emails</p>
-                      </div>
+                {/* Welcome Header */}
+                <div className="mb-6 bg-primary-600 rounded-3xl p-6 text-white shadow-md">
+                  <h1 className="text-2xl font-bold mb-2">{family?.name || "Your"} Family Hub</h1>
+                  <p className="text-primary-50 text-sm leading-relaxed">
+                    Add events, discover activities, and keep your family's schedule organized—all in one place
+                  </p>
+                </div>
+
+                {/* Quick AI - First Section */}
+                <div className="mb-8">
+                <div className="bg-blue-50 rounded-3xl p-6 shadow-md">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
                     </div>
-                    <Link
-                      href="/review"
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors text-sm"
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Quick Add</h2>
+                      <p className="text-sm text-gray-600">Just type naturally—we'll handle the rest</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={conversationalInput}
+                      onChange={(e) => setConversationalInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && conversationalInput.trim() && !isParsingConversational) {
+                          handleParseConversational();
+                        }
+                      }}
+                      placeholder="'Soccer practice Tuesday 4pm at Lincoln Field'"
+                      className="flex-1 px-5 py-4 border-2 border-primary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-base placeholder:text-gray-400 bg-white shadow-sm"
+                      disabled={isParsingConversational}
+                    />
+                    <button
+                      onClick={handleParseConversational}
+                      disabled={!conversationalInput.trim() || isParsingConversational}
+                      className="px-6 py-4 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                      Review
-                    </Link>
+                      {isParsingConversational ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span className="hidden sm:inline">Adding...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Add</span>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Type naturally and click Add</span>
                   </div>
                 </div>
-              )}
+                </div>
 
+              {/* Log an Event - Second Section */}
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Log an Event</h2>
+                <p className="text-sm text-gray-600 mb-4">Quick ways to add events manually</p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Snap Photo of Flyer */}
+                  <button
+                    onClick={() => setShowPhotoUploadModal(true)}
+                    className="bg-primary-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                  >
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div className="font-bold text-base">Snap Photo</div>
+                    <div className="text-xs opacity-90 mt-1">Flyer or schedule</div>
+                  </button>
+
+                  {/* Voice Record */}
+                  <button
+                    onClick={() => setShowVoiceRecordModal(true)}
+                    className="bg-rose-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                  >
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                      </svg>
+                    </div>
+                    <div className="font-bold text-base">Voice</div>
+                    <div className="text-xs opacity-90 mt-1">Say it out loud</div>
+                  </button>
+
+                  {/* Paste Text */}
+                  <button
+                    onClick={() => setShowPasteTextModal(true)}
+                    className="bg-teal-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                  >
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="font-bold text-base">Paste Text</div>
+                    <div className="text-xs opacity-90 mt-1">Copy & paste</div>
+                  </button>
+
+                  {/* Manual Entry */}
+                  <button
+                    onClick={() => setShowAddEventModal(true)}
+                    className="bg-slate-600 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                  >
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <div className="font-bold text-base">Type it in</div>
+                    <div className="text-xs opacity-90 mt-1">Manual entry</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Find an Event - Third Section */}
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Find an Event</h2>
+                <p className="text-sm text-gray-600 mb-4">Search emails or discover local activities</p>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {/* Search Email */}
+                  {gmailAccounts && gmailAccounts.length > 0 && (
+                    <Link
+                      href="/review"
+                      className="bg-amber-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition-all text-white flex items-center gap-3"
+                    >
+                      <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <div className="text-left flex-1">
+                        <div className="font-bold text-lg">Search Email</div>
+                        <div className="text-sm opacity-90 mt-0.5">Find specific events in your inbox</div>
+                      </div>
+                      <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  )}
+
+                  {/* Explore Local Activities */}
+                  <Link
+                    href="/discover"
+                    className="bg-purple-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition-all text-white flex items-center gap-3"
+                  >
+                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div className="text-left flex-1">
+                      <div className="font-bold text-lg">Explore Activities</div>
+                      <div className="text-sm opacity-90 mt-0.5">Discover events happening near you</div>
+                    </div>
+                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
+            </div>
+          </PullToRefresh>
+        </div>
+
+        {/* Desktop View - Keep existing layout */}
+        <div className="hidden lg:block">
+          {/* Original desktop layout below */}
+          <div className="flex-1">
+            <div className="max-w-7xl mx-auto">
               {/* Search Bar */}
               <div className="mb-6">
                 <div className="relative">
@@ -1508,12 +1669,92 @@ function DashboardContent() {
 
                   <div className="space-y-4">
                     {todayEvents.map((event: any, index: number) => (
-                      <div
+                      <SwipeableCard
                         key={event._id}
+                        onSwipeLeft={() => {
+                          setConfirmDialogConfig({
+                            title: "Delete Event",
+                            message: `Are you sure you want to delete "${event.title}"?`,
+                            onConfirm: async () => {
+                              try {
+                                const eventBackup = { ...event };
+                                await deleteEvent({ eventId: event._id });
+                                setShowConfirmDialog(false);
+
+                                // Show undo toast
+                                showToast(
+                                  'Event deleted',
+                                  'success',
+                                  async () => {
+                                    await createEvent({
+                                      createdByUserId: eventBackup.createdByUserId,
+                                      title: eventBackup.title,
+                                      eventDate: eventBackup.eventDate,
+                                      eventTime: eventBackup.eventTime || undefined,
+                                      endTime: eventBackup.endTime || undefined,
+                                      location: eventBackup.location || undefined,
+                                      category: eventBackup.category || undefined,
+                                      childName: eventBackup.childName || undefined,
+                                      description: eventBackup.description || undefined,
+                                      requiresAction: eventBackup.requiresAction || false,
+                                      actionDescription: eventBackup.actionDescription || undefined,
+                                      actionDeadline: eventBackup.actionDeadline || undefined,
+                                      isConfirmed: eventBackup.isConfirmed,
+                                    });
+                                    showToast('Event restored', 'success');
+                                  },
+                                  10000
+                                );
+                              } catch (error) {
+                                console.error('Error deleting event:', error);
+                                showToast('Unable to delete event. Please try again.', 'error');
+                                setShowConfirmDialog(false);
+                              }
+                            },
+                            variant: "danger"
+                          });
+                          setShowConfirmDialog(true);
+                        }}
+                        onSwipeRight={async () => {
+                          if (event.requiresAction && !event.actionCompleted) {
+                            try {
+                              await updateEvent({
+                                eventId: event._id,
+                                actionCompleted: true,
+                              });
+                              showToast('Action marked as complete! 🎉', 'success');
+                            } catch (error) {
+                              console.error('Error updating event:', error);
+                              showToast('Unable to update event. Please try again.', 'error');
+                            }
+                          }
+                        }}
+                        rightAction={event.requiresAction && !event.actionCompleted ? {
+                          label: "Complete",
+                          icon: <span>✓</span>,
+                          color: "#10b981"
+                        } : undefined}
+                      >
+                      <div
                         onClick={() => setSelectedEvent(event)}
                         className="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 border-gray-100 hover:border-primary-200 cursor-pointer"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
+                        {/* Action Required Banner */}
+                        {!event.isConfirmed && (
+                          <div className="mb-3 px-3 py-2 bg-amber-50 border-l-4 border-amber-500 rounded">
+                            <p className="text-sm font-semibold text-amber-900">Needs Review</p>
+                          </div>
+                        )}
+                        {event.requiresAction && !event.actionCompleted && (
+                          <div className="mb-3 px-3 py-2 bg-red-50 border-l-4 border-red-500 rounded">
+                            <p className="text-sm font-semibold text-red-900">Action Required</p>
+                            {event.actionDescription && (
+                              <p className="text-xs text-red-800 mt-1">{event.actionDescription}</p>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex gap-4">
                           {/* Category Emoji Icon */}
                           <div className="flex-shrink-0">
@@ -1571,6 +1812,7 @@ function DashboardContent() {
                           </div>
                         </div>
                       </div>
+                      </SwipeableCard>
                     ))}
                   </div>
                 </div>
@@ -1588,12 +1830,92 @@ function DashboardContent() {
 
                   <div className="space-y-4">
                     {tomorrowEvents.map((event: any, index: number) => (
-                      <div
+                      <SwipeableCard
                         key={event._id}
+                        onSwipeLeft={() => {
+                          setConfirmDialogConfig({
+                            title: "Delete Event",
+                            message: `Are you sure you want to delete "${event.title}"?`,
+                            onConfirm: async () => {
+                              try {
+                                const eventBackup = { ...event };
+                                await deleteEvent({ eventId: event._id });
+                                setShowConfirmDialog(false);
+
+                                // Show undo toast
+                                showToast(
+                                  'Event deleted',
+                                  'success',
+                                  async () => {
+                                    await createEvent({
+                                      createdByUserId: eventBackup.createdByUserId,
+                                      title: eventBackup.title,
+                                      eventDate: eventBackup.eventDate,
+                                      eventTime: eventBackup.eventTime || undefined,
+                                      endTime: eventBackup.endTime || undefined,
+                                      location: eventBackup.location || undefined,
+                                      category: eventBackup.category || undefined,
+                                      childName: eventBackup.childName || undefined,
+                                      description: eventBackup.description || undefined,
+                                      requiresAction: eventBackup.requiresAction || false,
+                                      actionDescription: eventBackup.actionDescription || undefined,
+                                      actionDeadline: eventBackup.actionDeadline || undefined,
+                                      isConfirmed: eventBackup.isConfirmed,
+                                    });
+                                    showToast('Event restored', 'success');
+                                  },
+                                  10000
+                                );
+                              } catch (error) {
+                                console.error('Error deleting event:', error);
+                                showToast('Unable to delete event. Please try again.', 'error');
+                                setShowConfirmDialog(false);
+                              }
+                            },
+                            variant: "danger"
+                          });
+                          setShowConfirmDialog(true);
+                        }}
+                        onSwipeRight={async () => {
+                          if (event.requiresAction && !event.actionCompleted) {
+                            try {
+                              await updateEvent({
+                                eventId: event._id,
+                                actionCompleted: true,
+                              });
+                              showToast('Action marked as complete! 🎉', 'success');
+                            } catch (error) {
+                              console.error('Error updating event:', error);
+                              showToast('Unable to update event. Please try again.', 'error');
+                            }
+                          }
+                        }}
+                        rightAction={event.requiresAction && !event.actionCompleted ? {
+                          label: "Complete",
+                          icon: <span>✓</span>,
+                          color: "#10b981"
+                        } : undefined}
+                      >
+                      <div
                         onClick={() => setSelectedEvent(event)}
                         className="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 border-gray-100 hover:border-primary-200 cursor-pointer"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
+                        {/* Action Required Banner */}
+                        {!event.isConfirmed && (
+                          <div className="mb-3 px-3 py-2 bg-amber-50 border-l-4 border-amber-500 rounded">
+                            <p className="text-sm font-semibold text-amber-900">Needs Review</p>
+                          </div>
+                        )}
+                        {event.requiresAction && !event.actionCompleted && (
+                          <div className="mb-3 px-3 py-2 bg-red-50 border-l-4 border-red-500 rounded">
+                            <p className="text-sm font-semibold text-red-900">Action Required</p>
+                            {event.actionDescription && (
+                              <p className="text-xs text-red-800 mt-1">{event.actionDescription}</p>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex gap-4">
                           {/* Category Emoji Icon */}
                           <div className="flex-shrink-0">
@@ -1651,6 +1973,7 @@ function DashboardContent() {
                           </div>
                         </div>
                       </div>
+                      </SwipeableCard>
                     ))}
                   </div>
                 </div>
@@ -1661,38 +1984,118 @@ function DashboardContent() {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">This Week</h2>
 
-                  <div className="space-y-4">
-                    {weekEvents.filter((e: any) => e.eventDate > tomorrow).map((event: any, index: number) => (
-                      <div
-                        key={event._id}
-                        onClick={() => setSelectedEvent(event)}
-                        className="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 border-gray-100 hover:border-primary-200 cursor-pointer"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <div className="flex gap-4">
-                          {/* Category Emoji Icon */}
-                          <div className="flex-shrink-0">
-                            <div
-                              className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-sm"
-                              style={{
-                                backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
-                                borderLeft: `4px solid ${getCategoryColor(event.category)}`,
-                              }}
-                            >
-                              {getCategoryEmoji(event.category)}
-                            </div>
-                          </div>
+                  {groupEventsByDate(weekEvents.filter((e: any) => e.eventDate > tomorrow)).map(({ date, events }) => (
+                    <div key={date} className="mb-6">
+                      <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span>{formatMomFriendlyDate(date)}</span>
+                      </h3>
+                      <div className="space-y-4">
+                        {events.map((event: any, index: number) => (
+                          <SwipeableCard
+                            key={event._id}
+                            onSwipeLeft={() => {
+                              setConfirmDialogConfig({
+                                title: "Delete Event",
+                                message: `Are you sure you want to delete "${event.title}"?`,
+                                onConfirm: async () => {
+                                  try {
+                                    const eventBackup = { ...event };
+                                    await deleteEvent({ eventId: event._id });
+                                    setShowConfirmDialog(false);
 
-                          {/* Event Details */}
-                          <div className="flex-1 min-w-0">
-                            <div className="mb-2">
-                              <div className="text-sm font-semibold text-primary-600 mb-1">
-                                {formatMomFriendlyDate(event.eventDate)}
+                                    // Show undo toast
+                                    showToast(
+                                      'Event deleted',
+                                      'success',
+                                      async () => {
+                                        await createEvent({
+                                          createdByUserId: eventBackup.createdByUserId,
+                                          title: eventBackup.title,
+                                          eventDate: eventBackup.eventDate,
+                                          eventTime: eventBackup.eventTime || undefined,
+                                          endTime: eventBackup.endTime || undefined,
+                                          location: eventBackup.location || undefined,
+                                          category: eventBackup.category || undefined,
+                                          childName: eventBackup.childName || undefined,
+                                          description: eventBackup.description || undefined,
+                                          requiresAction: eventBackup.requiresAction || false,
+                                          actionDescription: eventBackup.actionDescription || undefined,
+                                          actionDeadline: eventBackup.actionDeadline || undefined,
+                                          isConfirmed: eventBackup.isConfirmed,
+                                        });
+                                        showToast('Event restored', 'success');
+                                      },
+                                      10000
+                                    );
+                                  } catch (error) {
+                                    console.error('Error deleting event:', error);
+                                    showToast('Unable to delete event. Please try again.', 'error');
+                                    setShowConfirmDialog(false);
+                                  }
+                                },
+                                variant: "danger"
+                              });
+                              setShowConfirmDialog(true);
+                            }}
+                            onSwipeRight={async () => {
+                              if (event.requiresAction && !event.actionCompleted) {
+                                try {
+                                  await updateEvent({
+                                    eventId: event._id,
+                                    actionCompleted: true,
+                                  });
+                                  showToast('Action marked as complete! 🎉', 'success');
+                                } catch (error) {
+                                  console.error('Error updating event:', error);
+                                  showToast('Unable to update event. Please try again.', 'error');
+                                }
+                              }
+                            }}
+                            rightAction={event.requiresAction && !event.actionCompleted ? {
+                          label: "Complete",
+                          icon: <span>✓</span>,
+                          color: "#10b981"
+                        } : undefined}
+                          >
+                          <div
+                            onClick={() => setSelectedEvent(event)}
+                            className="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 border-gray-100 hover:border-primary-200 cursor-pointer"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            {/* Action Required Banner */}
+                            {!event.isConfirmed && (
+                              <div className="mb-3 px-3 py-2 bg-amber-50 border-l-4 border-amber-500 rounded">
+                                <p className="text-sm font-semibold text-amber-900">Needs Review</p>
                               </div>
-                              <h3 className="font-bold text-gray-900 text-xl leading-tight">{event.title}</h3>
-                            </div>
+                            )}
+                            {event.requiresAction && !event.actionCompleted && (
+                              <div className="mb-3 px-3 py-2 bg-red-50 border-l-4 border-red-500 rounded">
+                                <p className="text-sm font-semibold text-red-900">Action Required</p>
+                                {event.actionDescription && (
+                                  <p className="text-xs text-red-800 mt-1">{event.actionDescription}</p>
+                                )}
+                              </div>
+                            )}
 
-                            <div className="space-y-2 mb-4">
+                            <div className="flex gap-4">
+                              {/* Category Emoji Icon */}
+                              <div className="flex-shrink-0">
+                                <div
+                                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-sm"
+                                  style={{
+                                    backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
+                                    borderLeft: `4px solid ${getCategoryColor(event.category)}`,
+                                  }}
+                                >
+                                  {getCategoryEmoji(event.category)}
+                                </div>
+                              </div>
+
+                              {/* Event Details */}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-gray-900 text-xl mb-3 leading-tight">{event.title}</h3>
+
+                                <div className="space-y-2 mb-4">
                               {event.eventTime && (
                                 <div className="flex items-center gap-2.5 text-gray-700">
                                   <span className="text-xl">🕐</span>
@@ -1728,11 +2131,14 @@ function DashboardContent() {
                                 })()}
                               </div>
                             )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                          </SwipeableCard>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -2335,18 +2741,6 @@ function DashboardContent() {
           </div>
         </div>
       </div>
-
-      {/* Floating Action Button - Mobile Only */}
-      <button
-        onClick={() => setShowAddEventChoiceModal(true)}
-        title="Add new event"
-        aria-label="Add new event"
-        className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full shadow-strong flex items-center justify-center text-white hover:shadow-xl transition-all duration-200 z-50 transform hover:scale-110"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
 
       {/* Email Scan Progress Modal */}
       {showScanModal && (
@@ -4314,8 +4708,7 @@ Example:
         </div>
       )}
 
-      {/* Floating Action Button */}
-      <FAB onAction={handleFABAction} />
+      {/* FAB removed - Quick Actions now prominently displayed on mobile home screen */}
 
       {/* Bottom Navigation for Mobile */}
       <BottomNav />

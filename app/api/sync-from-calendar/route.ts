@@ -42,18 +42,13 @@ export async function POST(request: NextRequest) {
 
     const convex = getConvexClient();
 
-    // Get family's Google Calendar ID
-    const family = await convex.query(api.families.getFamily, { familyId });
-    if (!family || !family.googleCalendarId) {
-      return NextResponse.json({ error: "No Google Calendar connected" }, { status: 404 });
-    }
-
-    console.log("[sync-from-calendar] Family calendar ID:", family.googleCalendarId);
-
     // Get a Gmail account to use for OAuth (we need the refresh token)
     const gmailAccounts = await convex.query(api.gmailAccounts.getFamilyGmailAccounts, { familyId });
     if (!gmailAccounts || gmailAccounts.length === 0) {
-      return NextResponse.json({ error: "No Gmail account connected" }, { status: 404 });
+      return NextResponse.json({
+        error: "Please connect your Google account first",
+        needsReconnect: true
+      }, { status: 404 });
     }
 
     const account = gmailAccounts[0];
@@ -67,14 +62,31 @@ export async function POST(request: NextRequest) {
     oauth2Client.setCredentials({ access_token: accessToken });
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
+    // Use primary calendar instead of a specific calendar ID to avoid permission issues
+    const calendarId = 'primary';
+    console.log("[sync-from-calendar] Using primary calendar for account:", account.gmailEmail);
+
+    // First, verify we have access to the calendar
+    try {
+      await calendar.calendarList.get({ calendarId });
+      console.log("[sync-from-calendar] Calendar access verified");
+    } catch (accessError: any) {
+      console.error("[sync-from-calendar] Calendar access denied:", accessError.message);
+      return NextResponse.json({
+        error: "Calendar access denied. Please reconnect your Google account to grant calendar permissions.",
+        needsReconnect: true,
+        details: accessError.message
+      }, { status: 403 });
+    }
+
     // Get events from Google Calendar (next 90 days)
     const now = new Date();
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 90);
 
-    console.log("[sync-from-calendar] Fetching events from Google Calendar...");
+    console.log("[sync-from-calendar] Fetching events from primary calendar...");
     const response = await calendar.events.list({
-      calendarId: family.googleCalendarId,
+      calendarId,
       timeMin: now.toISOString(),
       timeMax: futureDate.toISOString(),
       singleEvents: true,

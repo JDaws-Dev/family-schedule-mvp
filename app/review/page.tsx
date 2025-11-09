@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import MobileNav from "@/app/components/MobileNav";
 import BottomNav from "@/app/components/BottomNav";
+import FAB from "@/app/components/FAB";
 import { EventCardSkeleton } from "@/app/components/LoadingSkeleton";
 import { useToast } from "@/app/components/Toast";
 import CelebrationToast from "@/app/components/CelebrationToast";
@@ -1046,6 +1047,24 @@ function ReviewPageContent() {
     }
   };
 
+  // Handle FAB actions
+  const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
+    switch (action) {
+      case "manual":
+        setShowAddEventModal(true);
+        break;
+      case "paste":
+        setShowPasteTextModal(true);
+        break;
+      case "photo":
+        setShowPhotoUploadModal(true);
+        break;
+      case "voice":
+        setShowVoiceRecordModal(true);
+        break;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Celebration Toast */}
@@ -1104,21 +1123,22 @@ function ReviewPageContent() {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl">✨</span>
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-                Events
+                Review Events
               </h1>
               <p className="text-gray-600 text-lg mt-1">
-                Your command center for everything happening
+                Events found in your emails waiting for your approval
               </p>
             </div>
           </div>
           <p className="text-gray-600 max-w-3xl">
-            Add events yourself, let us find them in your emails, or search for specific activities.
-            Review new events we discover and approve the ones you want on your calendar - no more missed sign-ups or forgotten game days!
+            We automatically scan your connected Gmail accounts for event information. Review the details below and approve the ones you want added to your family calendar.
           </p>
         </div>
 
@@ -1161,119 +1181,6 @@ function ReviewPageContent() {
           </div>
         )}
 
-        {/* Hero Quick Add Section */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-6 rounded-2xl border-2 border-purple-200 shadow-lg">
-            {/* Conversational Input */}
-            <div className="mb-4">
-              <div className="flex items-start gap-3 mb-3">
-                <span className="text-3xl">✨</span>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-1">Add Events</h2>
-                  <p className="text-sm text-gray-600">
-                    Describe your events naturally and let AI help you add them!
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={conversationalInput}
-                  onChange={(e) => setConversationalInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !isParsingConversational && (e.preventDefault(), handleParseConversational())}
-                  className="flex-1 px-5 py-4 text-lg border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white shadow-sm"
-                  placeholder='e.g., "Emma has soccer every Tuesday at 5pm" or "dentist tomorrow at 3"'
-                  disabled={isParsingConversational}
-                />
-                <button
-                  onClick={handleParseConversational}
-                  disabled={!conversationalInput.trim() || isParsingConversational}
-                  className="px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all transform hover:scale-105"
-                >
-                  {isParsingConversational ? (
-                    <div className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span className="hidden sm:inline">Processing...</span>
-                    </div>
-                  ) : (
-                    <span>✨ Add Event</span>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Inline Option Buttons */}
-            <div className="border-t-2 border-purple-200 pt-4">
-              <p className="text-sm font-semibold text-gray-700 mb-3">Or add events using:</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <button
-                  onClick={() => setShowVoiceRecordModal(true)}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all shadow-sm hover:shadow-md group"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">Voice</span>
-                </button>
-
-                <button
-                  onClick={() => setShowPhotoUploadModal(true)}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-all shadow-sm hover:shadow-md group"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">Photo</span>
-                </button>
-
-                <button
-                  onClick={() => setShowPasteTextModal(true)}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 transition-all shadow-sm hover:shadow-md group"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">Paste Text</span>
-                </button>
-
-                <button
-                  onClick={() => setShowAddEventModal(true)}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-orange-400 hover:bg-orange-50 transition-all shadow-sm hover:shadow-md group"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">Manual</span>
-                </button>
-
-                <button
-                  onClick={() => setShowSearchEmailsModal(true)}
-                  className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-teal-400 hover:bg-teal-50 transition-all shadow-sm hover:shadow-md group"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-teal-200 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">Search Emails</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Scan Completion Message */}
         {scanMessage && !isScanning && (
           <div className="mb-6 p-4 bg-primary-50 border border-primary-200 rounded-lg text-primary-800">
@@ -1309,13 +1216,13 @@ function ReviewPageContent() {
                   {unconfirmedEvents === undefined
                     ? "Loading..."
                     : selectedEvents.size > 0
-                    ? `${selectedEvents.size} of ${unconfirmedEvents.length} events selected`
-                    : `${unconfirmedEvents.length} events need your review`}
+                    ? `${selectedEvents.size} of ${unconfirmedEvents.length} selected`
+                    : `${unconfirmedEvents.length} event${unconfirmedEvents.length === 1 ? '' : 's'} to review`}
                 </h2>
                 <p className="text-sm sm:text-base text-gray-700">
                   {selectedEvents.size > 0
-                    ? "Use the buttons below to approve or dismiss selected events"
-                    : "Found in your recent emails. Please confirm or edit them."}
+                    ? "Approve to add to calendar or dismiss to remove"
+                    : "Check the details and approve to add to your calendar"}
                 </p>
               </div>
               {unconfirmedEvents && unconfirmedEvents.length > 0 && (
@@ -1392,62 +1299,26 @@ function ReviewPageContent() {
 
         {/* Unconfirmed Events List */}
         {unconfirmedEvents === undefined ? (
-          <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
-            <EventCardSkeleton />
-            <EventCardSkeleton />
-            <EventCardSkeleton />
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="inline-block w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-600">Loading events...</p>
           </div>
         ) : unconfirmedEvents.length === 0 ? (
-          <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-lg p-12 text-center border-2 border-green-200">
-            <div className="w-32 h-32 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-md">
-              <div className="text-7xl">🎉</div>
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               All Caught Up!
             </h2>
-            <p className="text-lg text-gray-700 mb-6">
-              No events waiting for review. Great job staying organized!
+            <p className="text-gray-600 mb-6">
+              No events waiting for review.
             </p>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 mb-6 max-w-lg mx-auto border border-green-200">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <span className="text-2xl">✨</span>
-                <h3 className="font-semibold text-gray-900 text-lg">Ready to add more events?</h3>
-              </div>
-              <p className="text-gray-600 text-sm">
-                Scroll up to use the Quick Add section! You can type naturally, use your voice, snap a photo of a flyer, or paste text from an email or message.
-              </p>
-            </div>
-
-            <div className="space-y-4 max-w-md mx-auto text-left">
-              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-gray-200">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 mb-1">Auto-detected from Gmail</p>
-                    <p className="text-sm text-gray-600">We check your emails daily and extract event details automatically. When we find something, it shows up here for you to review.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-gray-200">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 mb-1">Events you add manually</p>
-                    <p className="text-sm text-gray-600">When you add events using the Quick Add section above, they go straight to your calendar (no review needed!).</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm text-gray-500">
+              When we find events in your emails, they'll appear here for you to review and add to your calendar.
+            </p>
           </div>
         ) : (
           <>
@@ -3061,6 +2932,9 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
           </button>
         </div>
       )}
+
+      {/* FAB - Floating Action Button */}
+      <FAB onAction={handleFABAction} />
 
       {/* Bottom Navigation for Mobile */}
       <BottomNav />
