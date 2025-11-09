@@ -778,7 +778,7 @@ export default function Onboarding() {
               )}
 
               {/* Connect Gmail Button */}
-              <Link
+              <a
                 href={`/api/auth/google?returnUrl=/onboarding`}
                 className="w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
               >
@@ -786,7 +786,7 @@ export default function Onboarding() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19" />
                 </svg>
                 {gmailAccounts && gmailAccounts.length > 0 ? "Connect Another Email" : "Connect Your First Email"}
-              </Link>
+              </a>
 
               <div className="space-y-4">
                 <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white">
