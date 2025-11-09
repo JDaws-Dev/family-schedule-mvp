@@ -17,7 +17,10 @@ export default function Onboarding() {
     return 1;
   });
   const [familyName, setFamilyName] = useState("");
-  const [primaryEmail, setPrimaryEmail] = useState("");
+  const [primaryEmail, setPrimaryEmail] = useState(() => {
+    // Auto-populate with Clerk user's email if available
+    return "";
+  });
   const [familyMembers, setFamilyMembers] = useState<Array<{ name: string; birthdate: string; relationship: string; interests: string }>>([
     { name: "", birthdate: "", relationship: "Parent", interests: "" }
   ]);
@@ -38,6 +41,13 @@ export default function Onboarding() {
   const [emailDigestFrequency, setEmailDigestFrequency] = useState<"none" | "daily" | "weekly">("daily");
   const { user: clerkUser } = useUser();
   const router = useRouter();
+
+  // Auto-populate email from Clerk user when available
+  useEffect(() => {
+    if (clerkUser?.primaryEmailAddress?.emailAddress && !primaryEmail) {
+      setPrimaryEmail(clerkUser.primaryEmailAddress.emailAddress);
+    }
+  }, [clerkUser, primaryEmail]);
 
   // Get current user to access familyId
   const currentUser = useQuery(api.users.getUserByClerkId,
@@ -484,7 +494,6 @@ export default function Onboarding() {
                   placeholder="your@email.com"
                   value={primaryEmail}
                   onChange={(e) => setPrimaryEmail(e.target.value)}
-                  defaultValue={clerkUser?.primaryEmailAddress?.emailAddress}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
                 />
