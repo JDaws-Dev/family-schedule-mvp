@@ -20,6 +20,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "../components/LoadingSpinner";
 import SwipeableCard from "../components/SwipeableCard";
 import PullToRefresh from "../components/PullToRefresh";
+import FAB from "../components/FAB";
 
 // Bible verses - Family and Peace themed (ESV)
 const BIBLE_VERSES = [
