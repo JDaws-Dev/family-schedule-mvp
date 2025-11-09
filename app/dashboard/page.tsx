@@ -891,6 +891,28 @@ function DashboardContent() {
     }
   };
 
+  // Handle FAB actions
+  const handleFABAction = (action: "manual" | "paste" | "photo" | "voice" | "discover") => {
+    switch (action) {
+      case "manual":
+        setShowAddEventModal(true);
+        break;
+      case "paste":
+        // For now, open the manual modal - we can add paste modal later
+        setShowAddEventModal(true);
+        break;
+      case "photo":
+        setShowPhotoUploadModal(true);
+        break;
+      case "voice":
+        setShowVoiceRecordModal(true);
+        break;
+      case "discover":
+        window.location.href = "/discover";
+        break;
+    }
+  };
+
   const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!convexUser?._id) {
@@ -3969,6 +3991,9 @@ Example:
           </div>
         </div>
       )}
+
+      {/* Floating Action Button */}
+      <FAB onAction={handleFABAction} />
 
       {/* Bottom Navigation for Mobile */}
       <BottomNav />
