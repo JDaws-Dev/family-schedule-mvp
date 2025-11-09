@@ -34,5 +34,8 @@ export async function GET(request: NextRequest) {
 
   console.log("[google-auth] Redirecting to:", googleAuthUrl.toString());
 
-  return NextResponse.redirect(googleAuthUrl.toString());
+  // Use 307 redirect to preserve the request method and avoid CORS preflight
+  return NextResponse.redirect(googleAuthUrl.toString(), {
+    status: 307,
+  });
 }
