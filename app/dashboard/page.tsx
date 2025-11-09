@@ -397,6 +397,13 @@ function DashboardContent() {
       : "skip"
   );
 
+  const tomorrowEvents = useQuery(
+    api.events.getEventsByDateRange,
+    convexUser?.familyId
+      ? { familyId: convexUser.familyId, startDate: tomorrow, endDate: tomorrow }
+      : "skip"
+  );
+
   const isGmailConnected = (gmailAccounts?.length ?? 0) > 0;
 
   // Check for onboarding completion
@@ -1228,8 +1235,8 @@ function DashboardContent() {
           />
         )}
 
-        {/* Personalized Greeting with Family Branding */}
-        <div className="mb-8">
+        {/* Personalized Greeting with Family Branding - Desktop Only */}
+        <div className="hidden lg:block mb-8">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-3xl">🏠</span>
@@ -1274,8 +1281,8 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Stats Cards - Now Clickable! */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Stats Cards - Desktop Only */}
+        <div className="hidden lg:grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* This Week Card */}
           <Link
             href="/calendar"
@@ -1381,9 +1388,9 @@ function DashboardContent() {
           </Link>
         </div>
 
-        {/* Today's Events - Prominent Section */}
+        {/* Today's Events - Prominent Section - Desktop Only */}
         {todayEvents && todayEvents.length > 0 && (
-          <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-6 mb-8 border-2 border-primary-200">
+          <div className="hidden lg:block bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-6 mb-8 border-2 border-primary-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center">
@@ -1434,8 +1441,322 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Mobile-First Layout */}
+        <div className="block lg:hidden">
+          {/* Main Content - Mobile First */}
+          <div className="flex-1">
+            <div className="max-w-2xl mx-auto">
+
+              {/* Notification Banner - Only show if unconfirmed events exist */}
+              {unconfirmedEvents && unconfirmedEvents.length > 0 && (
+                <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-2xl p-4 shadow-soft">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">📧</div>
+                      <div>
+                        <p className="font-bold text-gray-900">
+                          {unconfirmedEvents.length} event{unconfirmedEvents.length !== 1 ? 's' : ''} need review
+                        </p>
+                        <p className="text-sm text-gray-600">From your emails</p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/review"
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors text-sm"
+                    >
+                      Review
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Search Bar */}
+              <div className="mb-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-base"
+                  />
+                  <svg className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Today's Events */}
+              {todayEvents && todayEvents.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span>Today</span>
+                    <span className="text-sm font-normal text-gray-500">
+                      {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </h2>
+
+                  <div className="space-y-4">
+                    {todayEvents.map((event: any, index: number) => (
+                      <div
+                        key={event._id}
+                        onClick={() => setSelectedEvent(event)}
+                        className="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 border-gray-100 hover:border-primary-200 cursor-pointer"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <div className="flex gap-4">
+                          {/* Category Emoji Icon */}
+                          <div className="flex-shrink-0">
+                            <div
+                              className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-sm"
+                              style={{
+                                backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
+                                borderLeft: `4px solid ${getCategoryColor(event.category)}`,
+                              }}
+                            >
+                              {getCategoryEmoji(event.category)}
+                            </div>
+                          </div>
+
+                          {/* Event Details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-gray-900 text-xl mb-3 leading-tight">{event.title}</h3>
+
+                            <div className="space-y-2 mb-4">
+                              {event.eventTime && (
+                                <div className="flex items-center gap-2.5 text-gray-700">
+                                  <span className="text-xl">🕐</span>
+                                  <span className="font-semibold text-lg">{formatTime12Hour(event.eventTime)}</span>
+                                </div>
+                              )}
+                              {event.location && (
+                                <div className="flex items-center gap-2.5 text-gray-700">
+                                  <span className="text-xl">📍</span>
+                                  <span className="truncate text-base">{event.location}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Tags Row */}
+                            {event.childName && (
+                              <div className="flex flex-wrap gap-2">
+                                {(() => {
+                                  const names = event.childName.split(",").map((n: string) => n.trim());
+                                  return names.map((name: string, idx: number) => {
+                                    const member = familyMembers?.find((m: any) => m.name === name);
+                                    const color = member?.color || "#6366f1";
+                                    return (
+                                      <span
+                                        key={idx}
+                                        className="inline-flex items-center px-3.5 py-2 rounded-full text-sm font-semibold text-white shadow-soft"
+                                        style={{ backgroundColor: color }}
+                                      >
+                                        {name}
+                                      </span>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tomorrow's Events Preview */}
+              {tomorrowEvents && tomorrowEvents.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span>Tomorrow</span>
+                    <span className="text-sm font-normal text-gray-500">
+                      {new Date(Date.now() + 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </h2>
+
+                  <div className="space-y-4">
+                    {tomorrowEvents.map((event: any, index: number) => (
+                      <div
+                        key={event._id}
+                        onClick={() => setSelectedEvent(event)}
+                        className="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 border-gray-100 hover:border-primary-200 cursor-pointer"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <div className="flex gap-4">
+                          {/* Category Emoji Icon */}
+                          <div className="flex-shrink-0">
+                            <div
+                              className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-sm"
+                              style={{
+                                backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
+                                borderLeft: `4px solid ${getCategoryColor(event.category)}`,
+                              }}
+                            >
+                              {getCategoryEmoji(event.category)}
+                            </div>
+                          </div>
+
+                          {/* Event Details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-gray-900 text-xl mb-3 leading-tight">{event.title}</h3>
+
+                            <div className="space-y-2 mb-4">
+                              {event.eventTime && (
+                                <div className="flex items-center gap-2.5 text-gray-700">
+                                  <span className="text-xl">🕐</span>
+                                  <span className="font-semibold text-lg">{formatTime12Hour(event.eventTime)}</span>
+                                </div>
+                              )}
+                              {event.location && (
+                                <div className="flex items-center gap-2.5 text-gray-700">
+                                  <span className="text-xl">📍</span>
+                                  <span className="truncate text-base">{event.location}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Tags Row */}
+                            {event.childName && (
+                              <div className="flex flex-wrap gap-2">
+                                {(() => {
+                                  const names = event.childName.split(",").map((n: string) => n.trim());
+                                  return names.map((name: string, idx: number) => {
+                                    const member = familyMembers?.find((m: any) => m.name === name);
+                                    const color = member?.color || "#6366f1";
+                                    return (
+                                      <span
+                                        key={idx}
+                                        className="inline-flex items-center px-3.5 py-2 rounded-full text-sm font-semibold text-white shadow-soft"
+                                        style={{ backgroundColor: color }}
+                                      >
+                                        {name}
+                                      </span>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* This Week - Remaining events */}
+              {weekEvents && weekEvents.filter((e: any) => e.eventDate > tomorrow).length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">This Week</h2>
+
+                  <div className="space-y-4">
+                    {weekEvents.filter((e: any) => e.eventDate > tomorrow).map((event: any, index: number) => (
+                      <div
+                        key={event._id}
+                        onClick={() => setSelectedEvent(event)}
+                        className="bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all duration-300 border-2 border-gray-100 hover:border-primary-200 cursor-pointer"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <div className="flex gap-4">
+                          {/* Category Emoji Icon */}
+                          <div className="flex-shrink-0">
+                            <div
+                              className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-sm"
+                              style={{
+                                backgroundColor: event.category ? `${getCategoryColor(event.category)}15` : '#f3f4f615',
+                                borderLeft: `4px solid ${getCategoryColor(event.category)}`,
+                              }}
+                            >
+                              {getCategoryEmoji(event.category)}
+                            </div>
+                          </div>
+
+                          {/* Event Details */}
+                          <div className="flex-1 min-w-0">
+                            <div className="mb-2">
+                              <div className="text-sm font-semibold text-primary-600 mb-1">
+                                {formatMomFriendlyDate(event.eventDate)}
+                              </div>
+                              <h3 className="font-bold text-gray-900 text-xl leading-tight">{event.title}</h3>
+                            </div>
+
+                            <div className="space-y-2 mb-4">
+                              {event.eventTime && (
+                                <div className="flex items-center gap-2.5 text-gray-700">
+                                  <span className="text-xl">🕐</span>
+                                  <span className="font-semibold text-lg">{formatTime12Hour(event.eventTime)}</span>
+                                </div>
+                              )}
+                              {event.location && (
+                                <div className="flex items-center gap-2.5 text-gray-700">
+                                  <span className="text-xl">📍</span>
+                                  <span className="truncate text-base">{event.location}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Tags Row */}
+                            {event.childName && (
+                              <div className="flex flex-wrap gap-2">
+                                {(() => {
+                                  const names = event.childName.split(",").map((n: string) => n.trim());
+                                  return names.map((name: string, idx: number) => {
+                                    const member = familyMembers?.find((m: any) => m.name === name);
+                                    const color = member?.color || "#6366f1";
+                                    return (
+                                      <span
+                                        key={idx}
+                                        className="inline-flex items-center px-3.5 py-2 rounded-full text-sm font-semibold text-white shadow-soft"
+                                        style={{ backgroundColor: color }}
+                                      >
+                                        {name}
+                                      </span>
+                                    );
+                                  });
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty State */}
+              {(!todayEvents || todayEvents.length === 0) &&
+               (!tomorrowEvents || tomorrowEvents.length === 0) &&
+               (!weekEvents || weekEvents.filter((e: any) => e.eventDate > tomorrow).length === 0) && (
+                <div className="p-8 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-200 to-green-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">All clear this week!</h3>
+                  <p className="text-gray-600 mb-6">No events scheduled. Tap the + button to add one.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout - Original Two Column */}
+        <div className="hidden lg:block">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upcoming Events */}
           <div id="upcoming-events" className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow">
@@ -2010,6 +2331,7 @@ function DashboardContent() {
                 </div>
               </Link>
             </div>
+          </div>
           </div>
         </div>
       </div>
