@@ -59,6 +59,42 @@ export default function Onboarding() {
 
   const totalSteps = 6;
 
+  // Show loading state while waiting for user to be created in database
+  if (clerkUser && currentUser === undefined) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Setting up your account...</h2>
+          <p className="text-gray-600">This will only take a moment</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user query returned null (no user found), something went wrong
+  if (clerkUser && currentUser === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-4xl">⚠️</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Oops! Something went wrong</h2>
+          <p className="text-gray-700 mb-6">
+            We're having trouble setting up your account. Please try refreshing the page.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Save step to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
