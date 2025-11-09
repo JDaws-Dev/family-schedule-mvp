@@ -67,7 +67,7 @@ export default function Onboarding() {
   const setFamilyCalendar = useMutation(api.families.updateSelectedCalendar);
   const updateNotificationPreferences = useMutation(api.notifications.updateNotificationPreferences);
 
-  const totalSteps = 6;
+  const totalSteps = 7; // Added payment step
 
   // Show loading state while waiting for user to be created in database
   if (clerkUser && currentUser === undefined) {
@@ -424,7 +424,8 @@ export default function Onboarding() {
               { num: 3, label: "Interests" },
               { num: 4, label: "Email" },
               { num: 5, label: "Calendar" },
-              { num: 6, label: "Alerts" }
+              { num: 6, label: "Alerts" },
+              { num: 7, label: "Payment" }
             ].map((step, index) => (
               <div key={step.num} className="flex flex-col items-center flex-1">
                 <div className="flex items-center w-full">
@@ -446,7 +447,7 @@ export default function Onboarding() {
                     )}
                   </div>
                 </div>
-                {index < 5 && (
+                {index < 6 && (
                   <div
                     className={`h-1 absolute left-1/2 top-5 -translate-y-1/2 transition-all duration-200 ${
                       step.num < currentStep ? "bg-green-500" : "bg-gray-200"
@@ -1210,6 +1211,73 @@ export default function Onboarding() {
             </div>
           )}
 
+          {/* Step 7: Payment (Placeholder) */}
+          {currentStep === 7 && (
+            <div className="space-y-6">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-4xl">💳</span>
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">Start your 7-day free trial</h1>
+                <p className="text-lg text-gray-600 max-w-xl mx-auto">
+                  Try everything free for 7 days. Cancel anytime. No charge until {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.
+                </p>
+                <p className="text-sm text-green-600 font-medium mt-2">Then just $9.99/month 💚</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-200">
+                <div className="max-w-md mx-auto">
+                  {/* Placeholder for Stripe card element */}
+                  <div className="bg-white rounded-xl p-8 border-2 border-dashed border-gray-300 text-center">
+                    <div className="text-6xl mb-4">🔒</div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Payment Integration Coming Soon</h3>
+                    <p className="text-gray-600 mb-6">
+                      This is where users will enter their credit card securely via Stripe.
+                    </p>
+                    <div className="space-y-3 text-left bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Free for 7 days (no charge today)</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>$9.99/month after trial</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Cancel anytime (no questions asked)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 bg-blue-50 rounded-xl p-5 border border-blue-200">
+                    <div className="flex gap-3">
+                      <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <div>
+                        <h4 className="font-semibold text-blue-900 text-sm">Secure & Encrypted</h4>
+                        <p className="text-sm text-blue-800 mt-1">
+                          Your payment info is encrypted and secured by Stripe. We never see or store your card details.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-center text-sm text-gray-500 mt-6">
+                    By continuing, you agree to our Terms of Service and Privacy Policy.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Navigation Buttons */}
           <div className="flex items-center justify-end pt-8 border-t border-gray-200 mt-8">
             <div className="flex gap-3">
@@ -1226,7 +1294,7 @@ export default function Onboarding() {
                   onClick={handleNext}
                   className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-soft hover:shadow-medium transform hover:scale-105"
                 >
-                  {currentStep === 1 ? "Let's Go! →" : currentStep === 2 ? "Share Your Interests! →" : currentStep === 3 ? "Connect My Emails! →" : currentStep === 4 ? "Choose My Calendar! →" : currentStep === 5 ? "Set Up Notifications! →" : "Continue →"}
+                  {currentStep === 1 ? "Let's Go! →" : currentStep === 2 ? "Share Your Interests! →" : currentStep === 3 ? "Connect My Emails! →" : currentStep === 4 ? "Choose My Calendar! →" : currentStep === 5 ? "Set Up Notifications! →" : currentStep === 6 ? "Add Payment! →" : "Continue →"}
                 </button>
               ) : (
                 <button
