@@ -62,9 +62,13 @@ export async function POST(request: NextRequest) {
     oauth2Client.setCredentials({ access_token: accessToken });
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-    // Use primary calendar instead of a specific calendar ID to avoid permission issues
-    const calendarId = 'primary';
-    console.log("[sync-from-calendar] Using primary calendar for account:", account.gmailEmail);
+    // Get family to check for selected calendar
+    const family = await convex.query(api.families.getFamilyById, { familyId });
+
+    // Use selected calendar if available, otherwise use primary
+    const calendarId = family?.googleCalendarId || 'primary';
+    const calendarName = family?.calendarName || 'primary calendar';
+    console.log("[sync-from-calendar] Using calendar:", calendarName, "for account:", account.gmailEmail);
 
     // First, verify we have access to the calendar
     try {
