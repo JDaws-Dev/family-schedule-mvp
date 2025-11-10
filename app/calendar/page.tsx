@@ -1625,6 +1625,8 @@ function CalendarContent() {
                   frameBorder="0"
                   scrolling="no"
                   title="Family Calendar"
+                  allow="camera; microphone; geolocation"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                 />
               </div>
             )}
