@@ -18,6 +18,23 @@ async function refreshAccessToken(refreshToken: string) {
   });
 
   const data = await response.json();
+
+  // ERROR HANDLING - Check if refresh was successful
+  if (!response.ok) {
+    console.error("[Token Refresh] Failed to refresh access token:", {
+      status: response.status,
+      error: data.error,
+      error_description: data.error_description,
+    });
+    throw new Error(`Token refresh failed: ${data.error_description || data.error || 'Unknown error'}`);
+  }
+
+  if (!data.access_token) {
+    console.error("[Token Refresh] No access token in response:", data);
+    throw new Error("Token refresh did not return an access token");
+  }
+
+  console.log("[Token Refresh] Successfully refreshed access token");
   return data.access_token;
 }
 
