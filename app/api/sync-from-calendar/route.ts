@@ -113,6 +113,10 @@ export async function POST(request: NextRequest) {
 
     let addedCount = 0;
     let updatedCount = 0;
+    let deletedCount = 0;
+
+    // Create set of Google Calendar event IDs for quick lookup
+    const googleEventIds = new Set(googleEvents.map(e => e.id).filter(Boolean));
 
     // Process each Google Calendar event
     for (const gEvent of googleEvents) {
@@ -189,7 +193,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[sync-from-calendar] Sync complete: ${addedCount} added, ${updatedCount} updated`);
+    // Delete events that exist in our DB but not in Google Calendar
+    for (const existingEvent of existingEvents) {
+      if (existingEvent.googleCalendarEventId && !googleEventIds.has(existingEvent.googleCalendarEventId)) {
+        console.log(`[sync-from-calendar] Deleting event removed from Google Calendar: ${existingEvent.title}`);
+        await convex.mutation(api.events.deleteEvent, {
+          eventId: existingEvent._id,
+        });
+        deletedCount++;
+      }
+    }
+
+    console.log(`[sync-from-calendar] Sync complete: ${addedCount} added, ${updatedCount} updated, ${deletedCount} deleted`);
 
     // Update last sync timestamp
     await convex.mutation(api.families.updateLastCalendarSync, { familyId });
@@ -198,6 +213,7 @@ export async function POST(request: NextRequest) {
       success: true,
       addedCount,
       updatedCount,
+      deletedCount,
       totalScanned: googleEvents.length,
     });
   } catch (error: any) {
