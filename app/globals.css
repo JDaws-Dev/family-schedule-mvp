@@ -29,20 +29,6 @@ a {
   min-width: 44px;
 }
 
-/* Fix iOS bottom navigation jumping */
-body {
-  position: fixed;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-}
-
-#__next {
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 /* Ensure bottom nav stays fixed on iOS */
 @supports (padding: env(safe-area-inset-bottom)) {
   .fixed.bottom-0 {
