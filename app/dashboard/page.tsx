@@ -3795,14 +3795,14 @@ function DashboardContent() {
       {/* Add Event Modal */}
       {showAddEventModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto pb-24 md:pb-4"
           onClick={() => {
             setShowAddEventModal(false);
             setAddEventTab("manual");
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[80vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[70vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
@@ -3865,7 +3865,7 @@ function DashboardContent() {
                   <textarea
                     value={pastedText}
                     onChange={(e) => setPastedText(e.target.value)}
-                    rows={10}
+                    rows={6}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     placeholder="Paste your email or text message here...
 
