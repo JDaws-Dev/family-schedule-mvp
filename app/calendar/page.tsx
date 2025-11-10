@@ -2374,7 +2374,7 @@ function CalendarContent() {
           onClose={() => setShowAddEventChoiceModal(false)}
           onCheckEmails={() => router.push('/dashboard#search-emails')}
           onTypeManually={() => router.push('/dashboard#type-manually')}
-          onPasteText={() => router.push('/dashboard#paste-text')}
+          onPasteText={() => router.push('/dashboard?openModal=paste')}
           onUploadPhoto={() => {
             setShowAddEventChoiceModal(false);
             setShowPhotoUploadModal(true);

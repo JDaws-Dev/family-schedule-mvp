@@ -416,6 +416,17 @@ function DashboardContent() {
     }
   }, [searchParams]);
 
+  // Open modal from query parameter (from calendar FAB)
+  useEffect(() => {
+    const openModal = searchParams.get("openModal");
+    if (openModal === "paste") {
+      setShowAddEventModal(true);
+      setAddEventTab("paste");
+      // Clear the query params
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [searchParams]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
