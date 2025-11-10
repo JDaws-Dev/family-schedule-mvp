@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as calendarSync from "../calendarSync.js";
 import type * as calendarWebhooks from "../calendarWebhooks.js";
 import type * as crons from "../crons.js";
 import type * as discover from "../discover.js";
@@ -38,6 +39,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  calendarSync: typeof calendarSync;
   calendarWebhooks: typeof calendarWebhooks;
   crons: typeof crons;
   discover: typeof discover;

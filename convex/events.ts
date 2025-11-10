@@ -90,6 +90,11 @@ export const createEvent = mutation({
       });
     }
 
+    // Schedule sync to Google Calendar (don't await to avoid timeout)
+    ctx.scheduler.runAfter(0, internal.calendarSync.syncEventToGoogleCalendar, {
+      eventId: eventId,
+    });
+
     return eventId;
   },
 });
@@ -305,6 +310,11 @@ export const confirmEvent = mutation({
   args: { eventId: v.id("events") },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.eventId, { isConfirmed: true });
+
+    // Schedule sync to Google Calendar when event is confirmed
+    ctx.scheduler.runAfter(0, internal.calendarSync.syncEventToGoogleCalendar, {
+      eventId: args.eventId,
+    });
   },
 });
 
