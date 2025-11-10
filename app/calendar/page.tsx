@@ -177,7 +177,6 @@ function CalendarContent() {
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
   const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
-  const [recentlyDeleted, setRecentlyDeleted] = useState<{eventId: string, event: any, timeout: NodeJS.Timeout} | null>(null);
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
@@ -853,26 +852,32 @@ function CalendarContent() {
       title: 'Delete Event?',
       message: `Are you sure you want to delete "${event.title}"?`,
       variant: 'danger',
-      onConfirm: () => {
-        // Clear any existing undo timeout
-        if (recentlyDeleted) {
-          clearTimeout(recentlyDeleted.timeout);
-        }
+      onConfirm: async () => {
+        try {
+          // If event is synced with Google Calendar, delete from there first
+          if (event.googleCalendarEventId) {
+            const response = await fetch("/api/delete-calendar-event", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ eventId: event._id }),
+            });
 
-        // Set up undo timeout (10 seconds to undo)
-        const timeout = setTimeout(async () => {
-          // Actually delete the event after 10 seconds
-          if (recentlyDeleted?.eventId) {
-            await deleteEvent({ eventId: recentlyDeleted.eventId as any });
+            const result = await response.json();
+
+            if (!response.ok) {
+              console.error("Error deleting from Google Calendar:", result);
+              showToast(`Failed to delete: ${result.error || "Unknown error"}`, "error");
+              return;
+            }
           }
-          setRecentlyDeleted(null);
-        }, 10000);
 
-        setRecentlyDeleted({
-          eventId: event._id,
-          event: event,
-          timeout
-        });
+          // Always delete from our database immediately (don't wait for webhook)
+          await deleteEvent({ eventId: event._id });
+          showToast("Event deleted successfully", "success");
+        } catch (error) {
+          console.error("Error deleting event:", error);
+          showToast("Failed to delete event. Please try again.", "error");
+        }
 
         setShowConfirmDialog(false);
         setConfirmDialogConfig(null);
@@ -881,13 +886,6 @@ function CalendarContent() {
     setShowConfirmDialog(true);
   };
 
-  // Handle undo delete
-  const handleUndoDelete = () => {
-    if (recentlyDeleted) {
-      clearTimeout(recentlyDeleted.timeout);
-      setRecentlyDeleted(null);
-    }
-  };
 
   const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
     switch (action) {
@@ -1486,9 +1484,7 @@ function CalendarContent() {
                       </div>
                       {/* Events for this day - Simplified card style */}
                       <div className="space-y-2">
-                        {events
-                          .filter((event: any) => event._id !== recentlyDeleted?.eventId)
-                          .map((event: any) => (
+                        {events.map((event: any) => (
                           <div
                             key={event._id}
                             className={`bg-white rounded-xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all border ${
@@ -2424,19 +2420,6 @@ function CalendarContent() {
       )}
 
       {/* FAB for Mobile */}
-      {/* Undo Notification */}
-      {recentlyDeleted && (
-        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-4 z-50 animate-slide-up">
-          <span className="text-sm font-medium">Event deleted</span>
-          <button
-            onClick={handleUndoDelete}
-            className="px-4 py-1 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition font-semibold text-sm"
-          >
-            Undo
-          </button>
-        </div>
-      )}
-
       <FAB onAction={handleFABAction} />
 
       {/* Bottom Navigation for Mobile */}
