@@ -80,6 +80,9 @@ export const createEvent = mutation({
       recurrenceEndType: args.recurrenceEndType,
       recurrenceEndDate: args.recurrenceEndDate,
       recurrenceEndCount: args.recurrenceEndCount,
+      // Sync status tracking - start as pending
+      syncStatus: "pending",
+      syncRetryCount: 0,
     });
 
     // Generate recurring instances if this is a recurring event
@@ -224,6 +227,9 @@ export const createUnconfirmedEvent = mutation({
       sourceEmailId: args.sourceEmailId,
       sourceEmailSubject: args.sourceEmailSubject,
       isConfirmed: false,
+      // Sync status tracking - unconfirmed events don't sync yet
+      syncStatus: "pending",
+      syncRetryCount: 0,
     });
   },
 });
@@ -301,6 +307,16 @@ export const updateEvent = mutation({
     isConfirmed: v.optional(v.boolean()),
     googleCalendarEventId: v.optional(v.string()),
     lastSyncedAt: v.optional(v.number()),
+    // Sync status fields
+    syncStatus: v.optional(v.union(
+      v.literal("pending"),
+      v.literal("syncing"),
+      v.literal("synced"),
+      v.literal("failed")
+    )),
+    syncError: v.optional(v.string()),
+    lastSyncAttempt: v.optional(v.number()),
+    syncRetryCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { eventId, ...updates } = args;
@@ -313,9 +329,10 @@ export const updateEvent = mutation({
     await ctx.db.patch(eventId, updates);
 
     // If event is synced to Google Calendar and is confirmed, schedule an update sync
-    // Only sync if we're not just updating sync metadata (googleCalendarEventId or lastSyncedAt)
+    // Only sync if we're not just updating sync metadata (googleCalendarEventId, lastSyncedAt, syncStatus, etc.)
+    const syncMetadataKeys = ['googleCalendarEventId', 'lastSyncedAt', 'syncStatus', 'syncError', 'lastSyncAttempt', 'syncRetryCount'];
     const isMetadataOnlyUpdate = Object.keys(updates).every(key =>
-      key === 'googleCalendarEventId' || key === 'lastSyncedAt'
+      syncMetadataKeys.includes(key)
     );
 
     if (shouldSync && !isMetadataOnlyUpdate) {
@@ -439,6 +456,9 @@ export const createConfirmedEventFromCalendar = mutation({
       isConfirmed: true,
       googleCalendarEventId: args.googleCalendarEventId,
       lastSyncedAt: Date.now(),
+      // Events from Google Calendar are already synced
+      syncStatus: "synced",
+      syncRetryCount: 0,
     });
   },
 });

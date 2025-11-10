@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalAction } from "./_generated/server";
+import { internalAction, internalQuery, mutation, query } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
 /**
@@ -39,6 +39,26 @@ async function refreshAccessToken(refreshToken: string) {
 }
 
 /**
+ * Calculate exponential backoff delay for retry attempts
+ * Retry schedule: 1 min, 5 min, 15 min, 1 hour, 4 hours
+ */
+function getRetryDelay(retryCount: number): number {
+  const delays = [
+    1 * 60 * 1000,      // 1 minute
+    5 * 60 * 1000,      // 5 minutes
+    15 * 60 * 1000,     // 15 minutes
+    60 * 60 * 1000,     // 1 hour
+    4 * 60 * 60 * 1000, // 4 hours
+  ];
+
+  if (retryCount >= delays.length) {
+    return 0; // No more retries
+  }
+
+  return delays[retryCount];
+}
+
+/**
  * Internal action to sync a newly created event to Google Calendar
  * This is called via scheduler after an event is created
  *
@@ -48,9 +68,12 @@ async function refreshAccessToken(refreshToken: string) {
 export const syncEventToGoogleCalendar = internalAction({
   args: {
     eventId: v.id("events"),
+    isRetry: v.optional(v.boolean()), // Whether this is a retry attempt
   },
   handler: async (ctx, args) => {
-    console.log(`[CALENDAR SYNC] Starting sync for event ID: ${args.eventId}`);
+    const MAX_RETRIES = 5;
+    console.log(`[CALENDAR SYNC] Starting sync for event ID: ${args.eventId}${args.isRetry ? ' (RETRY)' : ''}`);
+
     try {
       // Get the event details
       const event = await ctx.runQuery(api.events.getEventById, {
@@ -65,11 +88,38 @@ export const syncEventToGoogleCalendar = internalAction({
         };
       }
 
-      console.log(`[CALENDAR SYNC] Retrieved event: ${event.title}, familyId: ${event.familyId}, isConfirmed: ${event.isConfirmed}`)
+      console.log(`[CALENDAR SYNC] Retrieved event: ${event.title}, familyId: ${event.familyId}, isConfirmed: ${event.isConfirmed}, syncStatus: ${event.syncStatus}, retryCount: ${event.syncRetryCount || 0}`)
+
+      // Check if we've exceeded max retries
+      const retryCount = event.syncRetryCount || 0;
+      if (retryCount >= MAX_RETRIES) {
+        console.error(`[CALENDAR SYNC] Event ${args.eventId} has exceeded max retry attempts (${MAX_RETRIES})`);
+        await ctx.runMutation(api.events.updateEvent, {
+          eventId: args.eventId,
+          syncStatus: "failed",
+          syncError: `Maximum retry attempts (${MAX_RETRIES}) exceeded. Please manually retry sync.`,
+          lastSyncAttempt: Date.now(),
+        });
+        return {
+          success: false,
+          error: "Max retries exceeded",
+        };
+      }
+
+      // Update status to "syncing"
+      await ctx.runMutation(api.events.updateEvent, {
+        eventId: args.eventId,
+        syncStatus: "syncing",
+        lastSyncAttempt: Date.now(),
+      });
 
       // If event already has a Google Calendar ID, it's already synced
       if (event.googleCalendarEventId) {
-        console.log(`[CALENDAR SYNC] Event ${args.eventId} already has Google Calendar ID, skipping sync`);
+        console.log(`[CALENDAR SYNC] Event ${args.eventId} already has Google Calendar ID, marking as synced`);
+        await ctx.runMutation(api.events.updateEvent, {
+          eventId: args.eventId,
+          syncStatus: "synced",
+        });
         return {
           success: true,
           message: "Event already synced",
@@ -86,7 +136,12 @@ export const syncEventToGoogleCalendar = internalAction({
 
       // Only sync if the family has a googleCalendarId configured
       if (!family?.googleCalendarId) {
-        console.log(`[CALENDAR SYNC] Family ${event.familyId} has no Google Calendar configured, skipping sync for event ${args.eventId}`);
+        console.log(`[CALENDAR SYNC] Family ${event.familyId} has no Google Calendar configured, marking as synced (no calendar to sync to)`);
+        // Mark as synced since there's nothing to sync to
+        await ctx.runMutation(api.events.updateEvent, {
+          eventId: args.eventId,
+          syncStatus: "synced",
+        });
         return {
           success: true,
           message: "No Google Calendar configured for family, skipping sync",
@@ -101,7 +156,26 @@ export const syncEventToGoogleCalendar = internalAction({
       console.log(`[CALENDAR SYNC] Found ${gmailAccounts?.length || 0} active Gmail accounts for family ${event.familyId}`);
 
       if (!gmailAccounts || gmailAccounts.length === 0) {
-        console.error(`[CALENDAR SYNC] No Gmail account connected for family ${event.familyId}`);
+        console.error(`[CALENDAR SYNC] No Gmail account connected for family ${event.familyId}, scheduling retry`);
+        const newRetryCount = retryCount + 1;
+        const retryDelay = getRetryDelay(newRetryCount);
+
+        await ctx.runMutation(api.events.updateEvent, {
+          eventId: args.eventId,
+          syncStatus: "failed",
+          syncError: "No Gmail account connected. Cannot add to Google Calendar.",
+          syncRetryCount: newRetryCount,
+        });
+
+        // Schedule retry if we haven't exceeded max attempts
+        if (retryDelay > 0) {
+          console.log(`[CALENDAR SYNC] Scheduling retry ${newRetryCount} in ${retryDelay / 1000} seconds`);
+          ctx.scheduler.runAfter(retryDelay, internal.calendarSync.syncEventToGoogleCalendar, {
+            eventId: args.eventId,
+            isRetry: true,
+          });
+        }
+
         return {
           success: false,
           error: "No Gmail account connected. Cannot add to Google Calendar.",
@@ -169,6 +243,26 @@ export const syncEventToGoogleCalendar = internalAction({
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[CALENDAR SYNC] Failed to sync event ${args.eventId} to Google Calendar: ${response.status} ${errorText}`);
+
+        const newRetryCount = retryCount + 1;
+        const retryDelay = getRetryDelay(newRetryCount);
+
+        await ctx.runMutation(api.events.updateEvent, {
+          eventId: args.eventId,
+          syncStatus: "failed",
+          syncError: `Google Calendar API returned ${response.status}: ${errorText}`,
+          syncRetryCount: newRetryCount,
+        });
+
+        // Schedule retry if we haven't exceeded max attempts
+        if (retryDelay > 0) {
+          console.log(`[CALENDAR SYNC] Scheduling retry ${newRetryCount} in ${retryDelay / 1000} seconds`);
+          ctx.scheduler.runAfter(retryDelay, internal.calendarSync.syncEventToGoogleCalendar, {
+            eventId: args.eventId,
+            isRetry: true,
+          });
+        }
+
         return {
           success: false,
           error: `Google Calendar API returned ${response.status}: ${errorText}`,
@@ -180,14 +274,16 @@ export const syncEventToGoogleCalendar = internalAction({
 
       console.log(`[CALENDAR SYNC] Event created in Google Calendar with ID: ${googleCalendarEventId}`);
 
-      // Update the event in Convex with the Google Calendar ID and sync timestamp
+      // Update the event in Convex with the Google Calendar ID, sync timestamp, and success status
       await ctx.runMutation(api.events.updateEvent, {
         eventId: args.eventId,
         googleCalendarEventId: googleCalendarEventId,
         lastSyncedAt: Date.now(),
+        syncStatus: "synced",
+        syncRetryCount: 0, // Reset retry count on success
       });
 
-      console.log(`[CALENDAR SYNC] Successfully synced event ${args.eventId} to Google Calendar with ID ${googleCalendarEventId}`);
+      console.log(`[CALENDAR SYNC] Successfully synced event ${args.eventId} to Google Calendar with ID ${googleCalendarEventId}${retryCount > 0 ? ` (after ${retryCount} ${retryCount === 1 ? 'retry' : 'retries'})` : ''}`);
 
       return {
         success: true,
@@ -195,9 +291,29 @@ export const syncEventToGoogleCalendar = internalAction({
         googleCalendarEventId: googleCalendarEventId,
       };
     } catch (error: any) {
-      // Log the error but don't throw - we want the event creation to succeed even if sync fails
+      // Log the error and schedule retry
       console.error(`[CALENDAR SYNC] ERROR syncing event ${args.eventId} to Google Calendar:`, error);
       console.error(`[CALENDAR SYNC] Error stack:`, error.stack);
+
+      const newRetryCount = retryCount + 1;
+      const retryDelay = getRetryDelay(newRetryCount);
+
+      await ctx.runMutation(api.events.updateEvent, {
+        eventId: args.eventId,
+        syncStatus: "failed",
+        syncError: error.message || "Unknown error",
+        syncRetryCount: newRetryCount,
+      });
+
+      // Schedule retry if we haven't exceeded max attempts
+      if (retryDelay > 0) {
+        console.log(`[CALENDAR SYNC] Scheduling retry ${newRetryCount} in ${retryDelay / 1000} seconds after error: ${error.message}`);
+        ctx.scheduler.runAfter(retryDelay, internal.calendarSync.syncEventToGoogleCalendar, {
+          eventId: args.eventId,
+          isRetry: true,
+        });
+      }
+
       return {
         success: false,
         error: error.message || "Unknown error",
@@ -419,6 +535,218 @@ export const deleteEventFromGoogleCalendar = internalAction({
       };
     } catch (error: any) {
       console.error(`[CALENDAR SYNC DELETE] ERROR deleting event from Google Calendar:`, error);
+      return {
+        success: false,
+        error: error.message || "Unknown error",
+      };
+    }
+  },
+});
+
+/**
+ * Query to get all unsynced events (pending or failed) for a family
+ */
+export const getUnsyncedEvents = query({
+  args: {
+    familyId: v.id("families"),
+  },
+  handler: async (ctx, args) => {
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_family_and_sync_status", (q) =>
+        q.eq("familyId", args.familyId)
+      )
+      .collect();
+
+    // Filter for events that need syncing (pending or failed, and confirmed)
+    return events.filter(
+      (event) =>
+        event.isConfirmed &&
+        (event.syncStatus === "pending" || event.syncStatus === "failed")
+    );
+  },
+});
+
+/**
+ * Internal query to get all unsynced events across all families (for cron job)
+ */
+export const getAllUnsyncedEvents = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const pendingEvents = await ctx.db
+      .query("events")
+      .withIndex("by_sync_status", (q) => q.eq("syncStatus", "pending"))
+      .collect();
+
+    const failedEvents = await ctx.db
+      .query("events")
+      .withIndex("by_sync_status", (q) => q.eq("syncStatus", "failed"))
+      .collect();
+
+    // Only return confirmed events
+    const allUnsynced = [...pendingEvents, ...failedEvents].filter(
+      (event) => event.isConfirmed
+    );
+
+    return allUnsynced;
+  },
+});
+
+/**
+ * Mutation to manually retry sync for a specific event
+ */
+export const retrySyncForEvent = mutation({
+  args: {
+    eventId: v.id("events"),
+  },
+  handler: async (ctx, args) => {
+    const event = await ctx.db.get(args.eventId);
+
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    if (!event.isConfirmed) {
+      throw new Error("Cannot sync unconfirmed events");
+    }
+
+    if (event.syncStatus === "synced") {
+      return {
+        success: true,
+        message: "Event is already synced",
+      };
+    }
+
+    // Reset retry count to allow fresh attempts
+    await ctx.db.patch(args.eventId, {
+      syncStatus: "pending",
+      syncRetryCount: 0,
+    });
+
+    // Schedule immediate sync
+    ctx.scheduler.runAfter(0, internal.calendarSync.syncEventToGoogleCalendar, {
+      eventId: args.eventId,
+      isRetry: false,
+    });
+
+    return {
+      success: true,
+      message: "Sync scheduled for event",
+    };
+  },
+});
+
+/**
+ * Mutation to manually retry sync for all unsynced events in a family
+ */
+export const retrySyncForFamily = mutation({
+  args: {
+    familyId: v.id("families"),
+  },
+  handler: async (ctx, args) => {
+    const events = await ctx.db
+      .query("events")
+      .withIndex("by_family_and_sync_status", (q) =>
+        q.eq("familyId", args.familyId)
+      )
+      .collect();
+
+    // Find all unsynced confirmed events
+    const unsyncedEvents = events.filter(
+      (event) =>
+        event.isConfirmed &&
+        (event.syncStatus === "pending" || event.syncStatus === "failed")
+    );
+
+    console.log(
+      `[MANUAL SYNC] Found ${unsyncedEvents.length} unsynced events for family ${args.familyId}`
+    );
+
+    // Reset retry count and schedule sync for each
+    for (const event of unsyncedEvents) {
+      await ctx.db.patch(event._id, {
+        syncStatus: "pending",
+        syncRetryCount: 0,
+      });
+
+      // Schedule immediate sync
+      ctx.scheduler.runAfter(0, internal.calendarSync.syncEventToGoogleCalendar, {
+        eventId: event._id,
+        isRetry: false,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Scheduled sync for ${unsyncedEvents.length} ${unsyncedEvents.length === 1 ? 'event' : 'events'}`,
+      eventCount: unsyncedEvents.length,
+    };
+  },
+});
+
+/**
+ * Internal action for background cron job to retry failed syncs
+ */
+export const backgroundSyncRetry = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    console.log("[BACKGROUND SYNC] Starting background sync retry job");
+
+    try {
+      // Get all unsynced events
+      const unsyncedEvents = await ctx.runQuery(
+        internal.calendarSync.getAllUnsyncedEvents
+      );
+
+      console.log(
+        `[BACKGROUND SYNC] Found ${unsyncedEvents.length} unsynced events`
+      );
+
+      let scheduledCount = 0;
+
+      for (const event of unsyncedEvents) {
+        const retryCount = event.syncRetryCount || 0;
+
+        // Skip if max retries exceeded
+        if (retryCount >= 5) {
+          console.log(
+            `[BACKGROUND SYNC] Skipping event ${event._id} - max retries exceeded`
+          );
+          continue;
+        }
+
+        // Check if enough time has passed since last attempt
+        const lastAttempt = event.lastSyncAttempt || 0;
+        const timeSinceLastAttempt = Date.now() - lastAttempt;
+        const minWaitTime = getRetryDelay(retryCount - 1) || 0;
+
+        if (timeSinceLastAttempt < minWaitTime) {
+          console.log(
+            `[BACKGROUND SYNC] Skipping event ${event._id} - not enough time since last attempt`
+          );
+          continue;
+        }
+
+        // Schedule sync
+        ctx.scheduler.runAfter(0, internal.calendarSync.syncEventToGoogleCalendar, {
+          eventId: event._id,
+          isRetry: true,
+        });
+
+        scheduledCount++;
+      }
+
+      console.log(
+        `[BACKGROUND SYNC] Scheduled ${scheduledCount} events for sync`
+      );
+
+      return {
+        success: true,
+        totalUnsynced: unsyncedEvents.length,
+        scheduledForRetry: scheduledCount,
+      };
+    } catch (error: any) {
+      console.error("[BACKGROUND SYNC] Error in background sync job:", error);
       return {
         success: false,
         error: error.message || "Unknown error",

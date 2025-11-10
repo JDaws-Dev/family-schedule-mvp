@@ -134,12 +134,24 @@ export default defineSchema({
     // Google Calendar sync
     googleCalendarEventId: v.optional(v.string()), // For two-way sync
     lastSyncedAt: v.optional(v.number()),
+    // Sync status tracking for retry mechanism
+    syncStatus: v.optional(v.union(
+      v.literal("pending"),   // Not yet synced, waiting to sync
+      v.literal("syncing"),   // Currently being synced
+      v.literal("synced"),    // Successfully synced to Google Calendar
+      v.literal("failed")     // Sync failed, needs retry
+    )),
+    syncError: v.optional(v.string()), // Error message from last sync attempt
+    lastSyncAttempt: v.optional(v.number()), // Timestamp of last sync attempt
+    syncRetryCount: v.optional(v.number()), // Number of retry attempts made
   })
     .index("by_family", ["familyId"])
     .index("by_family_and_date", ["familyId", "eventDate"])
     .index("by_confirmed", ["isConfirmed"])
     .index("by_google_event_id", ["googleCalendarEventId"])
-    .index("by_parent_recurring_event", ["parentRecurringEventId"]),
+    .index("by_parent_recurring_event", ["parentRecurringEventId"])
+    .index("by_sync_status", ["syncStatus"])
+    .index("by_family_and_sync_status", ["familyId", "syncStatus"]),
 
   emailProcessingLog: defineTable({
     gmailAccountId: v.id("gmailAccounts"), // Which Gmail account this email came from

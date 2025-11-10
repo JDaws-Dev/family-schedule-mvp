@@ -33,4 +33,12 @@ crons.daily(
   internal.calendarWebhooks.renewExpiringWebhooks
 );
 
+// Background sync retry for failed calendar syncs - runs every 30 minutes
+// This ensures that events eventually sync even if initial attempts fail
+crons.interval(
+  "retry-failed-calendar-syncs",
+  { minutes: 30 },
+  internal.calendarSync.backgroundSyncRetry
+);
+
 export default crons;
