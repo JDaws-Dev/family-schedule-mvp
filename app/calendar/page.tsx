@@ -1900,7 +1900,7 @@ function CalendarContent() {
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[85vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -2365,9 +2365,9 @@ function CalendarContent() {
       {showAddEventChoiceModal && (
         <AddEventChoiceModal
           onClose={() => setShowAddEventChoiceModal(false)}
-          onCheckEmails={() => router.push('/dashboard')}
-          onTypeManually={() => router.push('/dashboard')}
-          onPasteText={() => router.push('/dashboard')}
+          onCheckEmails={() => router.push('/review')}
+          onTypeManually={() => router.push('/review?mode=manual')}
+          onPasteText={() => router.push('/review?mode=paste')}
           onUploadPhoto={() => {
             setShowAddEventChoiceModal(false);
             setShowPhotoUploadModal(true);
@@ -2376,7 +2376,7 @@ function CalendarContent() {
             setShowAddEventChoiceModal(false);
             setShowVoiceRecordModal(true);
           }}
-          onSearchSpecific={() => router.push('/dashboard')}
+          onSearchSpecific={() => router.push('/review?mode=search')}
           isGmailConnected={!!gmailAccounts && gmailAccounts.length > 0}
         />
       )}
@@ -2401,7 +2401,7 @@ function CalendarContent() {
       {showConfirmDialog && confirmDialogConfig && (
         <ConfirmDialog
           isOpen={showConfirmDialog}
-          onClose={() => {
+          onCancel={() => {
             setShowConfirmDialog(false);
             setConfirmDialogConfig(null);
           }}

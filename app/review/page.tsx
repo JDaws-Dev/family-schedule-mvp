@@ -1569,7 +1569,7 @@ function ReviewPageContent() {
       {/* Edit Event Modal */}
       {showEditEventModal && editingEvent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
             <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Edit Event</h2>
               <button
@@ -2111,7 +2111,6 @@ function ReviewPageContent() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Example:
 Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara. Please bring water and shin guards!"
-                  autoFocus
                 />
               </div>
 
@@ -2167,7 +2166,7 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[85vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
