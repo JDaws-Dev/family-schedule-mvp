@@ -49,8 +49,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
 
-      {/* Toast Container */}
-      <div className="fixed bottom-32 md:bottom-4 right-0 z-50 p-4 space-y-3 max-w-md w-full pointer-events-none">
+      {/* Toast Container - positioned above bottom nav (68px) + browser nav + safe area */}
+      <div className="fixed right-0 z-50 p-4 space-y-3 max-w-md w-full pointer-events-none" style={{ bottom: 'max(8rem, calc(env(safe-area-inset-bottom) + 5rem))' }}>
         {toasts.map((toast) => (
           <div
             key={toast.id}
