@@ -90,10 +90,12 @@ export const createEvent = mutation({
       });
     }
 
+    console.log(`[CREATE EVENT] Event created with ID: ${eventId}. Scheduling Google Calendar sync...`);
     // Schedule sync to Google Calendar (don't await to avoid timeout)
     ctx.scheduler.runAfter(0, internal.calendarSync.syncEventToGoogleCalendar, {
       eventId: eventId,
     });
+    console.log(`[CREATE EVENT] Google Calendar sync scheduled for event ${eventId}`);
 
     return eventId;
   },
@@ -298,10 +300,30 @@ export const updateEvent = mutation({
     actionCompleted: v.optional(v.boolean()),
     isConfirmed: v.optional(v.boolean()),
     googleCalendarEventId: v.optional(v.string()),
+    lastSyncedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { eventId, ...updates } = args;
+
+    // Get the event before updating to check if it has a Google Calendar ID
+    const event = await ctx.db.get(eventId);
+    const shouldSync = event?.googleCalendarEventId && event.isConfirmed;
+
+    // Apply the update
     await ctx.db.patch(eventId, updates);
+
+    // If event is synced to Google Calendar and is confirmed, schedule an update sync
+    // Only sync if we're not just updating sync metadata (googleCalendarEventId or lastSyncedAt)
+    const isMetadataOnlyUpdate = Object.keys(updates).every(key =>
+      key === 'googleCalendarEventId' || key === 'lastSyncedAt'
+    );
+
+    if (shouldSync && !isMetadataOnlyUpdate) {
+      console.log(`[UPDATE EVENT] Event ${eventId} updated. Scheduling Google Calendar sync...`);
+      ctx.scheduler.runAfter(0, internal.calendarSync.updateEventInGoogleCalendar, {
+        eventId: eventId,
+      });
+    }
   },
 });
 
@@ -311,10 +333,12 @@ export const confirmEvent = mutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.eventId, { isConfirmed: true });
 
+    console.log(`[CONFIRM EVENT] Event ${args.eventId} confirmed. Scheduling Google Calendar sync...`);
     // Schedule sync to Google Calendar when event is confirmed
     ctx.scheduler.runAfter(0, internal.calendarSync.syncEventToGoogleCalendar, {
       eventId: args.eventId,
     });
+    console.log(`[CONFIRM EVENT] Google Calendar sync scheduled for event ${args.eventId}`);
   },
 });
 
@@ -322,7 +346,20 @@ export const confirmEvent = mutation({
 export const deleteEvent = mutation({
   args: { eventId: v.id("events") },
   handler: async (ctx, args) => {
+    // Get the event before deleting to check if it has a Google Calendar ID
+    const event = await ctx.db.get(args.eventId);
+
+    // Delete from Convex database first
     await ctx.db.delete(args.eventId);
+
+    // If event was synced to Google Calendar, schedule deletion from Google Calendar
+    if (event?.googleCalendarEventId && event.familyId) {
+      console.log(`[DELETE EVENT] Event ${args.eventId} deleted. Scheduling Google Calendar deletion...`);
+      ctx.scheduler.runAfter(0, internal.calendarSync.deleteEventFromGoogleCalendar, {
+        familyId: event.familyId,
+        googleCalendarEventId: event.googleCalendarEventId,
+      });
+    }
   },
 });
 
@@ -401,6 +438,7 @@ export const createConfirmedEventFromCalendar = mutation({
       location: args.location,
       isConfirmed: true,
       googleCalendarEventId: args.googleCalendarEventId,
+      lastSyncedAt: Date.now(),
     });
   },
 });

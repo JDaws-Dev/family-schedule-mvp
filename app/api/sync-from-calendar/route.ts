@@ -155,6 +155,10 @@ export async function POST(request: NextRequest) {
       const existing = existingEventsMap.get(gEvent.id);
 
       if (existing) {
+        // Get the last update time from Google Calendar
+        const gcalUpdatedAt = gEvent.updated ? new Date(gEvent.updated).getTime() : 0;
+        const ourLastSyncAt = existing.lastSyncedAt || 0;
+
         // Check if anything changed
         const needsUpdate =
           existing.title !== gEvent.summary ||
@@ -163,8 +167,9 @@ export async function POST(request: NextRequest) {
           existing.location !== (gEvent.location || undefined) ||
           existing.description !== (gEvent.description || undefined);
 
-        if (needsUpdate) {
-          console.log(`[sync-from-calendar] Updating event: ${gEvent.summary}`);
+        // Only update if Google Calendar was updated after our last sync (avoid infinite loops)
+        if (needsUpdate && gcalUpdatedAt > ourLastSyncAt) {
+          console.log(`[sync-from-calendar] Updating event: ${gEvent.summary} (GCal updated: ${new Date(gcalUpdatedAt).toISOString()}, Last sync: ${new Date(ourLastSyncAt).toISOString()})`);
           await convex.mutation(api.events.updateEvent, {
             eventId: existing._id,
             title: gEvent.summary,
@@ -173,8 +178,11 @@ export async function POST(request: NextRequest) {
             endTime,
             location: gEvent.location || undefined,
             description: gEvent.description || undefined,
+            lastSyncedAt: Date.now(),
           });
           updatedCount++;
+        } else if (needsUpdate) {
+          console.log(`[sync-from-calendar] Skipping update for event: ${gEvent.summary} (our version is newer)`);
         }
       } else {
         // New event from Google Calendar - add it

@@ -25,7 +25,7 @@ export default function ConfirmDialog({
   variant = 'danger',
   itemCount,
 }: ConfirmDialogProps) {
-  // Add keyboard listener for Escape key
+  // Add keyboard listener for Escape key and block body scroll
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -35,10 +35,12 @@ export default function ConfirmDialog({
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onCancel]);
 

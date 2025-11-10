@@ -22,8 +22,11 @@ export default function VoiceRecordModal({
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Block body scroll when modal is open
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
     return () => {
+      document.body.style.overflow = 'unset';
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }

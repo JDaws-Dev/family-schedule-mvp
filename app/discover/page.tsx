@@ -6,6 +6,7 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "../components/Toast";
+import MobileNav from "../components/MobileNav";
 import BottomNav from "../components/BottomNav";
 import ConfirmDialog from "../components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "../components/LoadingSpinner";
@@ -230,43 +231,55 @@ export default function DiscoverPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200  shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-primary-600">
-            Our Daily Family
-          </Link>
+      {/* Top Navigation Header */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/dashboard" className="text-xl font-bold text-slate-900 hover:text-primary-600 transition">
+              Our Daily Family
+            </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">Home</Link>
-            <Link href="/calendar" className="text-gray-600 hover:text-gray-900">Calendar</Link>
-            <Link href="/review" className="text-gray-600 hover:text-gray-900">Events</Link>
-            <Link href="/discover" className="text-primary-600 font-medium">Find Activities</Link>
-            <Link href="/settings" className="text-gray-600 hover:text-gray-900">Settings</Link>
-            <button onClick={() => signOut()} className="text-gray-600 hover:text-gray-900">Log Out</button>
-          </nav>
-
-          {/* Mobile Menu Button */}
-          <button className="md:hidden text-2xl text-gray-600" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
-        </div>
-
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <nav className="flex flex-col py-2">
-              <Link href="/dashboard" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Home</Link>
-              <Link href="/calendar" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Calendar</Link>
-              <Link href="/review" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Events</Link>
-              <Link href="/discover" className="px-4 py-3 text-primary-600 font-medium bg-primary-50">Find Activities</Link>
-              <Link href="/settings" className="px-4 py-3 text-gray-600 hover:bg-gray-50">Settings</Link>
-              <button onClick={() => signOut()} className="px-4 py-3 text-left text-gray-600 hover:bg-gray-50">Log Out</button>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-6">
+              <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                Home
+              </Link>
+              <Link href="/calendar" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                Calendar
+              </Link>
+              <Link href="/review" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                Events
+              </Link>
+              <Link href="/discover" className="text-sm font-medium text-primary-600 transition">
+                Discover
+              </Link>
+              <Link href="/settings" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                Settings
+              </Link>
+              <Link href="/support" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                Support
+              </Link>
             </nav>
+
+            {/* Mobile Hamburger Menu */}
+            <button
+              className="md:hidden text-gray-600 hover:text-gray-900 focus:outline-none"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
-        )}
+        </div>
       </header>
+
+      {/* Mobile Navigation Menu */}
+      <MobileNav
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+        currentPage="discover"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
@@ -902,7 +915,7 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      {/* Bottom Navigation for Mobile */}
+      {/* Bottom Navigation (Mobile) */}
       <BottomNav />
     </div>
   );

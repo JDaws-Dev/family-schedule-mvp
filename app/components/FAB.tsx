@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface FABProps {
   onAction: (action: "manual" | "paste" | "photo" | "voice") => void;
+  hasGmailAccount?: boolean;
 }
 
-export default function FAB({ onAction }: FABProps) {
+export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const actions = [
@@ -19,8 +21,9 @@ export default function FAB({ onAction }: FABProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       ),
-      color: "from-primary-500 to-primary-600",
+      color: "bg-blue-500",
       description: "Flyer or schedule",
+      type: "action" as const,
     },
     {
       id: "voice" as const,
@@ -30,8 +33,9 @@ export default function FAB({ onAction }: FABProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
         </svg>
       ),
-      color: "from-secondary-500 to-secondary-600",
+      color: "bg-emerald-500",
       description: "Say it out loud",
+      type: "action" as const,
     },
     {
       id: "paste" as const,
@@ -41,8 +45,9 @@ export default function FAB({ onAction }: FABProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       ),
-      color: "from-accent-500 to-accent-600",
+      color: "bg-violet-500",
       description: "Copy & paste",
+      type: "action" as const,
     },
     {
       id: "manual" as const,
@@ -52,14 +57,44 @@ export default function FAB({ onAction }: FABProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
       ),
-      color: "from-gray-500 to-gray-600",
+      color: "bg-gray-600",
       description: "Manual entry",
+      type: "action" as const,
+    },
+    ...(hasGmailAccount ? [{
+      id: "search-email" as const,
+      label: "Search Email",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ),
+      color: "bg-amber-500",
+      description: "Find in inbox",
+      type: "link" as const,
+      href: "/search-emails",
+    }] : []),
+    {
+      id: "explore" as const,
+      label: "Explore",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      color: "bg-pink-500",
+      description: "Find activities",
+      type: "link" as const,
+      href: "/discover",
     },
   ];
 
-  const handleActionClick = (actionId: typeof actions[number]["id"]) => {
+  const handleActionClick = (actionId: string) => {
     setIsOpen(false);
-    onAction(actionId);
+    if (actionId === "photo" || actionId === "voice" || actionId === "paste" || actionId === "manual") {
+      onAction(actionId);
+    }
   };
 
   return (
@@ -76,40 +111,72 @@ export default function FAB({ onAction }: FABProps) {
       {isOpen && (
         <div
           className="fixed right-6 z-50 md:hidden space-y-3 animate-slideInUp"
-          style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}
+          style={{ bottom: 'calc(9rem + env(safe-area-inset-bottom))' }}
         >
-          {actions.map((action, index) => (
-            <button
-              key={action.id}
-              onClick={() => handleActionClick(action.id)}
-              className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px]"
-              style={{
-                animationDelay: `${index * 50}ms`,
-              }}
-            >
-              <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center text-white shadow-soft group-hover:scale-105 transition-transform flex-shrink-0`}>
-                {action.icon}
-              </div>
-              <div className="text-left flex-1">
-                <div className="font-bold text-gray-900">{action.label}</div>
-                <div className="text-xs text-gray-600 mt-0.5">{action.description}</div>
-              </div>
-            </button>
-          ))}
+          {actions.map((action, index) => {
+            const content = (
+              <>
+                <div className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform flex-shrink-0`}>
+                  {action.icon}
+                </div>
+                <div className="text-left flex-1">
+                  <div className="font-bold text-gray-900">{action.label}</div>
+                  <div className="text-xs text-gray-600 mt-0.5">{action.description}</div>
+                </div>
+              </>
+            );
+
+            if (action.type === "link" && "href" in action) {
+              return (
+                <Link
+                  key={action.id}
+                  href={action.href}
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px]"
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                  }}
+                >
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={action.id}
+                onClick={() => handleActionClick(action.id)}
+                className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px]"
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                }}
+              >
+                {content}
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {/* FAB Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-6 z-50 w-14 h-14 md:w-16 md:h-16 md:right-8 rounded-full bg-primary-600 text-white shadow-lifted hover:shadow-strong active:scale-95 transition-all flex items-center justify-center ${
-          isOpen ? "rotate-45" : ""
-        }`}
+      {/* FAB Button with Label */}
+      <div
+        className="fixed right-6 z-50 md:right-8 flex flex-col items-end gap-2"
         style={{
           bottom: 'max(2rem, calc(4.75rem + env(safe-area-inset-bottom)))',
         }}
-        aria-label="Add event"
       >
+        {!isOpen && (
+          <div className="bg-gray-900 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md animate-fadeIn">
+            Add Event
+          </div>
+        )}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-14 h-14 md:w-16 md:h-16 rounded-full bg-accent-600 hover:bg-accent-700 text-white shadow-[0_8px_24px_rgba(249,115,22,0.5)] hover:shadow-[0_12px_32px_rgba(249,115,22,0.6)] active:scale-95 transition-all flex items-center justify-center ring-4 ring-white ${
+            isOpen ? "rotate-45" : ""
+          }`}
+          aria-label="Add event"
+        >
         <svg
           className="w-7 h-7 md:w-8 md:h-8"
           fill="none"
@@ -123,7 +190,8 @@ export default function FAB({ onAction }: FABProps) {
             d="M12 4v16m8-8H4"
           />
         </svg>
-      </button>
+        </button>
+      </div>
 
       <style jsx>{`
         @keyframes fadeIn {
