@@ -4583,30 +4583,47 @@ Example:
                           timeframe: emailSearchTimeframe
                         });
 
-                        const response = await fetch("/api/search-emails", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            query: emailSearchQuery,
-                            familyId: convexUser?.familyId,
-                            timeframeMonths: parseInt(emailSearchTimeframe)
-                          }),
-                        });
+                        // Add timeout to the fetch request (90 seconds)
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-                        console.log('[search-emails] Response status:', response.status);
-                        const data = await response.json();
-                        console.log('[search-emails] Response data:', data);
+                        try {
+                          const response = await fetch("/api/search-emails", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              query: emailSearchQuery,
+                              familyId: convexUser?.familyId,
+                              timeframeMonths: parseInt(emailSearchTimeframe)
+                            }),
+                            signal: controller.signal,
+                          });
 
-                        if (!response.ok) {
-                          showToast(data.error || "Failed to search emails", "error");
-                        } else if (data.error) {
-                          showToast(data.error, "error");
-                        } else {
-                          setEmailSearchResults(data.results || []);
-                          if (data.results && data.results.length === 0) {
-                            showToast("No events found matching your search", "info");
+                          clearTimeout(timeoutId);
+
+                          console.log('[search-emails] Response status:', response.status);
+                          const data = await response.json();
+                          console.log('[search-emails] Response data:', data);
+
+                          if (!response.ok) {
+                            showToast(data.error || "Failed to search emails", "error");
+                          } else if (data.error) {
+                            showToast(data.error, "error");
                           } else {
-                            showToast(`Found ${data.results.length} event(s)!`, "success");
+                            setEmailSearchResults(data.results || []);
+                            if (data.results && data.results.length === 0) {
+                              showToast("No events found matching your search", "info");
+                            } else {
+                              showToast(`Found ${data.results.length} event(s)!`, "success");
+                            }
+                          }
+                        } catch (fetchError: any) {
+                          clearTimeout(timeoutId);
+                          if (fetchError.name === 'AbortError') {
+                            console.error("Search timed out after 90 seconds");
+                            showToast("Search is taking too long. Try a more specific search or shorter timeframe.", "error");
+                          } else {
+                            throw fetchError;
                           }
                         }
                       } catch (error) {
