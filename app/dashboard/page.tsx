@@ -190,6 +190,9 @@ function DashboardContent() {
   const [isSearchingEmails, setIsSearchingEmails] = useState(false);
   const [emailSearchProgress, setEmailSearchProgress] = useState({ current: 0, total: 0 });
   const [emailSearchResults, setEmailSearchResults] = useState<any[]>([]);
+  const [selectedEmailIds, setSelectedEmailIds] = useState<Set<string>>(new Set());
+  const [isExtractingFromEmails, setIsExtractingFromEmails] = useState(false);
+  const [extractedEvents, setExtractedEvents] = useState<any[]>([]);
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [newEventForm, setNewEventForm] = useState({
     title: "",
