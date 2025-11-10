@@ -1614,28 +1614,52 @@ function ReviewPageContent() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
-                  <div className="space-y-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
                     {familyMembers && familyMembers.length > 0 ? (
                       [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
                         const selectedMembers = editingEvent.childName ? editingEvent.childName.split(", ") : [];
                         const isChecked = selectedMembers.includes(member.name);
 
                         return (
-                          <label key={member._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                          <>
                             <input
+                              key={`hidden-${member._id}`}
                               type="checkbox"
                               name="familyMembers"
                               value={member.name}
-                              defaultChecked={isChecked}
-                              className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
+                              checked={isChecked}
+                              onChange={() => {}}
+                              className="hidden"
                             />
-                            <span
-                              className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium text-white"
-                              style={{ backgroundColor: member.color || "#6366f1" }}
+                            <button
+                              key={member._id}
+                              type="button"
+                              onClick={() => {
+                                let updatedMembers = [...selectedMembers];
+                                if (isChecked) {
+                                  updatedMembers = updatedMembers.filter(m => m !== member.name);
+                                } else {
+                                  updatedMembers.push(member.name);
+                                }
+                                setEditingEvent({
+                                  ...editingEvent,
+                                  childName: updatedMembers.join(", ")
+                                });
+                              }}
+                              className={`px-3 py-2 rounded-lg border-2 transition-all font-medium ${
+                                isChecked
+                                  ? 'border-primary-600 shadow-md'
+                                  : 'bg-white border-gray-300 hover:border-gray-400'
+                              }`}
+                              style={{
+                                backgroundColor: isChecked ? member.color || "#6366f1" : undefined,
+                                color: isChecked ? "white" : "#374151"
+                              }}
                             >
+                              {isChecked && <span className="mr-1">✓</span>}
                               {member.name}
-                            </span>
-                          </label>
+                            </button>
+                          </>
                         );
                       })
                     ) : (
@@ -2305,38 +2329,41 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
-                  <div className="space-y-2 p-3 border border-gray-300 rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
                     {familyMembers && familyMembers.length > 0 ? (
                       [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
                         const selectedMembers = newEventForm.childName ? newEventForm.childName.split(", ") : [];
                         const isChecked = selectedMembers.includes(member.name);
 
                         return (
-                          <label key={member._id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => {
-                                let updatedMembers = [...selectedMembers];
-                                if (e.target.checked) {
-                                  updatedMembers.push(member.name);
-                                } else {
-                                  updatedMembers = updatedMembers.filter(m => m !== member.name);
-                                }
-                                setNewEventForm({
-                                  ...newEventForm,
-                                  childName: updatedMembers.join(", ")
-                                });
-                              }}
-                              className="w-4 h-4 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                            />
-                            <span
-                              className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium text-white"
-                              style={{ backgroundColor: member.color || "#6366f1" }}
-                            >
-                              {member.name}
-                            </span>
-                          </label>
+                          <button
+                            key={member._id}
+                            type="button"
+                            onClick={() => {
+                              let updatedMembers = [...selectedMembers];
+                              if (isChecked) {
+                                updatedMembers = updatedMembers.filter(m => m !== member.name);
+                              } else {
+                                updatedMembers.push(member.name);
+                              }
+                              setNewEventForm({
+                                ...newEventForm,
+                                childName: updatedMembers.join(", ")
+                              });
+                            }}
+                            className={`px-3 py-2 rounded-lg border-2 transition-all font-medium ${
+                              isChecked
+                                ? 'border-primary-600 shadow-md'
+                                : 'bg-white border-gray-300 hover:border-gray-400'
+                            }`}
+                            style={{
+                              backgroundColor: isChecked ? member.color || "#6366f1" : undefined,
+                              color: isChecked ? "white" : "#374151"
+                            }}
+                          >
+                            {isChecked && <span className="mr-1">✓</span>}
+                            {member.name}
+                          </button>
                         );
                       })
                     ) : (
