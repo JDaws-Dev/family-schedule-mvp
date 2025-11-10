@@ -4577,6 +4577,12 @@ Example:
                       setEmailSearchProgress({ current: 0, total: 0 });
 
                       try {
+                        console.log('[search-emails] Starting search:', {
+                          query: emailSearchQuery,
+                          familyId: convexUser?.familyId,
+                          timeframe: emailSearchTimeframe
+                        });
+
                         const response = await fetch("/api/search-emails", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
@@ -4587,9 +4593,13 @@ Example:
                           }),
                         });
 
+                        console.log('[search-emails] Response status:', response.status);
                         const data = await response.json();
+                        console.log('[search-emails] Response data:', data);
 
-                        if (data.error) {
+                        if (!response.ok) {
+                          showToast(data.error || "Failed to search emails", "error");
+                        } else if (data.error) {
                           showToast(data.error, "error");
                         } else {
                           setEmailSearchResults(data.results || []);
