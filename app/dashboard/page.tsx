@@ -190,6 +190,7 @@ function DashboardContent() {
   const [isSearchingEmails, setIsSearchingEmails] = useState(false);
   const [emailSearchProgress, setEmailSearchProgress] = useState({ current: 0, total: 0 });
   const [emailSearchResults, setEmailSearchResults] = useState<any[]>([]);
+  const [emailList, setEmailList] = useState<any[]>([]); // Step 1: List of emails from search
   const [selectedEmailIds, setSelectedEmailIds] = useState<Set<string>>(new Set());
   const [isExtractingFromEmails, setIsExtractingFromEmails] = useState(false);
   const [extractedEvents, setExtractedEvents] = useState<any[]>([]);
@@ -4576,61 +4577,45 @@ Example:
                       if (!emailSearchQuery.trim() || isSearchingEmails) return;
 
                       setIsSearchingEmails(true);
-                      setEmailSearchResults([]);
-                      setEmailSearchProgress({ current: 0, total: 0 });
+                      setEmailList([]);
+                      setSelectedEmailIds(new Set());
+                      setExtractedEvents([]);
 
                       try {
-                        console.log('[search-emails] Starting search:', {
+                        console.log('[list-emails] Starting email list search:', {
                           query: emailSearchQuery,
                           familyId: convexUser?.familyId,
                           timeframe: emailSearchTimeframe
                         });
 
-                        // Add timeout to the fetch request (90 seconds)
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 90000);
+                        const response = await fetch("/api/list-emails", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            query: emailSearchQuery,
+                            familyId: convexUser?.familyId,
+                            timeframeMonths: parseInt(emailSearchTimeframe)
+                          }),
+                        });
 
-                        try {
-                          const response = await fetch("/api/search-emails", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              query: emailSearchQuery,
-                              familyId: convexUser?.familyId,
-                              timeframeMonths: parseInt(emailSearchTimeframe)
-                            }),
-                            signal: controller.signal,
-                          });
+                        console.log('[list-emails] Response status:', response.status);
+                        const data = await response.json();
+                        console.log('[list-emails] Response data:', data);
 
-                          clearTimeout(timeoutId);
-
-                          console.log('[search-emails] Response status:', response.status);
-                          const data = await response.json();
-                          console.log('[search-emails] Response data:', data);
-
-                          if (!response.ok) {
-                            showToast(data.error || "Failed to search emails", "error");
-                          } else if (data.error) {
-                            showToast(data.error, "error");
+                        if (!response.ok) {
+                          showToast(data.error || "Failed to search emails", "error");
+                        } else if (data.error) {
+                          showToast(data.error, "error");
+                        } else {
+                          setEmailList(data.emails || []);
+                          if (data.emails && data.emails.length === 0) {
+                            showToast("No emails found matching your search", "info");
                           } else {
-                            setEmailSearchResults(data.results || []);
-                            if (data.results && data.results.length === 0) {
-                              showToast("No events found matching your search", "info");
-                            } else {
-                              showToast(`Found ${data.results.length} event(s)!`, "success");
-                            }
-                          }
-                        } catch (fetchError: any) {
-                          clearTimeout(timeoutId);
-                          if (fetchError.name === 'AbortError') {
-                            console.error("Search timed out after 90 seconds");
-                            showToast("Search is taking too long. Try a more specific search or shorter timeframe.", "error");
-                          } else {
-                            throw fetchError;
+                            showToast(`Found ${data.emails.length} email(s)!`, "success");
                           }
                         }
                       } catch (error) {
-                        console.error("Search error:", error);
+                        console.error("Email list search error:", error);
                         showToast("Failed to search emails. Please try again.", "error");
                       } finally {
                         setIsSearchingEmails(false);
@@ -4652,7 +4637,7 @@ Example:
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        Search
+                        Search Emails
                       </>
                     )}
                   </button>
@@ -4662,14 +4647,152 @@ Example:
                 </p>
               </div>
 
-              {/* Results */}
-              {emailSearchResults.length > 0 && (
-                <div className="space-y-3">
+              {/* Step 1: Email List with Selection */}
+              {emailList.length > 0 && (
+                <div className="space-y-4 border-t border-gray-200 pt-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-900">
+                      Found {emailList.length} email(s) - Select which to extract events from:
+                    </h3>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setSelectedEmailIds(new Set(emailList.map(e => e.id)))}
+                        className="text-sm text-accent-600 hover:text-accent-700 font-medium"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-gray-300">|</span>
+                      <button
+                        onClick={() => setSelectedEmailIds(new Set())}
+                        className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {emailList.map((email: any) => (
+                      <div
+                        key={email.id}
+                        className={`border rounded-lg p-4 transition cursor-pointer ${
+                          selectedEmailIds.has(email.id)
+                            ? 'border-accent-500 bg-accent-50'
+                            : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          const newSelected = new Set(selectedEmailIds);
+                          if (newSelected.has(email.id)) {
+                            newSelected.delete(email.id);
+                          } else {
+                            newSelected.add(email.id);
+                          }
+                          setSelectedEmailIds(newSelected);
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedEmailIds.has(email.id)}
+                            onChange={() => {}}
+                            className="mt-1 h-5 w-5 text-accent-600 rounded focus:ring-accent-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="font-semibold text-gray-900 truncate">{email.subject}</h4>
+                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                                {new Date(email.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">From: {email.from}</p>
+                            {email.snippet && (
+                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{email.snippet}</p>
+                            )}
+                            <p className="text-xs text-primary-500 mt-1">📧 {email.accountEmail}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedEmailIds.size > 0 && (
+                    <div className="flex items-center justify-between bg-accent-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-semibold">{selectedEmailIds.size}</span> email(s) selected
+                      </p>
+                      <button
+                        onClick={async () => {
+                          setIsExtractingFromEmails(true);
+                          setExtractedEvents([]);
+
+                          try {
+                            console.log('[extract-from-emails] Extracting events from selected emails:', Array.from(selectedEmailIds));
+
+                            const response = await fetch("/api/extract-from-emails", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                emailIds: Array.from(selectedEmailIds),
+                                familyId: convexUser?.familyId,
+                              }),
+                            });
+
+                            console.log('[extract-from-emails] Response status:', response.status);
+                            const data = await response.json();
+                            console.log('[extract-from-emails] Response data:', data);
+
+                            if (!response.ok) {
+                              showToast(data.error || "Failed to extract events", "error");
+                            } else if (data.error) {
+                              showToast(data.error, "error");
+                            } else {
+                              setExtractedEvents(data.events || []);
+                              if (data.events && data.events.length === 0) {
+                                showToast("No events found in selected emails", "info");
+                              } else {
+                                showToast(`Extracted ${data.events.length} event(s)!`, "success");
+                              }
+                            }
+                          } catch (error) {
+                            console.error("Event extraction error:", error);
+                            showToast("Failed to extract events. Please try again.", "error");
+                          } finally {
+                            setIsExtractingFromEmails(false);
+                          }
+                        }}
+                        disabled={isExtractingFromEmails}
+                        className="px-6 py-3 bg-accent-500 text-white rounded-lg font-semibold hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center gap-2"
+                      >
+                        {isExtractingFromEmails ? (
+                          <>
+                            <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Extracting Events...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Extract Events from Selected
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step 2: Extracted Events */}
+              {extractedEvents.length > 0 && (
+                <div className="space-y-3 border-t border-gray-200 pt-6">
                   <h3 className="font-semibold text-gray-900 mb-3">
-                    Found {emailSearchResults.length} event(s):
+                    Extracted {extractedEvents.length} event(s) - Add to your calendar:
                   </h3>
                   <div className="max-h-96 overflow-y-auto space-y-3">
-                    {emailSearchResults.map((event: any, idx: number) => (
+                    {extractedEvents.map((event: any, idx: number) => (
                       <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -4706,7 +4829,7 @@ Example:
                                 });
                                 showToast(`✓ Added "${event.title}" to your calendar!`, "success");
                                 // Remove from results
-                                setEmailSearchResults(prev => prev.filter((_, i) => i !== idx));
+                                setExtractedEvents(prev => prev.filter((_, i) => i !== idx));
                               } catch (error) {
                                 console.error("Error adding event:", error);
                                 showToast("Failed to add event", "error");
@@ -4723,6 +4846,7 @@ Example:
                 </div>
               )}
 
+              {/* Loading States */}
               {isSearchingEmails && (
                 <div className="text-center py-12">
                   <svg className="animate-spin h-12 w-12 text-accent-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
@@ -4733,21 +4857,18 @@ Example:
                   <p className="text-gray-600 mt-2">
                     Scanning {emailSearchTimeframe === "1" ? "last month" : emailSearchTimeframe === "3" ? "last 3 months" : emailSearchTimeframe === "6" ? "last 6 months" : "last year"} for "{emailSearchQuery}"
                   </p>
-                  <div className="mt-4 inline-flex items-center gap-2 bg-accent-50 px-4 py-2 rounded-lg">
-                    <svg className="animate-pulse w-5 h-5 text-accent-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                    <span className="text-sm text-accent-700 font-medium">
-                      Estimated time: {
-                        emailSearchTimeframe === "1" ? "30-60 seconds" :
-                        emailSearchTimeframe === "3" ? "1-2 minutes" :
-                        emailSearchTimeframe === "6" ? "2-3 minutes" :
-                        "3-5 minutes"
-                      }
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3">Please wait while we find all your events...</p>
+                  <p className="text-xs text-gray-500 mt-3">This should only take a few seconds...</p>
+                </div>
+              )}
+
+              {isExtractingFromEmails && (
+                <div className="text-center py-8 border-t border-gray-200">
+                  <svg className="animate-spin h-10 w-10 text-accent-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <p className="text-gray-900 font-semibold">Extracting events from {selectedEmailIds.size} email(s)...</p>
+                  <p className="text-xs text-gray-500 mt-2">Using AI to find all events and schedules...</p>
                 </div>
               )}
             </div>
@@ -4760,6 +4881,9 @@ Example:
                   setEmailSearchQuery("");
                   setEmailSearchTimeframe("3");
                   setEmailSearchResults([]);
+                  setEmailList([]);
+                  setSelectedEmailIds(new Set());
+                  setExtractedEvents([]);
                   setEmailSearchProgress({ current: 0, total: 0 });
                 }}
                 className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
