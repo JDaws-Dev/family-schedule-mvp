@@ -1304,20 +1304,17 @@ function ReviewPageContent() {
             <p className="text-gray-600">Loading events...</p>
           </div>
         ) : unconfirmedEvents.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
               All Caught Up!
             </h2>
-            <p className="text-gray-600 mb-6">
-              No events waiting for review.
-            </p>
-            <p className="text-sm text-gray-500">
-              When we find events in your emails, they'll appear here for you to review and add to your calendar.
+            <p className="text-gray-600 text-sm">
+              No events waiting for review. New events from your emails will appear here.
             </p>
           </div>
         ) : (

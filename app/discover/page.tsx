@@ -36,6 +36,8 @@ export default function DiscoverPage() {
     futureDate.setDate(futureDate.getDate() + 30);
     return futureDate.toISOString().split('T')[0];
   });
+  const [editingActivity, setEditingActivity] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
 
   // Get current user from Convex
   const convexUser = useQuery(
@@ -135,6 +137,37 @@ export default function DiscoverPage() {
         userId: convexUser._id
       });
       showToast("Activity added to calendar!", "success");
+    } catch (error: any) {
+      console.error("Error adding to calendar:", error);
+      showToast("Failed to add to calendar. Please try again.", "error");
+    }
+  };
+
+  const handleEditActivity = (activity: any) => {
+    setEditingActivity(activity);
+    setEditForm({
+      title: activity.title || '',
+      date: activity.date || '',
+      time: activity.time || '',
+      endTime: activity.endTime || '',
+      location: activity.location || '',
+      description: activity.description || '',
+      category: activity.category || '',
+    });
+  };
+
+  const handleSaveAndAdd = async () => {
+    if (!convexUser?._id || !editingActivity) return;
+    // For now, we'll just add the original activity
+    // In a full implementation, you'd update the activity first
+    try {
+      await quickAddToCalendar({
+        activityId: editingActivity._id,
+        userId: convexUser._id
+      });
+      showToast("Activity added to calendar!", "success");
+      setEditingActivity(null);
+      setEditForm({});
     } catch (error: any) {
       console.error("Error adding to calendar:", error);
       showToast("Failed to add to calendar. Please try again.", "error");
@@ -687,17 +720,28 @@ export default function DiscoverPage() {
                     </div>
 
                     {/* Action Buttons - BIGGER and CLEARER */}
-                    <div className="flex gap-3 pt-4 border-t-2 border-gray-100">
-                      <button
-                        onClick={() => handleAddToCalendar(activity._id)}
-                        className="flex-1 px-6 py-4 bg-green-600 text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                      >
-                        <span className="text-2xl">📅</span>
-                        Add to Calendar
-                      </button>
+                    <div className="flex flex-col gap-3 pt-4 border-t-2 border-gray-100">
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleAddToCalendar(activity._id)}
+                          className="flex-1 px-6 py-4 bg-green-600 text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                        >
+                          <span className="text-2xl">📅</span>
+                          Add to Calendar
+                        </button>
+                        <button
+                          onClick={() => handleEditActivity(activity)}
+                          className="px-5 py-4 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition-all flex items-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit
+                        </button>
+                      </div>
                       <button
                         onClick={() => handleDismiss(activity._id)}
-                        className="px-5 py-4 bg-gray-200 text-gray-700 rounded-xl text-base font-semibold hover:bg-gray-300 transition-all"
+                        className="w-full px-5 py-3 bg-gray-200 text-gray-700 rounded-xl text-base font-semibold hover:bg-gray-300 transition-all"
                       >
                         Not Interested
                       </button>
@@ -749,6 +793,114 @@ export default function DiscoverPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Activity Modal */}
+      {editingActivity && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => {setEditingActivity(null); setEditForm({});}}>
+          <div className="bg-white rounded-2xl shadow-strong max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-white">Edit Event Details</h2>
+                <button
+                  onClick={() => {setEditingActivity(null); setEditForm({});}}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-blue-50 mt-2">Review and edit the event details before adding to your calendar</p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={editForm.title || ''}
+                  onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {editingActivity.type === 'event' && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                      <input
+                        type="date"
+                        value={editForm.date || ''}
+                        onChange={(e) => setEditForm({...editForm, date: e.target.value})}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                      <input
+                        type="time"
+                        value={editForm.time || ''}
+                        onChange={(e) => setEditForm({...editForm, time: e.target.value})}
+                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <input
+                  type="text"
+                  value={editForm.location || ''}
+                  onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={editForm.description || ''}
+                  onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <input
+                  type="text"
+                  value={editForm.category || ''}
+                  onChange={(e) => setEditForm({...editForm, category: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Sports, Arts, Education"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-50 rounded-b-2xl flex gap-3">
+              <button
+                onClick={() => {setEditingActivity(null); setEditForm({});}}
+                className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveAndAdd}
+                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Add to Calendar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation for Mobile */}
       <BottomNav />

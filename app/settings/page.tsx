@@ -18,13 +18,13 @@ function SettingsContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'account' | 'family' | 'apps'>('account');
   const [expandedSections, setExpandedSections] = useState({
-    yourInfo: true,
+    yourInfo: false,
     notifications: false,
     billing: false,
-    familyDetails: true,
+    familyDetails: false,
     familyMembers: false,
-    trackedMembers: true,
-    gmail: true,
+    trackedMembers: false,
+    gmail: false,
     googleCalendar: false,
   });
   const { user: clerkUser } = useUser();
@@ -1131,7 +1131,7 @@ function SettingsContent() {
             <div className="text-left">
               <h2 className="text-xl font-bold text-gray-900">Family Details</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Manage your family's basic information and contact preferences
+                Basic family information
               </p>
             </div>
             <svg
@@ -1208,7 +1208,7 @@ function SettingsContent() {
                   placeholder="e.g., Atlanta, GA or 30319"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">Helps us discover local activities for your family</p>
+                <p className="text-xs text-gray-500 mt-1">For discovering local activities</p>
               </div>
             </div>
           </div>
@@ -1223,7 +1223,7 @@ function SettingsContent() {
             <div className="text-left">
               <h2 className="text-xl font-bold text-gray-900">Family Members</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Share your family calendar with your spouse. One subscription, two logins.
+                Share calendar access with your spouse
               </p>
             </div>
             <svg
@@ -1317,136 +1317,6 @@ function SettingsContent() {
           </div>
         </div>
 
-        {/* Tracked Family Members */}
-        <div className="bg-white rounded-2xl shadow-soft mb-6">
-          <button
-            onClick={() => toggleSection('trackedMembers')}
-            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
-          >
-            <div className="text-left">
-              <h2 className="text-xl font-bold text-gray-900">Tracked Family Members</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Add family members whose calendars you want to track. This helps our AI identify and organize everyone's activities, appointments, and events.
-              </p>
-            </div>
-            <svg
-              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.trackedMembers ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div className={`p-6 ${expandedSections.trackedMembers ? 'block' : 'hidden md:block'}`}>
-            {/* Tracked Members List */}
-            <div className="space-y-4 mb-6">
-              {!trackedMembers || trackedMembers.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-600 mb-2">No family members added for tracking yet</p>
-                  <p className="text-sm text-gray-500">
-                    Add family members to help organize everyone's activities and events
-                  </p>
-                </div>
-              ) : (
-                trackedMembers.map((member) => {
-                  // Calculate age if birthdate exists
-                  const age = member.birthdate
-                    ? Math.floor((Date.now() - new Date(member.birthdate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-                    : null;
-
-                  return (
-                    <div
-                      key={member._id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div
-                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
-                            style={{ backgroundColor: member.color || "#6366f1" }}
-                          >
-                            {member.name.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-bold text-gray-900 text-lg">{member.name}</h3>
-                              {age && <span className="text-sm text-gray-600">• {age} years old</span>}
-                              <div
-                                className="w-6 h-6 rounded border-2 border-gray-300"
-                                style={{ backgroundColor: member.color || "#6366f1" }}
-                                title="Calendar color"
-                              />
-                            </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              {member.relationship && <div><span className="font-medium">Relationship:</span> {member.relationship}</div>}
-                              {member.nicknames?.length > 0 && (
-                                <div><span className="font-medium">Also goes by:</span> {member.nicknames.join(", ")}</div>
-                              )}
-                              {member.interests?.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {member.interests.map((interest: string, idx: number) => (
-                                    <span
-                                      key={idx}
-                                      className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium"
-                                    >
-                                      {interest}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 self-start">
-                          <button
-                            onClick={() => {
-                              setEditingMember(member._id);
-                              setShowAddMemberModal(true);
-                            }}
-                            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteFamilyMember(member._id, member.name)}
-                            className="px-4 py-2 text-sm bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Add Member Button */}
-            <button
-              onClick={() => setShowAddMemberModal(true)}
-              className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 font-medium hover:border-primary-400 hover:text-primary-600 transition flex items-center justify-center gap-2"
-            >
-              <span className="text-xl">+</span>
-              Add Family Member to Track
-            </button>
-
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div>
-                <h4 className="font-semibold text-blue-900 mb-1">Why track family members?</h4>
-                <p className="text-sm text-blue-800">
-                  Adding family member details helps our AI:
-                </p>
-                <ul className="text-sm text-blue-800 mt-2 space-y-1 list-disc list-inside">
-                  <li>Identify which events belong to which family member</li>
-                  <li>Suggest relevant activities based on age and interests</li>
-                  <li>Recognize nicknames and variations in emails</li>
-                  <li>Filter and organize your calendar by person</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
         </div>
         )}
 
@@ -1627,14 +1497,14 @@ function SettingsContent() {
                 {gmailAccounts.map((account) => (
                   <div
                     key={account._id}
-                    className={`flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 ${!account.isActive ? 'opacity-60' : ''}`}
+                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200 ${!account.isActive ? 'opacity-60' : ''}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="font-semibold text-gray-900">
                           {account.displayName || "Gmail Account"}
                         </div>
-                        <div className="text-sm text-gray-600">{account.gmailEmail}</div>
+                        <div className="text-sm text-gray-600 truncate">{account.gmailEmail}</div>
                         <div className="text-xs text-gray-500 mt-1">
                           {account.lastSyncAt
                             ? `Last checked: ${new Date(account.lastSyncAt).toLocaleDateString()}`
@@ -1643,7 +1513,7 @@ function SettingsContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <span
                         className={`text-sm flex items-center gap-1 ${account.isActive ? 'text-green-600' : 'text-gray-500'}`}
                       >
@@ -1651,7 +1521,7 @@ function SettingsContent() {
                       </span>
                       <button
                         onClick={() => handleDisconnectAccount(account._id, account.gmailEmail)}
-                        className="px-3 py-1 text-sm bg-red-50 text-red-600 hover:bg-red-100 rounded font-medium transition"
+                        className="px-4 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded-lg font-semibold transition shadow-sm"
                       >
                         Disconnect
                       </button>
@@ -1663,18 +1533,6 @@ function SettingsContent() {
 
             {/* Add New Gmail Account */}
             <div className="border-t pt-6">
-              {gmailAccounts && gmailAccounts.length > 0 && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-900 mb-2">
-                    <strong>Having permission issues?</strong> Before reconnecting:
-                  </p>
-                  <ol className="text-xs text-blue-800 ml-4 mb-2 list-decimal space-y-1">
-                    <li>Click "Disconnect" above to remove the account from our app</li>
-                    <li>Visit <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="underline font-medium">Google Permissions</a> and revoke access to this app</li>
-                    <li>Then click "Connect Email Account" below to reconnect with fresh permissions</li>
-                  </ol>
-                </div>
-              )}
               <button
                 onClick={() => {
                   window.location.href = "/api/auth/google?returnUrl=/settings?tab=integrations";

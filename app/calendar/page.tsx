@@ -18,7 +18,6 @@ import PhotoUploadModal from "@/app/components/PhotoUploadModal";
 import VoiceRecordModal from "@/app/components/VoiceRecordModal";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
-import SwipeableCard from "@/app/components/SwipeableCard";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -1490,27 +1489,13 @@ function CalendarContent() {
                         {events
                           .filter((event: any) => event._id !== recentlyDeleted?.eventId)
                           .map((event: any) => (
-                          <SwipeableCard
-                            key={event._id}
-                            onSwipeLeft={() => handleSwipeDelete(event)}
-                            leftAction={{
-                              label: 'Delete',
-                              icon: (
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              ),
-                              color: '#ef4444', // red-500
-                            }}
-                            threshold={80}
-                          >
                           <div
-                            onClick={() => setSelectedEvent(event)}
+                            key={event._id}
                             className={`bg-white rounded-xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all border ${
                               selectedEventIds.has(event._id)
                                 ? 'border-primary-400 bg-primary-50'
                                 : 'border-gray-200 hover:border-primary-300'
-                            } cursor-pointer active:scale-[0.99]`}
+                            } active:scale-[0.99]`}
                           >
                             <div className="flex gap-3 items-start">
                               {/* Checkbox for bulk selection - Hidden on mobile */}
@@ -1534,7 +1519,10 @@ function CalendarContent() {
                               </div>
 
                               {/* Event Details - Compact */}
-                              <div className="flex-1 min-w-0">
+                              <div
+                                onClick={() => setSelectedEvent(event)}
+                                className="flex-1 min-w-0 cursor-pointer"
+                              >
                                 <div className="flex items-start justify-between gap-2 mb-1">
                                   <h3 className="font-semibold text-gray-900 text-base">{event.title}</h3>
                                   {event.category && (
@@ -1585,9 +1573,22 @@ function CalendarContent() {
                                   </span>
                                 )}
                               </div>
+
+                              {/* Delete Button - Always visible on the right */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSwipeDelete(event);
+                                }}
+                                className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                aria-label="Delete event"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
                             </div>
                           </div>
-                          </SwipeableCard>
                         ))}
                       </div>
                     </div>
@@ -1619,7 +1620,7 @@ function CalendarContent() {
               <div className="relative w-full" style={{ paddingBottom: '85%', minHeight: '800px' }}>
                 <iframe
                   key={calendarView}
-                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=${calendarView === 'day' ? 'AGENDA' : calendarView.toUpperCase()}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff`}
+                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=${calendarView === 'day' ? 'AGENDA' : calendarView.toUpperCase()}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff&hours=6-23`}
                   className="absolute top-0 left-0 w-full h-full border-0"
                   frameBorder="0"
                   scrolling="no"
