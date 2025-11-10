@@ -2910,7 +2910,7 @@ function DashboardContent() {
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {isEditingEvent ? (
@@ -3763,7 +3763,7 @@ function DashboardContent() {
           }}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
@@ -4313,7 +4313,7 @@ Example:
           onClick={() => setShowActionsModal(false)}
         >
           <div
-            className="bg-white rounded-2xl max-w-3xl w-full shadow-strong my-4 md:my-8 max-h-[95vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-3xl w-full shadow-strong my-4 md:my-8 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
