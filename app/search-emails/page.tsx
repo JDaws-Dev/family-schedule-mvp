@@ -8,9 +8,19 @@ import { useRouter } from "next/navigation";
 
 export default function SearchEmailsPage() {
   const router = useRouter();
-  const { user: clerkUser } = useUser();
-  const convexUser = useQuery(api.users.getUserByClerkId, clerkUser?.id ? { clerkId: clerkUser.id } : "skip");
-  const familyMembers = useQuery(api.familyMembers.list);
+  const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
+
+  // Only query if we have a clerk user ID
+  const convexUser = useQuery(
+    api.users.getUserByClerkId,
+    clerkUser?.id ? { clerkId: clerkUser.id } : "skip"
+  );
+
+  const familyMembers = useQuery(
+    api.familyMembers.getFamilyMembers,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
   const createEvent = useMutation(api.events.create);
 
   const [emailSearchQuery, setEmailSearchQuery] = useState("");
@@ -109,10 +119,38 @@ export default function SearchEmailsPage() {
     }
   };
 
-  if (!clerkUser || !convexUser) {
+  // Show loading state while authentication is initializing
+  if (!isUserLoaded) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  // Redirect to sign in if no user
+  if (!clerkUser) {
+    router.push("/sign-in");
+    return null;
+  }
+
+  // Wait for convex user to load
+  if (convexUser === undefined) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading your account...</p>
+      </div>
+    );
+  }
+
+  // If no convex user exists, show error
+  if (!convexUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-red-600 font-semibold mb-2">Account Error</p>
+          <p className="text-gray-600">Unable to load your account. Please try signing out and back in.</p>
+        </div>
       </div>
     );
   }
