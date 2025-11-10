@@ -7,6 +7,27 @@ function getConvexClient() {
   return new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 }
 
+function decodeHtmlEntities(text: string): string {
+  const entities: { [key: string]: string } = {
+    '&#39;': "'",
+    '&quot;': '"',
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&#x27;': "'",
+    '&apos;': "'",
+  };
+  return text.replace(/&#?\w+;/g, match => entities[match] || match);
+}
+
+function normalizeSubject(subject: string): string {
+  // Remove Re:, Fwd:, etc. and trim for comparison
+  return subject
+    .replace(/^(re|fwd|fw):\s*/gi, '')
+    .trim()
+    .toLowerCase();
+}
+
 async function refreshAccessToken(refreshToken: string) {
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -105,10 +126,10 @@ export async function POST(request: NextRequest) {
 
             allEmails.push({
               id: message.id,
-              subject,
-              from,
+              subject: decodeHtmlEntities(subject),
+              from: decodeHtmlEntities(from),
               date: date.toISOString(),
-              snippet: msgData.data.snippet || "",
+              snippet: decodeHtmlEntities(msgData.data.snippet || ""),
               accountEmail: account.gmailEmail,
             });
           } catch (error) {
@@ -125,12 +146,25 @@ export async function POST(request: NextRequest) {
     // Sort by date (newest first)
     allEmails.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    console.log(`[list-emails] Total emails found: ${allEmails.length}`);
+    console.log(`[list-emails] Total emails found before deduplication: ${allEmails.length}`);
+
+    // Deduplicate by subject (keep only first instance of each thread)
+    const seenSubjects = new Set<string>();
+    const deduplicatedEmails = allEmails.filter(email => {
+      const normalizedSubject = normalizeSubject(email.subject);
+      if (seenSubjects.has(normalizedSubject)) {
+        return false; // Skip duplicate
+      }
+      seenSubjects.add(normalizedSubject);
+      return true; // Keep first instance
+    });
+
+    console.log(`[list-emails] Emails after deduplication: ${deduplicatedEmails.length}`);
 
     return NextResponse.json({
       success: true,
-      emails: allEmails,
-      totalFound: allEmails.length,
+      emails: deduplicatedEmails,
+      totalFound: deduplicatedEmails.length,
     });
   } catch (error: any) {
     console.error("[list-emails] Error:", error);
