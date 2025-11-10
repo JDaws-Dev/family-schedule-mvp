@@ -1545,7 +1545,10 @@ function DashboardContent() {
 
                   {/* Paste Text */}
                   <button
-                    onClick={() => setShowPasteTextModal(true)}
+                    onClick={() => {
+                      setShowAddEventModal(true);
+                      setAddEventTab("paste");
+                    }}
                     className="bg-teal-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                   >
                     <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
