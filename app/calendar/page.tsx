@@ -438,13 +438,14 @@ function CalendarContent() {
           showToast("All events are already up to date!", "info");
         }
       } else if (response.status === 403 && data.needsReconnect) {
-        // Calendar permission error - need to reconnect
-        showToast("Google Calendar needs permission. Go to Settings to reconnect.", "error");
+        // Calendar permission error - silently log, calendar display still works
+        console.log("Calendar permission issue (background sync):", data.error);
       } else if (response.status === 404 && data.needsReconnect) {
         // No Google account connected  - silently skip for background sync
         console.log("No Gmail account connected for calendar sync");
       } else {
-        showToast(data.error || "Couldn't sync with Google Calendar", "error");
+        // Don't show error toast for sync failures - calendar still displays local events
+        console.log("Calendar sync failed:", data.error || "Unknown error");
       }
     } catch (error) {
       console.error("Error syncing from Google Calendar:", error);
