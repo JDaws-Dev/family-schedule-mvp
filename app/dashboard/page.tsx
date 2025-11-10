@@ -424,6 +424,11 @@ function DashboardContent() {
       setAddEventTab("paste");
       // Clear the query params
       window.history.replaceState({}, "", "/dashboard");
+    } else if (openModal === "manual") {
+      setShowAddEventModal(true);
+      setAddEventTab("manual");
+      // Clear the query params
+      window.history.replaceState({}, "", "/dashboard");
     }
   }, [searchParams]);
 

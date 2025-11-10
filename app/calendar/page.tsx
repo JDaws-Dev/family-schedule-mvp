@@ -892,7 +892,7 @@ function CalendarContent() {
   const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
     switch (action) {
       case "manual":
-        setShowAddEventChoiceModal(true);
+        router.push('/dashboard?openModal=manual');
         break;
       case "paste":
         router.push('/dashboard?openModal=paste');

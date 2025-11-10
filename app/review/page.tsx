@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -57,6 +57,7 @@ function formatMomFriendlyDate(dateString: string): string {
 
 function ReviewPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
@@ -1051,10 +1052,10 @@ function ReviewPageContent() {
   const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
     switch (action) {
       case "manual":
-        setShowAddEventModal(true);
+        router.push('/dashboard?openModal=manual');
         break;
       case "paste":
-        setShowPasteTextModal(true);
+        router.push('/dashboard?openModal=paste');
         break;
       case "photo":
         setShowPhotoUploadModal(true);
