@@ -1820,8 +1820,7 @@ function CalendarContent() {
                 onClick={async () => {
                   if (confirm(`Delete "${selectedEvent.title}"?`)) {
                     try {
-                      // If event is synced with Google Calendar, delete from there ONLY
-                      // The webhook will automatically remove it from our database
+                      // If event is synced with Google Calendar, delete from there first
                       if (selectedEvent.googleCalendarEventId) {
                         const response = await fetch("/api/delete-calendar-event", {
                           method: "POST",
@@ -1836,16 +1835,12 @@ function CalendarContent() {
                           showToast(`Failed to delete: ${result.error || "Unknown error"}`, "error");
                           return;
                         }
-
-                        // Success! Google Calendar deleted, webhook will handle DB deletion
-                        setSelectedEvent(null);
-                        showToast("Event deleted from Google Calendar", "success");
-                      } else {
-                        // Event not synced to Google Calendar, delete from database only
-                        await deleteEvent({ eventId: selectedEvent._id });
-                        setSelectedEvent(null);
-                        showToast("Event deleted successfully", "success");
                       }
+
+                      // Always delete from our database immediately (don't wait for webhook)
+                      await deleteEvent({ eventId: selectedEvent._id });
+                      setSelectedEvent(null);
+                      showToast("Event deleted successfully", "success");
                     } catch (error) {
                       console.error("Error deleting event:", error);
                       showToast("Failed to delete event. Please try again.", "error");
