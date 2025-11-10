@@ -65,7 +65,7 @@ export default function PhotoUploadModal({
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white">
-                  Upload Photo
+                  Upload or Take Photo
                 </h2>
                 <p className="text-green-50 text-sm">
                   Snap or upload a picture of any flyer or schedule

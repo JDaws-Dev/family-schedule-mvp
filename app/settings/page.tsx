@@ -650,14 +650,10 @@ function SettingsContent() {
                 Settings
               </h1>
               <p className="text-gray-600 text-lg mt-1">
-                Customize your experience and manage connections
+                Manage your account
               </p>
             </div>
           </div>
-          <p className="text-gray-600 max-w-3xl">
-            Connect your email to automatically find events, add your family members to track everyone's schedule,
-            and manage your account preferences - all in one place.
-          </p>
         </div>
 
         {/* Tab Navigation */}

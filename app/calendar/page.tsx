@@ -2395,6 +2395,22 @@ function CalendarContent() {
         />
       )}
 
+      {/* Confirm Dialog */}
+      {showConfirmDialog && confirmDialogConfig && (
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          onClose={() => {
+            setShowConfirmDialog(false);
+            setConfirmDialogConfig(null);
+          }}
+          onConfirm={confirmDialogConfig.onConfirm}
+          title={confirmDialogConfig.title}
+          message={confirmDialogConfig.message}
+          variant={confirmDialogConfig.variant}
+          itemCount={confirmDialogConfig.itemCount}
+        />
+      )}
+
       {/* FAB for Mobile */}
       {/* Undo Notification */}
       {recentlyDeleted && (
