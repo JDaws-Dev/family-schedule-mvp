@@ -4505,11 +4505,11 @@ Example:
           onClick={() => setShowSearchEmailsModal(false)}
         >
           <div
-            className="bg-white rounded-2xl max-w-4xl w-full shadow-strong my-8"
+            className="bg-white rounded-2xl max-w-4xl w-full shadow-strong my-8 max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-accent-400 to-accent-500 rounded-t-2xl p-6">
+            <div className="bg-gradient-to-r from-accent-400 to-accent-500 rounded-t-2xl p-6 flex-shrink-0">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">🔍 Search Your Emails</h2>
@@ -4531,7 +4531,7 @@ Example:
             </div>
 
             {/* Search Form */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   What are you looking for?
