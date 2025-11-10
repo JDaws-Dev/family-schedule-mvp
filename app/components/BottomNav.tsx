@@ -64,8 +64,10 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-strong z-40"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-strong z-40 pb-safe"
+      style={{
+        paddingBottom: 'max(env(safe-area-inset-bottom), 8px)'
+      }}
     >
       <div className="flex items-center justify-around px-2">
         {navItems.map((item) => {
@@ -74,7 +76,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center flex-1 py-3 min-h-[68px] transition-all relative ${
+              className={`flex flex-col items-center justify-center flex-1 py-3 transition-all relative ${
                 isActive
                   ? "text-primary-600"
                   : "text-gray-500 hover:text-gray-700 active:text-gray-900"

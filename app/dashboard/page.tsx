@@ -1584,9 +1584,9 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 gap-3">
                   {/* Search Email */}
                   {gmailAccounts && gmailAccounts.length > 0 && (
-                    <Link
-                      href="/review"
-                      className="bg-amber-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition-all text-white flex items-center gap-3"
+                    <button
+                      onClick={() => setShowSearchEmailsModal(true)}
+                      className="bg-amber-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition-all text-white flex items-center gap-3 w-full text-left"
                     >
                       <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1600,7 +1600,7 @@ function DashboardContent() {
                       <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                    </Link>
+                    </button>
                   )}
 
                   {/* Explore Local Activities */}
@@ -3909,20 +3909,20 @@ Example:
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <input
                       type="text"
                       value={conversationalInput}
                       onChange={(e) => setConversationalInput(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleParseConversational())}
-                      className="flex-1 px-4 py-3 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-4 py-3 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       placeholder='e.g., "Emma has soccer every Tuesday at 5pm" or "dentist tomorrow at 3"'
                     />
                     <button
                       type="button"
                       onClick={handleParseConversational}
                       disabled={isParsingConversational || !conversationalInput.trim()}
-                      className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isParsingConversational ? (
                         <>
@@ -3934,7 +3934,7 @@ Example:
                         </>
                       ) : (
                         <>
-                          ✨ Auto-Fill
+                          ✨ Auto-Fill Form
                         </>
                       )}
                     </button>

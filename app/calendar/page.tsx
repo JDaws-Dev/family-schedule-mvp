@@ -1625,9 +1625,13 @@ function CalendarContent() {
                   frameBorder="0"
                   scrolling="no"
                   title="Family Calendar"
-                  allow="camera; microphone; geolocation"
-                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  loading="lazy"
                 />
+                {/* Info about potential cookie requirement */}
+                <div className="absolute bottom-4 left-4 right-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 hidden sm:block">
+                  <p className="font-semibold mb-1">Can't see your calendar?</p>
+                  <p>Make sure third-party cookies are enabled in your browser, or try <a href={`https://calendar.google.com/calendar/u/0/r`} target="_blank" rel="noopener noreferrer" className="underline font-medium">opening Google Calendar directly</a>.</p>
+                </div>
               </div>
             )}
           </div>

@@ -1313,6 +1313,121 @@ function SettingsContent() {
           </div>
         </div>
 
+        {/* Tracked Family Members */}
+        <div className="bg-white rounded-2xl shadow-soft mb-6">
+          <button
+            onClick={() => toggleSection('trackedMembers')}
+            className="w-full p-6 border-b border-gray-200 flex items-center justify-between md:cursor-default hover:bg-gray-50 md:hover:bg-white transition-colors"
+          >
+            <div className="text-left">
+              <h2 className="text-xl font-bold text-gray-900">Tracked Family Members</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Add the people in your family to track their schedules and activities
+              </p>
+            </div>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform md:hidden ${expandedSections.trackedMembers ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`p-6 ${expandedSections.trackedMembers ? 'block' : 'hidden md:block'}`}>
+            {/* Current Tracked Members */}
+            {!trackedMembers ? (
+              <div className="text-center py-4 text-gray-500">Loading...</div>
+            ) : (
+              <>
+                <div className="space-y-3 mb-6">
+                  {trackedMembers.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="mb-2">No family members added yet</p>
+                      <p className="text-sm">Add your first family member to start tracking their schedules</p>
+                    </div>
+                  ) : (
+                    trackedMembers.map((member) => (
+                      <div
+                        key={member._id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                            style={{ backgroundColor: member.color || "#6366f1" }}
+                          >
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-gray-900">{member.name}</div>
+                            <div className="text-sm text-gray-600 truncate">
+                              {member.relationship && member.relationship}
+                              {member.birthdate && ` • Age ${Math.floor((new Date().getTime() - new Date(member.birthdate).getTime()) / (1000 * 60 * 60 * 24 * 365))}`}
+                            </div>
+                            {member.interests && member.interests.length > 0 && (
+                              <div className="text-xs text-gray-500 mt-1 truncate">
+                                Interests: {member.interests.join(", ")}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingMember(member._id);
+                              setShowAddMemberModal(true);
+                            }}
+                            className="px-3 py-2 text-sm bg-primary-100 text-primary-700 rounded-lg font-medium hover:bg-primary-200 transition"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFamilyMember(member._id, member.name)}
+                            className="px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Add New Member Button */}
+                <button
+                  onClick={() => {
+                    setShowAddMemberModal(true);
+                    setEditingMember(null);
+                  }}
+                  className="w-full px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Family Member
+                </button>
+
+                {/* Info Box */}
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Why track family members?
+                  </h4>
+                  <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                    <li>Assign events to specific family members</li>
+                    <li>Use color-coding to quickly identify whose events are whose</li>
+                    <li>Get personalized activity suggestions based on their interests</li>
+                    <li>Track ages and relationships for better event recommendations</li>
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
         </div>
         )}
 
