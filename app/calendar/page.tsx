@@ -398,17 +398,15 @@ function CalendarContent() {
       }
 
       if (successCount > 0) {
-        showToast(`Saved ${successCount} event${successCount !== 1 ? "s" : ""} to your phone's calendar!`, "success");
+        showToast(`Synced ${successCount} event${successCount !== 1 ? "s" : ""} to Google Calendar!`, "success");
       }
-      if (errorCount > 0) {
-        showToast(`Oops! Couldn't save ${errorCount} event${errorCount !== 1 ? "s" : ""}. Want to try again?`, "error");
-      }
+      // Don't show error toast for sync failures - events are already saved in the app
       if (successCount === 0 && errorCount === 0) {
-        showToast("All events are already saved to Google Calendar!", "info");
+        showToast("All events are already synced to Google Calendar!", "info");
       }
     } catch (error) {
       console.error("Error syncing to Google Calendar:", error);
-      showToast("Oops! Couldn't save events. Want to try again?", "error");
+      // Don't show error toast - events are still saved in the app
     } finally {
       setSyncing(false);
     }
