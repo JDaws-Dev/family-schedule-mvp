@@ -1465,47 +1465,45 @@ function DashboardContent() {
             <div className="flex-1">
               <div className="max-w-2xl mx-auto">
 
-                {/* Welcome Header */}
-                <div className="mb-6 bg-primary-600 rounded-3xl p-6 text-white shadow-md">
-                  <h1 className="text-2xl font-bold mb-2">{family?.name || "Your"} Family Hub</h1>
-                  <p className="text-primary-50 text-sm leading-relaxed">
-                    Add events, discover activities, and keep your family's schedule organized—all in one place
+                {/* Compact Welcome Header */}
+                <div className="mb-4 bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-4 text-white shadow-sm">
+                  <h1 className="text-lg font-bold mb-1">{family?.name || "Your"} Family</h1>
+                  <p className="text-primary-50 text-xs">
+                    Add events quickly and keep everyone organized
                   </p>
                 </div>
 
                 {/* All Action Squares - Single Section */}
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">Quick Actions</h2>
-                  <p className="text-sm text-gray-600 mb-4">Choose how you want to add or find events</p>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {/* Snap Photo */}
                     <button
                       onClick={() => setShowPhotoUploadModal(true)}
-                      className="bg-primary-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                      className="bg-primary-500 rounded-xl p-3 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                     >
-                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center mb-2">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                       </div>
-                      <div className="font-bold text-base">Snap Photo</div>
-                      <div className="text-xs opacity-90 mt-1">Flyer or schedule</div>
+                      <div className="font-semibold text-sm">Snap Photo</div>
+                      <div className="text-xs opacity-90">Flyer or schedule</div>
                     </button>
 
                     {/* Voice Record */}
                     <button
                       onClick={() => setShowVoiceRecordModal(true)}
-                      className="bg-rose-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                      className="bg-rose-500 rounded-xl p-3 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                     >
-                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center mb-2">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                         </svg>
                       </div>
-                      <div className="font-bold text-base">Voice</div>
-                      <div className="text-xs opacity-90 mt-1">Say it out loud</div>
+                      <div className="font-semibold text-sm">Voice</div>
+                      <div className="text-xs opacity-90">Say it out loud</div>
                     </button>
 
                     {/* Paste Text */}
@@ -1514,60 +1512,60 @@ function DashboardContent() {
                         setShowAddEventModal(true);
                         setAddEventTab("paste");
                       }}
-                      className="bg-teal-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                      className="bg-teal-500 rounded-xl p-3 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                     >
-                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center mb-2">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
-                      <div className="font-bold text-base">Paste Text</div>
-                      <div className="text-xs opacity-90 mt-1">Copy & paste</div>
+                      <div className="font-semibold text-sm">Paste Text</div>
+                      <div className="text-xs opacity-90">Copy & paste</div>
                     </button>
 
                     {/* Manual Entry */}
                     <button
                       onClick={() => setShowAddEventModal(true)}
-                      className="bg-slate-600 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                      className="bg-slate-600 rounded-xl p-3 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                     >
-                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center mb-2">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <div className="font-bold text-base">Type it in</div>
-                      <div className="text-xs opacity-90 mt-1">Manual entry</div>
+                      <div className="font-semibold text-sm">Type it in</div>
+                      <div className="text-xs opacity-90">Manual entry</div>
                     </button>
 
                     {/* Search Email */}
                     {gmailAccounts && gmailAccounts.length > 0 && (
                       <Link
                         href="/search-emails"
-                        className="bg-amber-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                        className="bg-amber-500 rounded-xl p-3 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                       >
-                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                        <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center mb-2">
                           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                           </svg>
                         </div>
-                        <div className="font-bold text-base">Search Email</div>
-                        <div className="text-xs opacity-90 mt-1">Find in inbox</div>
+                        <div className="font-semibold text-sm">Search Email</div>
+                        <div className="text-xs opacity-90">Find in inbox</div>
                       </Link>
                     )}
 
                     {/* Explore Activities */}
                     <Link
                       href="/discover"
-                      className="bg-purple-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                      className="bg-purple-500 rounded-xl p-3 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                     >
-                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                      <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center mb-2">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                       </div>
-                      <div className="font-bold text-base">Explore</div>
-                      <div className="text-xs opacity-90 mt-1">Find activities</div>
+                      <div className="font-semibold text-sm">Explore</div>
+                      <div className="text-xs opacity-90">Find activities</div>
                     </Link>
                   </div>
                 </div>
