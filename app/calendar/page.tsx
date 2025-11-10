@@ -1430,6 +1430,7 @@ function CalendarContent() {
                               ),
                               color: '#ef4444', // red-500
                             }}
+                            threshold={80}
                           >
                           <div
                             onClick={() => setSelectedEvent(event)}
