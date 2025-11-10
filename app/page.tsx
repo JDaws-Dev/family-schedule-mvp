@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-warm-50 via-white to-primary-50">
       {/* Header with navigation */}
-      <header className="bg-warm-50/95 border-b border-primary-100 sticky top-0 z-50 backdrop-blur-md">
+      <header className="bg-warm-50/95 border-b border-primary-100  backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-xl font-bold text-primary-800 hover:text-primary-600 transition">
