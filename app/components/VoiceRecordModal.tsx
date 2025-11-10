@@ -126,32 +126,27 @@ export default function VoiceRecordModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div
         className="bg-white rounded-2xl shadow-strong max-w-lg w-full transform transition-all overflow-y-auto"
-        style={{ maxHeight: 'calc(90vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))' }}
+        style={{ maxHeight: '60vh' }}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-cyan-600 p-6 rounded-t-2xl">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-gradient-to-r from-blue-500 to-cyan-600 p-4 rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">
-                  Voice Recording
-                </h2>
-                <p className="text-blue-50 text-sm">
-                  Describe your event out loud - we'll capture it all!
-                </p>
-              </div>
+              <h2 className="text-xl font-bold text-white">
+                Voice Recording
+              </h2>
             </div>
             <button
               onClick={onClose}
               className="text-white hover:bg-white/20 rounded-lg p-2 transition flex-shrink-0"
               aria-label="Close"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -159,12 +154,12 @@ export default function VoiceRecordModal({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4">
           {!audioBlob ? (
             // Recording interface
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Visual feedback */}
-              <div className="flex flex-col items-center justify-center py-8">
+              <div className="flex flex-col items-center justify-center py-4">
                 <div className={`relative ${isRecording ? "animate-pulse" : ""}`}>
                   {/* Pulsing rings when recording */}
                   {isRecording && (
@@ -175,104 +170,67 @@ export default function VoiceRecordModal({
                   )}
 
                   {/* Main microphone circle */}
-                  <div className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all ${
+                  <div className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all ${
                     isRecording
                       ? isPaused
                         ? "bg-yellow-500"
                         : "bg-red-500"
                       : "bg-blue-500"
                   }`}>
-                    <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                     </svg>
                   </div>
                 </div>
 
                 {/* Timer */}
-                <div className="mt-6 text-center">
-                  <div className="text-4xl font-bold text-gray-900 font-mono">
+                <div className="mt-4 text-center">
+                  <div className="text-3xl font-bold text-gray-900 font-mono">
                     {formatTime(recordingTime)}
                   </div>
-                  <div className="text-sm text-gray-600 mt-2">
+                  <div className="text-xs text-gray-600 mt-1">
                     {isRecording ? (isPaused ? "Paused" : "Recording...") : "Ready to record"}
                   </div>
                 </div>
               </div>
-
-              {/* Example prompt */}
-              {!isRecording && (
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <p className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Example:
-                  </p>
-                  <p className="text-sm text-blue-800 italic">
-                    "Soccer practice every Tuesday and Thursday at 4pm at Lincoln Field starting next week. Coach is John Smith, phone number 555-1234."
-                  </p>
-                </div>
-              )}
-
-              {/* Recording tips */}
-              {isRecording && (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <p className="text-sm text-green-900">
-                    <strong>Tip:</strong> Speak clearly and include dates, times, locations, and any important details about your event!
-                  </p>
-                </div>
-              )}
             </div>
           ) : (
             // Playback interface
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-6 border-2 border-blue-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="space-y-3">
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg text-gray-900">Recording Complete!</h3>
-                    <p className="text-sm text-gray-600">Duration: {formatTime(recordingTime)}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900">Complete!</h3>
+                    <p className="text-xs text-gray-600">{formatTime(recordingTime)}</p>
                   </div>
                 </div>
 
                 {/* Audio player */}
                 {audioUrl && (
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <audio
                       controls
-                      className="w-full"
+                      className="w-full h-8"
                       src={audioUrl}
                       onError={(e) => {
                         console.warn('Audio playback error (non-critical):', e);
-                        // Suppress the error - recording was successful even if playback has issues
                       }}
                     >
-                      {/* Fallback text - only shown if audio element not supported */}
                     </audio>
                   </div>
                 )}
-              </div>
-
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <p className="text-sm text-green-900 flex items-start gap-2">
-                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>
-                    <strong>Ready to process!</strong> We'll transcribe your recording and automatically create an event with all the details you mentioned.
-                  </span>
-                </p>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6">
+        <div className="px-4 pb-4">
           {!audioBlob ? (
             <div className="flex gap-3">
               <button
