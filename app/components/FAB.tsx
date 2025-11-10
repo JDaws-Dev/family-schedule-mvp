@@ -74,7 +74,10 @@ export default function FAB({ onAction }: FABProps) {
 
       {/* Action Menu */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 md:hidden space-y-3 animate-slideInUp">
+        <div
+          className="fixed right-6 z-50 md:hidden space-y-3 animate-slideInUp"
+          style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}
+        >
           {actions.map((action, index) => (
             <button
               key={action.id}
@@ -99,9 +102,12 @@ export default function FAB({ onAction }: FABProps) {
       {/* FAB Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-20 right-6 z-50 md:bottom-8 md:right-8 w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary-600 text-white shadow-lifted hover:shadow-strong active:scale-95 transition-all flex items-center justify-center ${
+        className={`fixed right-6 z-50 w-14 h-14 md:w-16 md:h-16 md:right-8 rounded-full bg-primary-600 text-white shadow-lifted hover:shadow-strong active:scale-95 transition-all flex items-center justify-center ${
           isOpen ? "rotate-45" : ""
         }`}
+        style={{
+          bottom: 'max(2rem, calc(4.75rem + env(safe-area-inset-bottom)))',
+        }}
         aria-label="Add event"
       >
         <svg

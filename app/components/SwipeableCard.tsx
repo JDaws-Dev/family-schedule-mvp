@@ -25,89 +25,65 @@ export default function SwipeableCard({
   onSwipeRight,
   leftAction,
   rightAction,
-  threshold = 40,
+  threshold = 80,
 }: SwipeableCardProps) {
   const [startX, setStartX] = useState(0);
+  const [startY, setStartY] = useState(0);
   const [currentX, setCurrentX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Use refs to track current values for event handlers
   const startXRef = useRef(0);
+  const startYRef = useRef(0);
   const currentXRef = useRef(0);
+  const isHorizontalSwipeRef = useRef(false);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: TouchEvent) => {
     const x = e.touches[0].clientX;
     const y = e.touches[0].clientY;
     setStartX(x);
+    setStartY(y);
     startXRef.current = x;
+    startYRef.current = y;
     setIsSwiping(true);
-    // Store starting Y position to detect vertical vs horizontal swipes
-    (e.currentTarget as any)._startY = y;
-    (e.currentTarget as any)._hasSwiped = false;
-    console.log('Swipe started at X:', x);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isSwiping) return;
-    const deltaX = e.touches[0].clientX - startXRef.current;
-    const deltaY = e.touches[0].clientY - ((e.currentTarget as any)._startY || 0);
-
-    // If horizontal movement is greater than vertical, prevent default to stop scrolling
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-      e.preventDefault();
-      e.stopPropagation();
-      (e.currentTarget as any)._hasSwiped = true; // Mark that user is swiping
-    }
-
-    setCurrentX(deltaX);
-    currentXRef.current = deltaX;
-    console.log('Swiping - deltaX:', deltaX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isSwiping) return;
-
-    const finalX = currentXRef.current;
-    setIsSwiping(false);
-
-    console.log('Touch end - finalX:', finalX, 'threshold:', threshold);
-
-    // Check if swipe threshold is met
-    if (Math.abs(finalX) >= threshold) {
-      console.log('Threshold met!');
-      if (finalX > 0 && onSwipeRight) {
-        // Swiped right
-        console.log('Calling onSwipeRight');
-        onSwipeRight();
-      } else if (finalX < 0 && onSwipeLeft) {
-        // Swiped left
-        console.log('Calling onSwipeLeft');
-        onSwipeLeft();
-      }
-    } else {
-      console.log('Threshold NOT met - swipe too short');
-    }
-
-    // Reset position
-    setCurrentX(0);
-    setStartX(0);
-    currentXRef.current = 0;
-    startXRef.current = 0;
-  };
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    const deltaX = e.clientX - startXRef.current;
-    setCurrentX(deltaX);
-    currentXRef.current = deltaX;
+    setIsHorizontalSwipe(false);
+    isHorizontalSwipeRef.current = false;
   }, []);
 
-  const handleMouseUp = useCallback(() => {
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!startXRef.current) return;
+
+    const deltaX = e.touches[0].clientX - startXRef.current;
+    const deltaY = e.touches[0].clientY - startYRef.current;
+
+    // Determine if this is a horizontal swipe on first significant movement
+    if (!isHorizontalSwipeRef.current && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        isHorizontalSwipeRef.current = true;
+        setIsHorizontalSwipe(true);
+      }
+    }
+
+    // If this is a horizontal swipe, prevent scrolling
+    if (isHorizontalSwipeRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      setCurrentX(deltaX);
+      currentXRef.current = deltaX;
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!startXRef.current) return;
+
     const finalX = currentXRef.current;
     setIsSwiping(false);
+    setIsHorizontalSwipe(false);
 
     // Check if swipe threshold is met
-    if (Math.abs(finalX) >= threshold) {
+    if (isHorizontalSwipeRef.current && Math.abs(finalX) >= threshold) {
       if (finalX > 0 && onSwipeRight) {
         // Swiped right
         onSwipeRight();
@@ -120,29 +96,28 @@ export default function SwipeableCard({
     // Reset position
     setCurrentX(0);
     setStartX(0);
+    setStartY(0);
     currentXRef.current = 0;
     startXRef.current = 0;
+    startYRef.current = 0;
+    isHorizontalSwipeRef.current = false;
   }, [threshold, onSwipeLeft, onSwipeRight]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const x = e.clientX;
-    setStartX(x);
-    startXRef.current = x;
-    setIsSwiping(true);
-  };
-
-  // Mouse event listeners using useEffect
+  // Attach/detach native touch event listeners with passive: false
   useEffect(() => {
-    if (isSwiping) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+    const element = cardRef.current;
+    if (!element) return;
 
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isSwiping, handleMouseMove, handleMouseUp]);
+    element.addEventListener('touchstart', handleTouchStart, { passive: false });
+    element.addEventListener('touchmove', handleTouchMove, { passive: false });
+    element.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+      element.removeEventListener('touchmove', handleTouchMove);
+      element.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   // Calculate opacity and position of action indicators
   const swipeProgress = Math.min(Math.abs(currentX) / threshold, 1);
@@ -192,12 +167,7 @@ export default function SwipeableCard({
         style={{
           transform: `translateX(${currentX}px)`,
           transition: isSwiping ? 'none' : 'transform 0.3s ease-out',
-          touchAction: 'none', // Disable browser touch handling to let our swipe work
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
       >
         {children}
       </div>

@@ -7,6 +7,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Our Daily Family - Family Schedule Assistant",
   description: "Never miss a kid's activity again with Our Daily Family",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: "cover", // Important for iPhone notch/safe areas
+  },
 };
 
 export default function RootLayout({

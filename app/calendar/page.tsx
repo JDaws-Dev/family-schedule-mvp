@@ -1618,7 +1618,7 @@ function CalendarContent() {
             ) : (
               <div className="relative w-full" style={{ paddingBottom: '85%', minHeight: '800px' }}>
                 <iframe
-                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=${calendarView.toUpperCase()}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff`}
+                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=${calendarView === 'day' ? 'AGENDA' : calendarView.toUpperCase()}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff`}
                   className="absolute top-0 left-0 w-full h-full border-0"
                   frameBorder="0"
                   scrolling="no"
