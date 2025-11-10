@@ -148,7 +148,7 @@ export default function MobileNav({ mobileMenuOpen, setMobileMenuOpen, currentPa
           <button
             onClick={() => {
               setMobileMenuOpen(false);
-              signOut();
+              signOut({ redirectUrl: '/' });
             }}
             className="flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >

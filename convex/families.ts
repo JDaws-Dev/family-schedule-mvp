@@ -382,3 +382,97 @@ export const updateCalendarWebhook = mutation({
     return { success: true };
   },
 });
+
+// Clear all data from database (for testing/reset)
+export const clearAllData = mutation({
+  args: {},
+  handler: async (ctx) => {
+    console.log("Starting database clear...");
+
+    let total = 0;
+
+    // Delete suggestedActivities
+    const suggestedActivities = await ctx.db.query("suggestedActivities").collect();
+    for (const doc of suggestedActivities) {
+      await ctx.db.delete(doc._id);
+    }
+    total += suggestedActivities.length;
+
+    // Delete familyInvitations
+    const familyInvitations = await ctx.db.query("familyInvitations").collect();
+    for (const doc of familyInvitations) {
+      await ctx.db.delete(doc._id);
+    }
+    total += familyInvitations.length;
+
+    // Delete familyMembers
+    const familyMembers = await ctx.db.query("familyMembers").collect();
+    for (const doc of familyMembers) {
+      await ctx.db.delete(doc._id);
+    }
+    total += familyMembers.length;
+
+    // Delete userPreferences
+    const userPreferences = await ctx.db.query("userPreferences").collect();
+    for (const doc of userPreferences) {
+      await ctx.db.delete(doc._id);
+    }
+    total += userPreferences.length;
+
+    // Delete remindersSent
+    const remindersSent = await ctx.db.query("remindersSent").collect();
+    for (const doc of remindersSent) {
+      await ctx.db.delete(doc._id);
+    }
+    total += remindersSent.length;
+
+    // Delete emailProcessingLog
+    const emailProcessingLog = await ctx.db.query("emailProcessingLog").collect();
+    for (const doc of emailProcessingLog) {
+      await ctx.db.delete(doc._id);
+    }
+    total += emailProcessingLog.length;
+
+    // Delete events
+    const events = await ctx.db.query("events").collect();
+    for (const doc of events) {
+      await ctx.db.delete(doc._id);
+    }
+    total += events.length;
+
+    // Delete emailFilters
+    const emailFilters = await ctx.db.query("emailFilters").collect();
+    for (const doc of emailFilters) {
+      await ctx.db.delete(doc._id);
+    }
+    total += emailFilters.length;
+
+    // Delete gmailAccounts
+    const gmailAccounts = await ctx.db.query("gmailAccounts").collect();
+    for (const doc of gmailAccounts) {
+      await ctx.db.delete(doc._id);
+    }
+    total += gmailAccounts.length;
+
+    // Delete users
+    const users = await ctx.db.query("users").collect();
+    for (const doc of users) {
+      await ctx.db.delete(doc._id);
+    }
+    total += users.length;
+
+    // Delete families
+    const families = await ctx.db.query("families").collect();
+    for (const doc of families) {
+      await ctx.db.delete(doc._id);
+    }
+    total += families.length;
+
+    console.log(`Database clear complete! Total documents deleted: ${total}`);
+
+    return {
+      success: true,
+      totalDeleted: total,
+    };
+  },
+});

@@ -618,7 +618,7 @@ function SettingsContent() {
             <Link href="/discover" className="text-gray-600 hover:text-gray-900">Find Activities</Link>
             <Link href="/settings" className="text-primary-600 font-medium">Settings</Link>
             <button
-              onClick={() => signOut()}
+              onClick={() => signOut({ redirectUrl: '/' })}
               className="text-gray-600 hover:text-gray-900"
             >
               Log Out

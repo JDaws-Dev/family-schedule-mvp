@@ -210,8 +210,10 @@ function DashboardContent() {
     recurrenceEndCount: 10,
   });
   const [dailyVerse, setDailyVerse] = useState(() => {
-    // Select a random verse on component mount
-    return BIBLE_VERSES[Math.floor(Math.random() * BIBLE_VERSES.length)];
+    // Select a verse based on the current date (same verse all day)
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
+    return BIBLE_VERSES[dayOfYear % BIBLE_VERSES.length];
   });
 
   // New state for UX improvements
@@ -1099,7 +1101,7 @@ function DashboardContent() {
               Settings
             </Link>
             <button
-              onClick={() => signOut()}
+              onClick={() => signOut({ redirectUrl: '/' })}
               className="text-gray-600 hover:text-gray-900"
             >
               Log Out
