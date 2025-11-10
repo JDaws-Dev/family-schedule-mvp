@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function SearchEmailsPage() {
   const router = useRouter();
-  const convexUser = useQuery(api.users.getCurrentUser);
+  const { user: clerkUser } = useUser();
+  const convexUser = useQuery(api.users.getUserByClerkId, clerkUser?.id ? { clerkId: clerkUser.id } : "skip");
   const familyMembers = useQuery(api.familyMembers.list);
   const createEvent = useMutation(api.events.create);
 
@@ -31,7 +32,7 @@ export default function SearchEmailsPage() {
   const standardCategories = ["Sports", "School", "Medical", "Social", "Appointment", "Birthday", "Holiday", "Other"];
   const existingCategories = standardCategories; // Simplified for now
 
-  async function handleSearch() {
+  const handleSearch = async () => {
     if (!emailSearchQuery.trim() || isSearchingEmails) return;
 
     setIsSearchingEmails(true);
@@ -70,9 +71,9 @@ export default function SearchEmailsPage() {
     } finally {
       setIsSearchingEmails(false);
     }
-  }
+  };
 
-  async function handleExtractEvents() {
+  const handleExtractEvents = async () => {
     setIsExtractingFromEmails(true);
     setExtractedEvents([]);
 
@@ -106,9 +107,9 @@ export default function SearchEmailsPage() {
     } finally {
       setIsExtractingFromEmails(false);
     }
-  }
+  };
 
-  if (!convexUser) {
+  if (!clerkUser || !convexUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
@@ -408,6 +409,10 @@ export default function SearchEmailsPage() {
             {/* Modal Content */}
             <form onSubmit={async (e) => {
               e.preventDefault();
+              if (!convexUser) {
+                showToast("User not loaded. Please try again.", "error");
+                return;
+              }
               try {
                 await createEvent({
                   createdByUserId: convexUser._id,
