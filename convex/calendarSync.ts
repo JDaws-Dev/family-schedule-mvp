@@ -295,7 +295,12 @@ export const syncEventToGoogleCalendar = internalAction({
       console.error(`[CALENDAR SYNC] ERROR syncing event ${args.eventId} to Google Calendar:`, error);
       console.error(`[CALENDAR SYNC] Error stack:`, error.stack);
 
-      const newRetryCount = retryCount + 1;
+      // Get the event again to read current retry count
+      const event = await ctx.runQuery(api.events.getEventById, {
+        eventId: args.eventId,
+      });
+      const currentRetryCount = event?.syncRetryCount || 0;
+      const newRetryCount = currentRetryCount + 1;
       const retryDelay = getRetryDelay(newRetryCount);
 
       await ctx.runMutation(api.events.updateEvent, {
