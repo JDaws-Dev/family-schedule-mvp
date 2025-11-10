@@ -1823,11 +1823,17 @@ function CalendarContent() {
                       // Delete from Google Calendar first if it was synced
                       if (selectedEvent.googleCalendarEventId) {
                         try {
-                          await fetch("/api/delete-calendar-event", {
+                          const response = await fetch("/api/delete-calendar-event", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ eventId: selectedEvent._id }),
                           });
+
+                          if (!response.ok) {
+                            const error = await response.json();
+                            console.error("Error deleting from Google Calendar:", error);
+                            // Continue with deletion even if Google Calendar deletion fails
+                          }
                         } catch (error) {
                           console.error("Error deleting from Google Calendar:", error);
                           // Continue with deletion even if Google Calendar deletion fails
