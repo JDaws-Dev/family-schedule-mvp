@@ -2372,9 +2372,9 @@ function CalendarContent() {
       {showAddEventChoiceModal && (
         <AddEventChoiceModal
           onClose={() => setShowAddEventChoiceModal(false)}
-          onCheckEmails={() => router.push('/review')}
-          onTypeManually={() => router.push('/review?mode=manual')}
-          onPasteText={() => router.push('/review?mode=paste')}
+          onCheckEmails={() => router.push('/dashboard#search-emails')}
+          onTypeManually={() => router.push('/dashboard#type-manually')}
+          onPasteText={() => router.push('/dashboard#paste-text')}
           onUploadPhoto={() => {
             setShowAddEventChoiceModal(false);
             setShowPhotoUploadModal(true);
@@ -2383,7 +2383,7 @@ function CalendarContent() {
             setShowAddEventChoiceModal(false);
             setShowVoiceRecordModal(true);
           }}
-          onSearchSpecific={() => router.push('/review?mode=search')}
+          onSearchSpecific={() => router.push('/dashboard#search-specific')}
           isGmailConnected={!!gmailAccounts && gmailAccounts.length > 0}
         />
       )}
