@@ -63,13 +63,8 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-strong z-40 pb-safe"
-      style={{
-        paddingBottom: 'max(env(safe-area-inset-bottom), 8px)'
-      }}
-    >
-      <div className="flex items-center justify-around px-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-strong z-50">
+      <div className="flex items-center justify-around px-2" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
           return (
