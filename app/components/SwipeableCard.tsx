@@ -37,7 +37,6 @@ export default function SwipeableCard({
   const currentXRef = useRef(0);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    e.stopPropagation();
     const x = e.touches[0].clientX;
     const y = e.touches[0].clientY;
     setStartX(x);
@@ -45,18 +44,20 @@ export default function SwipeableCard({
     setIsSwiping(true);
     // Store starting Y position to detect vertical vs horizontal swipes
     (e.currentTarget as any)._startY = y;
+    (e.currentTarget as any)._hasSwiped = false;
     console.log('Swipe started at X:', x);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isSwiping) return;
-    e.stopPropagation();
     const deltaX = e.touches[0].clientX - startXRef.current;
     const deltaY = e.touches[0].clientY - ((e.currentTarget as any)._startY || 0);
 
     // If horizontal movement is greater than vertical, prevent default to stop scrolling
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       e.preventDefault();
+      e.stopPropagation();
+      (e.currentTarget as any)._hasSwiped = true; // Mark that user is swiping
     }
 
     setCurrentX(deltaX);
@@ -191,7 +192,7 @@ export default function SwipeableCard({
         style={{
           transform: `translateX(${currentX}px)`,
           transition: isSwiping ? 'none' : 'transform 0.3s ease-out',
-          touchAction: 'pan-y',
+          touchAction: 'none', // Disable browser touch handling to let our swipe work
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
