@@ -355,3 +355,22 @@ export const getAllCategories = query({
     };
   },
 });
+
+// Update calendar webhook info (for push notifications)
+export const updateCalendarWebhook = mutation({
+  args: {
+    familyId: v.id("families"),
+    calendarWebhookChannelId: v.string(),
+    calendarWebhookResourceId: v.string(),
+    calendarWebhookExpiration: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.familyId, {
+      calendarWebhookChannelId: args.calendarWebhookChannelId,
+      calendarWebhookResourceId: args.calendarWebhookResourceId,
+      calendarWebhookExpiration: args.calendarWebhookExpiration,
+    });
+
+    return { success: true };
+  },
+});
