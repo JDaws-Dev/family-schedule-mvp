@@ -2288,9 +2288,9 @@ function CalendarContent() {
       {showAddEventChoiceModal && (
         <AddEventChoiceModal
           onClose={() => setShowAddEventChoiceModal(false)}
-          onCheckEmails={() => router.push('/review')}
-          onTypeManually={() => router.push('/review')}
-          onPasteText={() => router.push('/review')}
+          onCheckEmails={() => router.push('/dashboard')}
+          onTypeManually={() => router.push('/dashboard')}
+          onPasteText={() => router.push('/dashboard')}
           onUploadPhoto={() => {
             setShowAddEventChoiceModal(false);
             setShowPhotoUploadModal(true);
@@ -2299,7 +2299,7 @@ function CalendarContent() {
             setShowAddEventChoiceModal(false);
             setShowVoiceRecordModal(true);
           }}
-          onSearchSpecific={() => router.push('/review')}
+          onSearchSpecific={() => router.push('/dashboard')}
           isGmailConnected={!!gmailAccounts && gmailAccounts.length > 0}
         />
       )}
