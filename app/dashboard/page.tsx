@@ -194,6 +194,8 @@ function DashboardContent() {
   const [selectedEmailIds, setSelectedEmailIds] = useState<Set<string>>(new Set());
   const [isExtractingFromEmails, setIsExtractingFromEmails] = useState(false);
   const [extractedEvents, setExtractedEvents] = useState<any[]>([]);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [editingEventIndex, setEditingEventIndex] = useState<number | null>(null);
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [newEventForm, setNewEventForm] = useState({
     title: "",
@@ -4509,7 +4511,7 @@ Example:
           onClick={() => setShowSearchEmailsModal(false)}
         >
           <div
-            className="bg-white rounded-2xl max-w-4xl w-full shadow-strong my-8 max-h-[85vh] flex flex-col"
+            className="bg-white rounded-2xl max-w-4xl w-full shadow-strong my-8 max-h-[75vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -4671,7 +4673,7 @@ Example:
                     </div>
                   </div>
 
-                  <div className="max-h-96 overflow-y-auto space-y-2">
+                  <div className="max-h-64 overflow-y-auto space-y-2">
                     {emailList.map((email: any) => (
                       <div
                         key={email.id}
@@ -4791,7 +4793,7 @@ Example:
                   <h3 className="font-semibold text-gray-900 mb-3">
                     Extracted {extractedEvents.length} event(s) - Add to your calendar:
                   </h3>
-                  <div className="max-h-96 overflow-y-auto space-y-3">
+                  <div className="max-h-64 overflow-y-auto space-y-3">
                     {extractedEvents.map((event: any, idx: number) => (
                       <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
                         <div className="flex items-start justify-between">
@@ -4810,34 +4812,13 @@ Example:
                             </div>
                           </div>
                           <button
-                            onClick={async () => {
-                              try {
-                                await createEvent({
-                                  createdByUserId: convexUser!._id,
-                                  title: event.title,
-                                  eventDate: event.eventDate,
-                                  eventTime: event.eventTime || undefined,
-                                  endTime: event.endTime || undefined,
-                                  location: event.location || undefined,
-                                  category: event.category || undefined,
-                                  childName: event.childName || undefined,
-                                  description: event.description || undefined,
-                                  requiresAction: event.requiresAction || undefined,
-                                  actionDescription: event.actionDescription || undefined,
-                                  actionDeadline: event.actionDeadline || undefined,
-                                  isConfirmed: true,
-                                });
-                                showToast(`✓ Added "${event.title}" to your calendar!`, "success");
-                                // Remove from results
-                                setExtractedEvents(prev => prev.filter((_, i) => i !== idx));
-                              } catch (error) {
-                                console.error("Error adding event:", error);
-                                showToast("Failed to add event", "error");
-                              }
+                            onClick={() => {
+                              setEditingEvent({...event});
+                              setEditingEventIndex(idx);
                             }}
                             className="ml-4 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition text-sm whitespace-nowrap"
                           >
-                            + Add to Calendar
+                            Edit & Add
                           </button>
                         </div>
                       </div>
@@ -4889,6 +4870,185 @@ Example:
                 className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Extracted Event Modal */}
+      {editingEvent && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => {
+            setEditingEvent(null);
+            setEditingEventIndex(null);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-8 max-h-[75vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-accent-400 to-accent-500 rounded-t-2xl p-6 flex-shrink-0">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Edit Event</h2>
+                  <p className="text-white/90 text-sm">Review and adjust the extracted event details</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingEvent(null);
+                    setEditingEventIndex(null);
+                  }}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close edit modal"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Event Title *</label>
+                <input
+                  type="text"
+                  value={editingEvent.title}
+                  onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                  <input
+                    type="date"
+                    value={editingEvent.eventDate}
+                    onChange={(e) => setEditingEvent({...editingEvent, eventDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                  <input
+                    type="time"
+                    value={editingEvent.eventTime || ''}
+                    onChange={(e) => setEditingEvent({...editingEvent, eventTime: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                  <input
+                    type="time"
+                    value={editingEvent.endTime || ''}
+                    onChange={(e) => setEditingEvent({...editingEvent, endTime: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={editingEvent.category || 'Sports'}
+                    onChange={(e) => setEditingEvent({...editingEvent, category: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  >
+                    <option value="Sports">Sports</option>
+                    <option value="School">School</option>
+                    <option value="Medical">Medical</option>
+                    <option value="Social">Social</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={editingEvent.location || ''}
+                  onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  placeholder="Where is this event?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Child Name</label>
+                <input
+                  type="text"
+                  value={editingEvent.childName || ''}
+                  onChange={(e) => setEditingEvent({...editingEvent, childName: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  placeholder="Which family member?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editingEvent.description || ''}
+                  onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  placeholder="Additional details..."
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setEditingEvent(null);
+                  setEditingEventIndex(null);
+                }}
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await createEvent({
+                      createdByUserId: convexUser!._id,
+                      title: editingEvent.title,
+                      eventDate: editingEvent.eventDate,
+                      eventTime: editingEvent.eventTime || undefined,
+                      endTime: editingEvent.endTime || undefined,
+                      location: editingEvent.location || undefined,
+                      category: editingEvent.category || undefined,
+                      childName: editingEvent.childName || undefined,
+                      description: editingEvent.description || undefined,
+                      requiresAction: editingEvent.requiresAction || undefined,
+                      actionDescription: editingEvent.actionDescription || undefined,
+                      actionDeadline: editingEvent.actionDeadline || undefined,
+                      isConfirmed: true,
+                    });
+                    showToast(`✓ Added "${editingEvent.title}" to your calendar!`, "success");
+                    // Remove from extracted events list
+                    if (editingEventIndex !== null) {
+                      setExtractedEvents(prev => prev.filter((_, i) => i !== editingEventIndex));
+                    }
+                    setEditingEvent(null);
+                    setEditingEventIndex(null);
+                  } catch (error) {
+                    console.error("Error adding event:", error);
+                    showToast("Failed to add event", "error");
+                  }
+                }}
+                disabled={!editingEvent.title || !editingEvent.eventDate}
+                className="px-6 py-3 bg-accent-500 text-white rounded-lg font-semibold hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Add to Calendar
               </button>
             </div>
           </div>
