@@ -1473,181 +1473,163 @@ function DashboardContent() {
                   </p>
                 </div>
 
-                {/* Quick AI - First Section */}
-                <div className="mb-8">
-                <div className="bg-blue-50 rounded-3xl p-6 shadow-md">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
-                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">Quick Add</h2>
-                      <p className="text-sm text-gray-600">Just type naturally—we'll handle the rest</p>
-                    </div>
-                  </div>
+                {/* All Action Squares - Single Section */}
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Quick Actions</h2>
+                  <p className="text-sm text-gray-600 mb-4">Choose how you want to add or find events</p>
 
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={conversationalInput}
-                      onChange={(e) => setConversationalInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && conversationalInput.trim() && !isParsingConversational) {
-                          handleParseConversational();
-                        }
-                      }}
-                      placeholder="'Soccer practice Tuesday 4pm at Lincoln Field'"
-                      className="flex-1 px-5 py-4 border-2 border-primary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-base placeholder:text-gray-400 bg-white shadow-sm"
-                      disabled={isParsingConversational}
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Snap Photo */}
                     <button
-                      onClick={handleParseConversational}
-                      disabled={!conversationalInput.trim() || isParsingConversational}
-                      className="px-6 py-4 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      onClick={() => setShowPhotoUploadModal(true)}
+                      className="bg-primary-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
                     >
-                      {isParsingConversational ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span className="hidden sm:inline">Adding...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Add</span>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Type naturally and click Add</span>
-                  </div>
-                </div>
-                </div>
-
-              {/* Log an Event - Second Section */}
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Log an Event</h2>
-                <p className="text-sm text-gray-600 mb-4">Quick ways to add events manually</p>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Snap Photo of Flyer */}
-                  <button
-                    onClick={() => setShowPhotoUploadModal(true)}
-                    className="bg-primary-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
-                  >
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div className="font-bold text-base">Snap Photo</div>
-                    <div className="text-xs opacity-90 mt-1">Flyer or schedule</div>
-                  </button>
-
-                  {/* Voice Record */}
-                  <button
-                    onClick={() => setShowVoiceRecordModal(true)}
-                    className="bg-rose-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
-                  >
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                      </svg>
-                    </div>
-                    <div className="font-bold text-base">Voice</div>
-                    <div className="text-xs opacity-90 mt-1">Say it out loud</div>
-                  </button>
-
-                  {/* Paste Text */}
-                  <button
-                    onClick={() => {
-                      setShowAddEventModal(true);
-                      setAddEventTab("paste");
-                    }}
-                    className="bg-teal-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
-                  >
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div className="font-bold text-base">Paste Text</div>
-                    <div className="text-xs opacity-90 mt-1">Copy & paste</div>
-                  </button>
-
-                  {/* Manual Entry */}
-                  <button
-                    onClick={() => setShowAddEventModal(true)}
-                    className="bg-slate-600 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
-                  >
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </div>
-                    <div className="font-bold text-base">Type it in</div>
-                    <div className="text-xs opacity-90 mt-1">Manual entry</div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Find an Event - Third Section */}
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Find an Event</h2>
-                <p className="text-sm text-gray-600 mb-4">Search emails or discover local activities</p>
-
-                <div className="grid grid-cols-1 gap-3">
-                  {/* Search Email */}
-                  {gmailAccounts && gmailAccounts.length > 0 && (
-                    <Link
-                      href="/search-emails"
-                      className="bg-amber-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition-all text-white flex items-center gap-3 w-full text-left"
-                    >
-                      <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                       </div>
-                      <div className="text-left flex-1">
-                        <div className="font-bold text-lg">Search Email</div>
-                        <div className="text-sm opacity-90 mt-0.5">Find specific events in your inbox</div>
-                      </div>
-                      <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  )}
+                      <div className="font-bold text-base">Snap Photo</div>
+                      <div className="text-xs opacity-90 mt-1">Flyer or schedule</div>
+                    </button>
 
-                  {/* Explore Local Activities */}
-                  <Link
-                    href="/discover"
-                    className="bg-purple-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition-all text-white flex items-center gap-3"
-                  >
-                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div className="text-left flex-1">
-                      <div className="font-bold text-lg">Explore Activities</div>
-                      <div className="text-sm opacity-90 mt-0.5">Discover events happening near you</div>
-                    </div>
-                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
+                    {/* Voice Record */}
+                    <button
+                      onClick={() => setShowVoiceRecordModal(true)}
+                      className="bg-rose-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                    >
+                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                      </div>
+                      <div className="font-bold text-base">Voice</div>
+                      <div className="text-xs opacity-90 mt-1">Say it out loud</div>
+                    </button>
+
+                    {/* Paste Text */}
+                    <button
+                      onClick={() => {
+                        setShowAddEventModal(true);
+                        setAddEventTab("paste");
+                      }}
+                      className="bg-teal-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                    >
+                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div className="font-bold text-base">Paste Text</div>
+                      <div className="text-xs opacity-90 mt-1">Copy & paste</div>
+                    </button>
+
+                    {/* Manual Entry */}
+                    <button
+                      onClick={() => setShowAddEventModal(true)}
+                      className="bg-slate-600 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                    >
+                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      </div>
+                      <div className="font-bold text-base">Type it in</div>
+                      <div className="text-xs opacity-90 mt-1">Manual entry</div>
+                    </button>
+
+                    {/* Search Email */}
+                    {gmailAccounts && gmailAccounts.length > 0 && (
+                      <Link
+                        href="/search-emails"
+                        className="bg-amber-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                      >
+                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <div className="font-bold text-base">Search Email</div>
+                        <div className="text-xs opacity-90 mt-1">Find in inbox</div>
+                      </Link>
+                    )}
+
+                    {/* Explore Activities */}
+                    <Link
+                      href="/discover"
+                      className="bg-purple-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-95 transition-all text-white text-left"
+                    >
+                      <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-3">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div className="font-bold text-base">Explore</div>
+                      <div className="text-xs opacity-90 mt-1">Find activities</div>
+                    </Link>
+                  </div>
                 </div>
-              </div>
+
+                {/* Quick Add - Second Section */}
+                <div className="mb-8">
+                  <div className="bg-blue-50 rounded-3xl p-6 shadow-md">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-sm">
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900">Quick Add</h2>
+                        <p className="text-sm text-gray-600">Just type naturally—we'll handle the rest</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={conversationalInput}
+                        onChange={(e) => setConversationalInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && conversationalInput.trim() && !isParsingConversational) {
+                            handleParseConversational();
+                          }
+                        }}
+                        placeholder="'Soccer practice Tuesday 4pm at Lincoln Field'"
+                        className="flex-1 px-5 py-4 border-2 border-primary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all text-base placeholder:text-gray-400 bg-white shadow-sm"
+                        disabled={isParsingConversational}
+                      />
+                      <button
+                        onClick={handleParseConversational}
+                        disabled={!conversationalInput.trim() || isParsingConversational}
+                        className="px-6 py-4 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isParsingConversational ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span className="hidden sm:inline">Adding...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Add</span>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Type naturally and click Add</span>
+                    </div>
+                  </div>
+                </div>
 
               {/* Bible Verse of the Day */}
               <div className="mb-8 mt-8">

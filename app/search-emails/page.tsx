@@ -31,6 +31,83 @@ export default function SearchEmailsPage() {
   const standardCategories = ["Sports", "School", "Medical", "Social", "Appointment", "Birthday", "Holiday", "Other"];
   const existingCategories = standardCategories; // Simplified for now
 
+  async function handleSearch() {
+    if (!emailSearchQuery.trim() || isSearchingEmails) return;
+
+    setIsSearchingEmails(true);
+    setEmailList([]);
+    setSelectedEmailIds(new Set());
+    setExtractedEvents([]);
+
+    try {
+      const response = await fetch("/api/list-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: emailSearchQuery,
+          familyId: convexUser?.familyId,
+          timeframeMonths: parseInt(emailSearchTimeframe)
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(data.error || "Failed to search emails", "error");
+      } else if (data.error) {
+        showToast(data.error, "error");
+      } else {
+        setEmailList(data.emails || []);
+        if (data.emails && data.emails.length === 0) {
+          showToast("No emails found matching your search", "info");
+        } else {
+          showToast(`Found ${data.emails.length} email(s)!`, "success");
+        }
+      }
+    } catch (error) {
+      console.error("Email search error:", error);
+      showToast("Failed to search emails. Please try again.", "error");
+    } finally {
+      setIsSearchingEmails(false);
+    }
+  }
+
+  async function handleExtractEvents() {
+    setIsExtractingFromEmails(true);
+    setExtractedEvents([]);
+
+    try {
+      const response = await fetch("/api/extract-from-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailIds: Array.from(selectedEmailIds),
+          familyId: convexUser?.familyId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(data.error || "Failed to extract events", "error");
+      } else if (data.error) {
+        showToast(data.error, "error");
+      } else {
+        setExtractedEvents(data.events || []);
+        if (data.events && data.events.length === 0) {
+          showToast("No events found in selected emails", "info");
+        } else {
+          showToast(`Extracted ${data.events.length} event(s)!`, "success");
+        }
+      }
+    } catch (error) {
+      console.error("Event extraction error:", error);
+      showToast("Failed to extract events. Please try again.", "error");
+    } finally {
+      setIsExtractingFromEmails(false);
+    }
+  }
+
   if (!convexUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -253,8 +330,279 @@ export default function SearchEmailsPage() {
           </div>
         )}
 
-        {/* TODO: Add extracted events section and edit modal */}
+        {/* Extracted Events Section */}
+        {extractedEvents.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Extracted Events ({extractedEvents.length})
+            </h2>
+
+            <div className="space-y-3">
+              {extractedEvents.map((event: any, index: number) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-accent-500 transition">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 mb-1">{event.title}</h4>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <p>📅 {new Date(event.eventDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                        {event.eventTime && <p>🕐 {event.eventTime}{event.endTime && ` - ${event.endTime}`}</p>}
+                        {event.location && <p>📍 {event.location}</p>}
+                        {event.category && <p>🏷️ {event.category}</p>}
+                        {event.description && <p className="mt-2 text-gray-700">{event.description}</p>}
+                      </div>
+                      {event.sourceEmailSubject && (
+                        <p className="text-xs text-gray-500 mt-2">From: {event.sourceEmailSubject}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setEditingEvent(event)}
+                      className="px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition whitespace-nowrap"
+                    >
+                      Review & Add
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  setExtractedEvents([]);
+                  setEmailList([]);
+                  setSelectedEmailIds(new Set());
+                }}
+                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Start New Search
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Edit Event Modal */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[75vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-primary-600 to-primary-500 text-white p-6 rounded-t-2xl sticky top-0 z-10">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Review & Edit Event
+                </h2>
+                <button
+                  onClick={() => setEditingEvent(null)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await createEvent({
+                  createdByUserId: convexUser._id,
+                  title: editingEvent.title,
+                  eventDate: editingEvent.eventDate,
+                  eventTime: editingEvent.eventTime || undefined,
+                  endTime: editingEvent.endTime || undefined,
+                  location: editingEvent.location || undefined,
+                  category: editingEvent.category || undefined,
+                  childName: editingEvent.childName || undefined,
+                  description: editingEvent.description || undefined,
+                  requiresAction: editingEvent.requiresAction || false,
+                  actionDescription: editingEvent.actionDescription || undefined,
+                  actionDeadline: editingEvent.actionDeadline || undefined,
+                  isConfirmed: true,
+                });
+                showToast("Event added to calendar!", "success");
+                setEditingEvent(null);
+                // Remove from extracted events
+                setExtractedEvents(extractedEvents.filter((_, i) => i !== extractedEvents.indexOf(editingEvent)));
+              } catch (error) {
+                console.error("Failed to add event:", error);
+                showToast("Failed to add event. Please try again.", "error");
+              }
+            }}>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingEvent.title}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={editingEvent.eventDate}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, eventDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={editingEvent.eventTime || ""}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, eventTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={editingEvent.endTime || ""}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, endTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={editingEvent.location || ""}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                    {familyMembers && familyMembers.length > 0 ? (
+                      [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
+                        const selectedMembers = editingEvent.childName ? editingEvent.childName.split(", ") : [];
+                        const isChecked = selectedMembers.includes(member.name);
+                        return (
+                          <button
+                            key={member._id}
+                            type="button"
+                            onClick={() => {
+                              let updatedMembers = [...selectedMembers];
+                              if (isChecked) {
+                                updatedMembers = updatedMembers.filter(m => m !== member.name);
+                              } else {
+                                updatedMembers.push(member.name);
+                              }
+                              setEditingEvent({
+                                ...editingEvent,
+                                childName: updatedMembers.join(", ")
+                              });
+                            }}
+                            className={`px-3 py-2 rounded-lg border-2 transition-all font-medium ${
+                              isChecked
+                                ? 'border-primary-600 shadow-md'
+                                : 'bg-white border-gray-300 hover:border-gray-400'
+                            }`}
+                            style={{
+                              backgroundColor: isChecked ? member.color || "#6366f1" : undefined,
+                              color: isChecked ? "white" : "#374151"
+                            }}
+                          >
+                            {isChecked && <span className="mr-1">✓</span>}
+                            {member.name}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">No family members added yet.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={editingEvent.category || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "custom") {
+                        const customCategory = prompt("Enter custom category:");
+                        if (customCategory && customCategory.trim()) {
+                          setEditingEvent({ ...editingEvent, category: customCategory.trim() });
+                        }
+                      } else {
+                        setEditingEvent({ ...editingEvent, category: value });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">Select a category...</option>
+                    <optgroup label="Standard Categories">
+                      {standardCategories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </optgroup>
+                    {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                      <optgroup label="Your Categories">
+                        {existingCategories
+                          .filter(cat => !standardCategories.includes(cat))
+                          .map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))
+                        }
+                      </optgroup>
+                    )}
+                    <option value="custom">+ Add Custom Category</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={editingEvent.description || ""}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="border-t border-gray-200 p-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingEvent(null)}
+                  className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft"
+                >
+                  Add to Calendar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {showToastMessage && (
@@ -264,81 +612,4 @@ export default function SearchEmailsPage() {
       )}
     </div>
   );
-
-  async function handleSearch() {
-    if (!emailSearchQuery.trim() || isSearchingEmails) return;
-
-    setIsSearchingEmails(true);
-    setEmailList([]);
-    setSelectedEmailIds(new Set());
-    setExtractedEvents([]);
-
-    try {
-      const response = await fetch("/api/list-emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: emailSearchQuery,
-          familyId: convexUser?.familyId,
-          timeframeMonths: parseInt(emailSearchTimeframe)
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        showToast(data.error || "Failed to search emails", "error");
-      } else if (data.error) {
-        showToast(data.error, "error");
-      } else {
-        setEmailList(data.emails || []);
-        if (data.emails && data.emails.length === 0) {
-          showToast("No emails found matching your search", "info");
-        } else {
-          showToast(`Found ${data.emails.length} email(s)!`, "success");
-        }
-      }
-    } catch (error) {
-      console.error("Email search error:", error);
-      showToast("Failed to search emails. Please try again.", "error");
-    } finally {
-      setIsSearchingEmails(false);
-    }
-  }
-
-  async function handleExtractEvents() {
-    setIsExtractingFromEmails(true);
-    setExtractedEvents([]);
-
-    try {
-      const response = await fetch("/api/extract-from-emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          emailIds: Array.from(selectedEmailIds),
-          familyId: convexUser?.familyId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        showToast(data.error || "Failed to extract events", "error");
-      } else if (data.error) {
-        showToast(data.error, "error");
-      } else {
-        setExtractedEvents(data.events || []);
-        if (data.events && data.events.length === 0) {
-          showToast("No events found in selected emails", "info");
-        } else {
-          showToast(`Extracted ${data.events.length} event(s)!`, "success");
-        }
-      }
-    } catch (error) {
-      console.error("Event extraction error:", error);
-      showToast("Failed to extract events. Please try again.", "error");
-    } finally {
-      setIsExtractingFromEmails(false);
-    }
-  }
 }
