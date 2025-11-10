@@ -124,7 +124,10 @@ export default function VoiceRecordModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-strong max-w-lg w-full transform transition-all">
+      <div
+        className="bg-white rounded-2xl shadow-strong max-w-lg w-full transform transition-all overflow-y-auto"
+        style={{ maxHeight: 'calc(90vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))' }}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-cyan-600 p-6 rounded-t-2xl">
           <div className="flex items-center gap-3">

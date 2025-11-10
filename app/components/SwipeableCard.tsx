@@ -50,6 +50,8 @@ export default function SwipeableCard({
     setIsSwiping(true);
     setIsHorizontalSwipe(false);
     isHorizontalSwipeRef.current = false;
+    currentXRef.current = 0;
+    setCurrentX(0);
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -59,8 +61,9 @@ export default function SwipeableCard({
     const deltaY = e.touches[0].clientY - startYRef.current;
 
     // Determine if this is a horizontal swipe on first significant movement
-    if (!isHorizontalSwipeRef.current && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (!isHorizontalSwipeRef.current && (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3)) {
+      if (Math.abs(deltaX) > Math.abs(deltaY) * 0.8) {
+        // More lenient horizontal detection
         isHorizontalSwipeRef.current = true;
         setIsHorizontalSwipe(true);
       }
@@ -163,10 +166,13 @@ export default function SwipeableCard({
       {/* Swipeable Card Content */}
       <div
         ref={cardRef}
-        className="relative transition-transform"
+        className="relative transition-transform select-none"
         style={{
           transform: `translateX(${currentX}px)`,
           transition: isSwiping ? 'none' : 'transform 0.3s ease-out',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          userSelect: 'none',
         }}
       >
         {children}

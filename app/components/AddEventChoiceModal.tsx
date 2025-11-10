@@ -25,7 +25,10 @@ export default function AddEventChoiceModal({
 }: AddEventChoiceModalProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-strong max-w-lg w-full transform transition-all my-8 max-h-[90vh] overflow-y-auto">
+      <div
+        className="bg-white rounded-2xl shadow-strong max-w-lg w-full transform transition-all my-8 overflow-y-auto"
+        style={{ maxHeight: 'calc(90vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))' }}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 rounded-t-2xl">
           <h2 className="text-2xl font-bold text-white mb-1">

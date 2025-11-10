@@ -981,7 +981,7 @@ function CalendarContent() {
                   <div className="flex gap-2 flex-1">
                     <button
                       onClick={() => setView("month")}
-                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      className={`flex-1 px-3 py-3 text-sm font-medium rounded-lg transition-colors min-h-[44px] ${
                         view === "month"
                           ? "bg-primary-600 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -991,7 +991,7 @@ function CalendarContent() {
                     </button>
                     <button
                       onClick={() => setView("list")}
-                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      className={`flex-1 px-3 py-3 text-sm font-medium rounded-lg transition-colors min-h-[44px] ${
                         view === "list"
                           ? "bg-primary-600 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -1007,7 +1007,7 @@ function CalendarContent() {
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={() => setCalendarView('month')}
-                      className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                      className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all min-h-[44px] ${
                         calendarView === 'month'
                           ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
                           : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
@@ -1017,7 +1017,7 @@ function CalendarContent() {
                     </button>
                     <button
                       onClick={() => setCalendarView('week')}
-                      className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                      className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all min-h-[44px] ${
                         calendarView === 'week'
                           ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
                           : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
@@ -1027,7 +1027,7 @@ function CalendarContent() {
                     </button>
                     <button
                       onClick={() => setCalendarView('day')}
-                      className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                      className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all min-h-[44px] ${
                         calendarView === 'day'
                           ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
                           : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
@@ -1618,6 +1618,7 @@ function CalendarContent() {
             ) : (
               <div className="relative w-full" style={{ paddingBottom: '85%', minHeight: '800px' }}>
                 <iframe
+                  key={calendarView}
                   src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=${calendarView === 'day' ? 'AGENDA' : calendarView.toUpperCase()}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff`}
                   className="absolute top-0 left-0 w-full h-full border-0"
                   frameBorder="0"
@@ -1638,7 +1639,8 @@ function CalendarContent() {
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[85vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 overflow-y-auto"
+            style={{ maxHeight: 'calc(85vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Gradient */}
