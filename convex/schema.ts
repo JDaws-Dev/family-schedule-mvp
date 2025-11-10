@@ -27,6 +27,10 @@ export default defineSchema({
     googleCalendarId: v.optional(v.string()), // The shared "Family Activities" calendar ID
     calendarName: v.optional(v.string()), // e.g., "Smith Family Activities"
     lastCalendarSyncAt: v.optional(v.number()), // Last time calendar was synced
+    // Google Calendar Push Notifications (Webhooks)
+    calendarWebhookChannelId: v.optional(v.string()), // Unique ID for webhook channel
+    calendarWebhookResourceId: v.optional(v.string()), // Google resource ID for webhook
+    calendarWebhookExpiration: v.optional(v.number()), // Webhook expiration timestamp (ms)
     // Custom event categories
     customCategories: v.optional(v.array(v.string())), // User-created custom categories
   }).index("by_stripe_customer", ["stripeCustomerId"]),

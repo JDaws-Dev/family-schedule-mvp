@@ -25,4 +25,12 @@ crons.interval(
 //   internal.discover.runDailyDiscovery
 // );
 
+// Renew Google Calendar webhooks daily at 3 AM UTC
+// This ensures watches don't expire (Google expires them after ~7 days)
+crons.daily(
+  "renew-calendar-webhooks",
+  { hourUTC: 3, minuteUTC: 0 },
+  internal.calendarWebhooks.renewExpiringWebhooks
+);
+
 export default crons;

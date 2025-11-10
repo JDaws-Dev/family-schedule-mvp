@@ -244,6 +244,14 @@ export const getAllFamilies = query({
   },
 });
 
+// Internal version for cron jobs
+export const getAllFamiliesInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("families").collect();
+  },
+});
+
 // Get all active families (for discovery cron job)
 export const getAllActiveFamilies = internalQuery({
   args: {},
