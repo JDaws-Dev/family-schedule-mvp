@@ -1002,6 +1002,42 @@ function CalendarContent() {
                   </div>
                 </div>
 
+                {/* Calendar View Mode Toggle (Month/Week/Day) - Only show when in calendar view */}
+                {view === 'month' && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => setCalendarView('month')}
+                      className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                        calendarView === 'month'
+                          ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      Month
+                    </button>
+                    <button
+                      onClick={() => setCalendarView('week')}
+                      className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                        calendarView === 'week'
+                          ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      Week
+                    </button>
+                    <button
+                      onClick={() => setCalendarView('day')}
+                      className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                        calendarView === 'day'
+                          ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      Day
+                    </button>
+                  </div>
+                )}
+
                 {/* Date Navigation */}
                 {view !== 'list' && (
                   <div className="flex items-center justify-between">
@@ -1078,6 +1114,42 @@ function CalendarContent() {
                   </button>
                 </div>
 
+                {/* Calendar View Mode Toggle (Month/Week/Day) - Only show when in calendar view */}
+                {view === 'month' && (
+                  <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                    <button
+                      onClick={() => setCalendarView('month')}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                        calendarView === 'month'
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-white'
+                      }`}
+                    >
+                      Month
+                    </button>
+                    <button
+                      onClick={() => setCalendarView('week')}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                        calendarView === 'week'
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-white'
+                      }`}
+                    >
+                      Week
+                    </button>
+                    <button
+                      onClick={() => setCalendarView('day')}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                        calendarView === 'day'
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-white'
+                      }`}
+                    >
+                      Day
+                    </button>
+                  </div>
+                )}
+
                 {/* Date Navigation */}
                 {view !== 'list' && (
                   <div className="flex items-center gap-3">
@@ -1129,8 +1201,8 @@ function CalendarContent() {
             </div>
           )}
 
-        {/* Compact Search and Filters */}
-        {confirmedEvents && confirmedEvents.length > 0 && (
+        {/* Compact Search and Filters - Only show in list view */}
+        {view === 'list' && confirmedEvents && confirmedEvents.length > 0 && (
           <div className="mb-4 bg-white rounded-xl shadow-sm p-3">
             {/* Mobile Layout */}
             <div className="lg:hidden space-y-2">
@@ -1546,7 +1618,7 @@ function CalendarContent() {
             ) : (
               <div className="relative w-full" style={{ paddingBottom: '85%', minHeight: '800px' }}>
                 <iframe
-                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=MONTH&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff`}
+                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=${calendarView.toUpperCase()}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff`}
                   className="absolute top-0 left-0 w-full h-full border-0"
                   frameBorder="0"
                   scrolling="no"
