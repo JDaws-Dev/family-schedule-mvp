@@ -895,7 +895,7 @@ function CalendarContent() {
         setShowAddEventChoiceModal(true);
         break;
       case "paste":
-        setShowAddEventChoiceModal(true);
+        router.push('/dashboard?openModal=paste');
         break;
       case "photo":
         setShowPhotoUploadModal(true);
