@@ -4890,12 +4890,14 @@ Example:
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-accent-400 to-accent-500 rounded-t-2xl p-6 flex-shrink-0">
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6 flex-shrink-0">
               <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Edit Event</h2>
-                  <p className="text-white/90 text-sm">Review and adjust the extracted event details</p>
-                </div>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Event
+                </h2>
                 <button
                   onClick={() => {
                     setEditingEvent(null);
@@ -4914,59 +4916,50 @@ Example:
             {/* Form */}
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Event Title *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Event Title <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
+                  required
                   value={editingEvent.title}
                   onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="e.g., Soccer Practice"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                  <input
-                    type="date"
-                    value={editingEvent.eventDate}
-                    onChange={(e) => setEditingEvent({...editingEvent, eventDate: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={editingEvent.eventDate}
+                  onChange={(e) => setEditingEvent({...editingEvent, eventDate: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                   <input
                     type="time"
                     value={editingEvent.eventTime || ''}
                     onChange={(e) => setEditingEvent({...editingEvent, eventTime: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
                   <input
                     type="time"
                     value={editingEvent.endTime || ''}
                     onChange={(e) => setEditingEvent({...editingEvent, endTime: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select
-                    value={editingEvent.category || 'Sports'}
-                    onChange={(e) => setEditingEvent({...editingEvent, category: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                  >
-                    <option value="Sports">Sports</option>
-                    <option value="School">School</option>
-                    <option value="Medical">Medical</option>
-                    <option value="Social">Social</option>
-                    <option value="Other">Other</option>
-                  </select>
                 </div>
               </div>
 
@@ -4976,20 +4969,91 @@ Example:
                   type="text"
                   value={editingEvent.location || ''}
                   onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                  placeholder="Where is this event?"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="e.g., Local Soccer Field"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Child Name</label>
-                <input
-                  type="text"
-                  value={editingEvent.childName || ''}
-                  onChange={(e) => setEditingEvent({...editingEvent, childName: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                  placeholder="Which family member?"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
+                <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                  {familyMembers && familyMembers.length > 0 ? (
+                    [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
+                      const selectedMembers = editingEvent.childName ? editingEvent.childName.split(", ") : [];
+                      const isChecked = selectedMembers.includes(member.name);
+
+                      return (
+                        <button
+                          key={member._id}
+                          type="button"
+                          onClick={() => {
+                            let updatedMembers = [...selectedMembers];
+                            if (isChecked) {
+                              updatedMembers = updatedMembers.filter(m => m !== member.name);
+                            } else {
+                              updatedMembers.push(member.name);
+                            }
+                            setEditingEvent({
+                              ...editingEvent,
+                              childName: updatedMembers.join(", ")
+                            });
+                          }}
+                          className={`px-3 py-2 rounded-lg border-2 transition-all font-medium ${
+                            isChecked
+                              ? 'border-primary-600 shadow-md'
+                              : 'bg-white border-gray-300 hover:border-gray-400'
+                          }`}
+                          style={{
+                            backgroundColor: isChecked ? member.color || "#6366f1" : undefined,
+                            color: isChecked ? "white" : "#374151"
+                          }}
+                        >
+                          {isChecked && <span className="mr-1">✓</span>}
+                          {member.name}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-gray-500">No family members added yet. Add them in Settings.</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={editingEvent.category || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "custom") {
+                      const customCategory = prompt("Enter custom category:");
+                      if (customCategory && customCategory.trim()) {
+                        setEditingEvent({ ...editingEvent, category: customCategory.trim() });
+                      }
+                    } else {
+                      setEditingEvent({ ...editingEvent, category: value });
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">Select a category...</option>
+                  <optgroup label="Standard Categories">
+                    {standardCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </optgroup>
+                  {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                    <optgroup label="Your Categories">
+                      {existingCategories
+                        .filter(cat => !standardCategories.includes(cat))
+                        .map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))
+                      }
+                    </optgroup>
+                  )}
+                  <option value="custom">+ Add Custom Category</option>
+                </select>
               </div>
 
               <div>
@@ -4998,8 +5062,8 @@ Example:
                   value={editingEvent.description || ''}
                   onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                  placeholder="Additional details..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Add any additional details..."
                 />
               </div>
             </div>
