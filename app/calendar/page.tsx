@@ -1820,30 +1820,32 @@ function CalendarContent() {
                 onClick={async () => {
                   if (confirm(`Delete "${selectedEvent.title}"?`)) {
                     try {
-                      // Delete from Google Calendar first if it was synced
+                      // If event is synced with Google Calendar, delete from there ONLY
+                      // The webhook will automatically remove it from our database
                       if (selectedEvent.googleCalendarEventId) {
-                        try {
-                          const response = await fetch("/api/delete-calendar-event", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ eventId: selectedEvent._id }),
-                          });
+                        const response = await fetch("/api/delete-calendar-event", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ eventId: selectedEvent._id }),
+                        });
 
-                          if (!response.ok) {
-                            const error = await response.json();
-                            console.error("Error deleting from Google Calendar:", error);
-                            // Continue with deletion even if Google Calendar deletion fails
-                          }
-                        } catch (error) {
-                          console.error("Error deleting from Google Calendar:", error);
-                          // Continue with deletion even if Google Calendar deletion fails
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                          console.error("Error deleting from Google Calendar:", result);
+                          showToast(`Failed to delete: ${result.error || "Unknown error"}`, "error");
+                          return;
                         }
-                      }
 
-                      // Delete from Convex database
-                      await deleteEvent({ eventId: selectedEvent._id });
-                      setSelectedEvent(null);
-                      showToast("Event deleted successfully", "success");
+                        // Success! Google Calendar deleted, webhook will handle DB deletion
+                        setSelectedEvent(null);
+                        showToast("Event deleted from Google Calendar", "success");
+                      } else {
+                        // Event not synced to Google Calendar, delete from database only
+                        await deleteEvent({ eventId: selectedEvent._id });
+                        setSelectedEvent(null);
+                        showToast("Event deleted successfully", "success");
+                      }
                     } catch (error) {
                       console.error("Error deleting event:", error);
                       showToast("Failed to delete event. Please try again.", "error");
