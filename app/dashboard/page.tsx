@@ -192,6 +192,7 @@ function DashboardContent() {
   const [emailSearchResults, setEmailSearchResults] = useState<any[]>([]);
   const [emailList, setEmailList] = useState<any[]>([]); // Step 1: List of emails from search
   const [selectedEmailIds, setSelectedEmailIds] = useState<Set<string>>(new Set());
+  const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [isExtractingFromEmails, setIsExtractingFromEmails] = useState(false);
   const [extractedEvents, setExtractedEvents] = useState<any[]>([]);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
@@ -1607,8 +1608,8 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 gap-3">
                   {/* Search Email */}
                   {gmailAccounts && gmailAccounts.length > 0 && (
-                    <button
-                      onClick={() => setShowSearchEmailsModal(true)}
+                    <Link
+                      href="/search-emails"
                       className="bg-amber-500 rounded-2xl p-4 shadow-md hover:shadow-lg active:scale-[0.98] transition-all text-white flex items-center gap-3 w-full text-left"
                     >
                       <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -1623,7 +1624,7 @@ function DashboardContent() {
                       <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
-                    </button>
+                    </Link>
                   )}
 
                   {/* Explore Local Activities */}
