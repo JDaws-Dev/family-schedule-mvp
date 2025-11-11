@@ -1336,23 +1336,32 @@ function CalendarContent() {
           <div className="flex items-center gap-2 mb-4 bg-white rounded-lg p-2 shadow-sm">
             <button
               onClick={() => setViewMode("list")}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] ${
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
                 viewMode === "list"
                   ? "bg-primary-600 text-white"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              📋 List
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              List
             </button>
             <button
               onClick={() => setViewMode("week")}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] ${
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
                 viewMode === "week"
                   ? "bg-primary-600 text-white"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
             >
-              📆 Week
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Week
             </button>
           </div>
         )}
