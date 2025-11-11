@@ -9,7 +9,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-xl font-bold text-primary-800 hover:text-primary-600 transition">
-              Our Daily Family
+              nufamly
             </Link>
 
             {/* Desktop Navigation */}

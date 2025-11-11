@@ -502,7 +502,7 @@ export default function DiscoverPage() {
         isRecurring: newEventForm.isRecurring || false,
         recurrencePattern: newEventForm.isRecurring ? newEventForm.recurrencePattern : undefined,
         recurrenceInterval: newEventForm.isRecurring ? newEventForm.recurrenceInterval : undefined,
-        recurrenceDaysOfWeek: newEventForm.isRecurring && newEventForm.recurrenceDaysOfWeek.length > 0 ? newEventForm.recurrenceDaysOfWeek : undefined,
+        recurrenceDaysOfWeek: newEventForm.isRecurring && newEventForm.recurrenceDaysOfWeek.length > 0 ? newEventForm.recurrenceDaysOfWeek as ("Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday")[] : undefined,
         recurrenceEndType: newEventForm.isRecurring ? newEventForm.recurrenceEndType : undefined,
         recurrenceEndDate: newEventForm.isRecurring && newEventForm.recurrenceEndType === "date" ? newEventForm.recurrenceEndDate : undefined,
         recurrenceEndCount: newEventForm.isRecurring && newEventForm.recurrenceEndType === "count" ? newEventForm.recurrenceEndCount : undefined,
@@ -588,7 +588,7 @@ export default function DiscoverPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/dashboard" className="text-xl font-bold text-slate-900 hover:text-primary-600 transition">
-              Our Daily Family
+              nufamly
             </Link>
 
             {/* Desktop Navigation */}
@@ -634,172 +634,169 @@ export default function DiscoverPage() {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl">🔍</span>
-            </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-                Find Activities
-              </h1>
-              <p className="text-gray-600 text-lg mt-1">
-                Discover new adventures and experiences for your family
-              </p>
-            </div>
-          </div>
-          <p className="text-gray-600 max-w-3xl">
-            We'll search local parks, libraries, museums, and event sites to find activities your kids will love.
-            Perfect for discovering summer camps, sports leagues, art classes, story times, and more - all in one place!
+        {/* Simplified Search Hero */}
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl p-6 sm:p-8 text-white mb-8 shadow-lg">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+            What are you looking for?
+          </h1>
+          <p className="text-purple-50 mb-6 text-lg">
+            Search local parks, museums, classes, and events for your family
           </p>
-        </div>
 
-        {/* Discovery Form */}
-        <div className="bg-white rounded-2xl shadow-soft border border-gray-200 p-6 sm:p-8 mb-8">
-          <div className="space-y-6">
-            {/* Simple Location Input */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Your Location
-              </label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Enter city or ZIP code"
-                className="w-full px-4 py-4 text-lg rounded-lg border-2 border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
-              />
-            </div>
+          {/* Single Search Input */}
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Enter your city or ZIP code"
+              className="w-full px-5 py-4 rounded-xl text-gray-900 text-lg font-medium placeholder-gray-500 focus:ring-4 focus:ring-purple-300 focus:outline-none"
+            />
 
-            {/* Advanced Options - Collapsible */}
-            <div className="border-t border-gray-200 pt-4">
-              <button
-                type="button"
-                onClick={() => setFiltersExpanded(!filtersExpanded)}
-                className="w-full flex items-center justify-between py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-              >
-                <span>Advanced Options</span>
-                <svg
-                  className={`w-5 h-5 transition-transform ${filtersExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {filtersExpanded && (
-                <div className="mt-4 space-y-4 pt-4 border-t border-gray-100">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Search Radius
-                      </label>
-                      <select
-                        value={distance}
-                        onChange={(e) => setDistance(Number(e.target.value))}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      >
-                        <option value={5}>5 miles</option>
-                        <option value={10}>10 miles</option>
-                        <option value={15}>15 miles</option>
-                        <option value={20}>20 miles</option>
-                        <option value={25}>25 miles</option>
-                        <option value={30}>30 miles</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Looking for something specific?
-                      </label>
-                      <input
-                        type="text"
-                        value={discoveryKeyword}
-                        onChange={(e) => setDiscoveryKeyword(e.target.value)}
-                        placeholder="e.g., Christmas lights, soccer..."
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Find Activities Button */}
             <button
               onClick={handleDiscoverActivities}
               disabled={isDiscovering || !location}
-              className="w-full px-6 py-4 text-lg bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-4 bg-white text-purple-600 rounded-xl font-bold text-lg hover:bg-purple-50 shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] flex items-center justify-center gap-2"
             >
               {isDiscovering ? (
-                <span className="flex items-center justify-center gap-2">
+                <>
                   <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Searching...
-                </span>
+                </>
               ) : (
-                "Find Activities"
+                "🔍 Search Near Me"
               )}
             </button>
 
+            {/* Advanced Options - Collapsed by default */}
+            <button
+              type="button"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className="text-sm text-white/80 hover:text-white underline min-h-[44px] w-full text-center transition"
+            >
+              {filtersExpanded ? "Hide" : "Show"} Advanced Options
+            </button>
+
+            {filtersExpanded && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-4 border border-white/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/90 mb-2">
+                      Search Radius
+                    </label>
+                    <select
+                      value={distance}
+                      onChange={(e) => setDistance(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-white"
+                    >
+                      <option value={5}>5 miles</option>
+                      <option value={10}>10 miles</option>
+                      <option value={15}>15 miles</option>
+                      <option value={20}>20 miles</option>
+                      <option value={25}>25 miles</option>
+                      <option value={30}>30 miles</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/90 mb-2">
+                      Keyword (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={discoveryKeyword}
+                      onChange={(e) => setDiscoveryKeyword(e.target.value)}
+                      placeholder="Try: soccer classes, art museums, summer camps"
+                      className="w-full px-4 py-3 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-white/90 mb-2">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white/90 mb-2">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full px-4 py-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {discoveryMessage && (
-              <div className={`mt-4 p-4 rounded-lg border ${
+              <div className={`p-4 rounded-xl border-2 ${
                 discoveryMessage.includes('Success')
-                  ? 'bg-green-50 border-green-200'
+                  ? 'bg-green-500/20 border-green-300 text-white'
                   : discoveryMessage.includes('Error')
-                  ? 'bg-red-50 border-red-200'
-                  : 'bg-blue-50 border-blue-200'
+                  ? 'bg-red-500/20 border-red-300 text-white'
+                  : 'bg-blue-500/20 border-blue-300 text-white'
               }`}>
-                <p className={`text-sm ${
-                  discoveryMessage.includes('Success')
-                    ? 'text-green-800'
-                    : discoveryMessage.includes('Error')
-                    ? 'text-red-800'
-                    : 'text-blue-800'
-                }`}>{discoveryMessage.replace(/🔍|✅|❌|💡/g, '').trim()}</p>
+                <p className="font-medium">{discoveryMessage}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Filter Controls */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          {/* Search Bar */}
-          <div className="flex-1">
+        {/* Category Pills Filter - Only show when there are activities */}
+        {suggestedActivities.length > 0 && (
+          <div className="mb-6">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-2 rounded-full whitespace-nowrap font-medium min-h-[44px] transition-all ${
+                  filter === "all"
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                All ({suggestedActivities.length})
+              </button>
+              {uniqueCategories.map((cat) => {
+                const count = suggestedActivities.filter(a => a.category?.toLowerCase() === cat?.toLowerCase()).length;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setFilter(cat?.toLowerCase())}
+                    className={`px-4 py-2 rounded-full whitespace-nowrap font-medium min-h-[44px] transition-all ${
+                      filter === cat?.toLowerCase()
+                        ? 'bg-primary-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {cat} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Search Bar - Only show when there are activities */}
+        {suggestedActivities.length > 0 && (
+          <div className="mb-6">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Filter results... (e.g., Christmas, STEM, soccer)"
+                placeholder="Search activities..."
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 className="w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
@@ -815,7 +812,7 @@ export default function DiscoverPage() {
               {searchKeyword && (
                 <button
                   onClick={() => setSearchKeyword("")}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] px-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -824,44 +821,12 @@ export default function DiscoverPage() {
               )}
             </div>
           </div>
-
-          {/* Type Filter */}
-          <div className="sm:w-56">
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as "all" | "event" | "place")}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white font-medium"
-            >
-              <option value="all">🎯 All Types</option>
-              <option value="event">📅 Events Only</option>
-              <option value="place">📍 Places Only</option>
-            </select>
-          </div>
-
-          {/* Category Dropdown */}
-          <div className="sm:w-64">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white"
-            >
-              <option value="all">All Categories ({suggestedActivities.length})</option>
-              {uniqueCategories.map((cat) => (
-                <option key={cat} value={cat?.toLowerCase()}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        )}
 
         {/* Activity Cards */}
         {suggestedActivities.length > 0 ? (
           (() => {
             const filteredActivities = suggestedActivities.filter(activity => {
-              // Filter by type (event vs place)
-              const matchesType = typeFilter === "all" || activity.type === typeFilter;
-
               // Filter by category
               const matchesCategory = filter === "all" || activity.category?.toLowerCase() === filter;
 
@@ -871,7 +836,7 @@ export default function DiscoverPage() {
                 activity.description?.toLowerCase().includes(searchKeyword.toLowerCase()) ||
                 activity.category?.toLowerCase().includes(searchKeyword.toLowerCase());
 
-              return matchesType && matchesCategory && matchesSearch;
+              return matchesCategory && matchesSearch;
             });
 
             // Show empty state if filter returns no results
@@ -909,204 +874,100 @@ export default function DiscoverPage() {
               );
             }
 
+            // Helper function to get emoji for category
+            const getCategoryEmoji = (category: string) => {
+              const emojiMap: { [key: string]: string } = {
+                'sports': '⚽',
+                'arts': '🎨',
+                'arts & crafts': '🎨',
+                'education': '📚',
+                'entertainment': '🎭',
+                'community': '🏘️',
+                'recreation': '🎪',
+                'family': '👨‍👩‍👧‍👦',
+                'music': '🎵',
+                'dance': '💃',
+                'other': '✨',
+              };
+              return emojiMap[category?.toLowerCase()] || '✨';
+            };
+
             return (
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredActivities.map((activity) => (
-                <div key={activity._id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border-2 border-gray-100">
-                  <div className="p-6">
-                    {/* Header with Type and Category Badges */}
-                    <div className="flex items-center gap-2 mb-3 flex-wrap">
-                      {/* Type Badge - Event or Place */}
-                      <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${
-                        activity.type === 'place'
-                          ? 'bg-purple-100 text-purple-800 border-2 border-purple-300'
-                          : 'bg-blue-100 text-blue-800 border-2 border-blue-300'
-                      }`}>
-                        {activity.type === 'place' ? '📍 Place to Visit' : '📅 Scheduled Event'}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getCategoryColor(activity.category)}`}>
-                        {activity.category}
-                      </span>
-                      {activity.ageRange && (
-                        <span className="text-sm text-gray-600 font-medium">
-                          {activity.ageRange}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                      {activity.title}
-                    </h3>
-
-                    {/* Conditional Display: Events show date/time, Places show hours */}
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
-                      {activity.type === 'place' ? (
-                        /* Place Information: Hours, Admission, Amenities */
-                        <>
-                          {activity.hoursOfOperation && (
-                            <div className="flex items-center gap-2 text-base font-medium text-gray-900">
-                              <span className="text-xl">🕒</span>
-                              <div>
-                                <span className="font-semibold text-gray-700">Hours: </span>
-                                {activity.hoursOfOperation}
-                              </div>
-                            </div>
-                          )}
-                          {activity.admission && (
-                            <div className="flex items-center gap-2 text-base text-gray-700">
-                              <span className="text-xl">🎫</span>
-                              <div>
-                                <span className="font-semibold">Admission: </span>
-                                {activity.admission}
-                              </div>
-                            </div>
-                          )}
-                          {activity.amenities && activity.amenities.length > 0 && (
-                            <div className="flex items-start gap-2 text-sm text-gray-700">
-                              <span className="text-xl">✨</span>
-                              <div>
-                                <span className="font-semibold">Features: </span>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                  {activity.amenities.map((amenity, idx) => (
-                                    <span key={idx} className="px-2 py-1 bg-gray-200 text-gray-700 rounded-md text-xs font-medium">
-                                      {amenity}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        /* Event Information: Date, Time, Location */
-                        <>
-                          {(activity.date || activity.time) && (
-                        <div className="flex items-center gap-2 text-base font-medium text-gray-900">
-                          <span className="text-xl">📅</span>
-                          <div>
-                            {activity.date && (
+                <div key={activity._id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all border border-gray-200">
+                  <div className="p-5">
+                    {/* Essential Info with Big Emoji */}
+                    <div className="flex gap-3 mb-4">
+                      <div className="text-5xl flex-shrink-0">
+                        {getCategoryEmoji(activity.category)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
+                          {activity.title}
+                        </h3>
+                        <div className="text-sm space-y-1 text-gray-700">
+                          {/* Show date for events, hours for places */}
+                          {activity.type === 'event' && activity.date && (
+                            <div className="flex items-center gap-1">
+                              <span>📅</span>
                               <span>
                                 {new Date(activity.date).toLocaleDateString('en-US', {
-                                  weekday: 'long',
-                                  month: 'long',
-                                  day: 'numeric',
-                                  year: new Date(activity.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric'
                                 })}
-                              </span>
-                            )}
-                            {activity.time && (
-                              <span className="ml-2">
-                                at {(() => {
+                                {activity.time && ` at ${(() => {
                                   const [hours, minutes] = activity.time.split(':');
-                                  const hour = parseInt(hours);
-                                  const ampm = hour >= 12 ? 'PM' : 'AM';
-                                  const displayHour = hour % 12 || 12;
-                                  return `${displayHour}:${minutes} ${ampm}`;
-                                })()}
-                                {activity.endTime && ` - ${(() => {
-                                  const [hours, minutes] = activity.endTime.split(':');
                                   const hour = parseInt(hours);
                                   const ampm = hour >= 12 ? 'PM' : 'AM';
                                   const displayHour = hour % 12 || 12;
                                   return `${displayHour}:${minutes} ${ampm}`;
                                 })()}`}
                               </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                        </>
-                      )}
-
-                      {/* Location - shown for both events and places */}
-                      {activity.location && (
-                        <div className="flex items-start gap-2 text-base text-gray-700">
-                          <span className="text-xl">📍</span>
-                          <span className="font-medium">{activity.location}</span>
-                          {activity.distance && (
-                            <span className="text-gray-500 text-sm">({activity.distance} mi away)</span>
+                            </div>
+                          )}
+                          {activity.type === 'place' && activity.hoursOfOperation && (
+                            <div className="flex items-center gap-1">
+                              <span>🕐</span>
+                              <span>{activity.hoursOfOperation}</span>
+                            </div>
+                          )}
+                          {activity.location && (
+                            <div className="flex items-center gap-1">
+                              <span>📍</span>
+                              <span className="truncate">{activity.location}</span>
+                            </div>
+                          )}
+                          {(activity.priceRange || activity.admission) && (
+                            <div className="flex items-center gap-1">
+                              <span>💰</span>
+                              <span>{activity.admission || getPriceLabel(activity.priceRange)}</span>
+                            </div>
                           )}
                         </div>
-                      )}
-
-                      {/* Price Range - shown for both if applicable */}
-                      {activity.priceRange && !activity.admission && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">💰</span>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">
-                            {getPriceLabel(activity.priceRange)}
-                          </span>
-                        </div>
-                      )}
+                      </div>
                     </div>
 
-                    {/* Description */}
-                    {activity.description && (
-                      <p className="text-gray-700 mb-4 leading-relaxed">
-                        {activity.description}
-                      </p>
-                    )}
+                    {/* Single Big Action */}
+                    <button
+                      onClick={() => handleAddToCalendar(activity._id)}
+                      className="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-all shadow-md min-h-[56px]"
+                    >
+                      Add to Calendar
+                    </button>
 
-                    {/* Why We Recommend This */}
-                    {activity.aiSummary && (
-                      <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-4">
-                        <div className="flex items-start gap-3">
-                          <span className="text-2xl">💡</span>
-                          <div>
-                            <div className="text-xs font-bold text-blue-900 mb-1 uppercase tracking-wide">
-                              Why This is Perfect for Your Family
-                            </div>
-                            <p className="text-sm text-gray-800 leading-relaxed">
-                              {activity.aiSummary}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Contact Info - Simplified */}
-                    <div className="flex flex-wrap gap-3 mb-5 text-sm">
-                      {activity.website && (
-                        <a
-                          href={activity.website.startsWith('http') ? activity.website : `https://${activity.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                        >
-                          🌐 View Website
-                        </a>
-                      )}
-                      {activity.phoneNumber && (
-                        <a href={`tel:${activity.phoneNumber}`} className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline">
-                          📞 {activity.phoneNumber}
-                        </a>
-                      )}
-                    </div>
-
-                    {/* Action Buttons - BIGGER and CLEARER */}
-                    <div className="flex flex-col gap-3 pt-4 border-t-2 border-gray-100">
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => handleAddToCalendar(activity._id)}
-                          className="flex-1 min-h-[48px] px-6 py-4 bg-green-600 text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                        >
-                          <span className="text-2xl">📅</span>
-                          Add to Calendar
-                        </button>
-                        <button
-                          onClick={() => handleEditActivity(activity)}
-                          className="min-h-[48px] px-5 py-4 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition-all flex items-center gap-2"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          Edit
-                        </button>
-                      </div>
+                    {/* Secondary Actions as Text Links */}
+                    <div className="mt-3 flex justify-between text-sm">
+                      <button
+                        onClick={() => handleEditActivity(activity)}
+                        className="text-blue-600 hover:text-blue-700 font-medium min-h-[44px] px-3"
+                      >
+                        View Details
+                      </button>
                       <button
                         onClick={() => handleDismiss(activity._id)}
-                        className="w-full min-h-[44px] px-5 py-3 bg-gray-200 text-gray-700 rounded-xl text-base font-semibold hover:bg-gray-300 transition-all"
+                        className="text-gray-500 hover:text-gray-700 font-medium min-h-[44px] px-3"
                       >
                         Not Interested
                       </button>
@@ -1118,40 +979,224 @@ export default function DiscoverPage() {
             );
           })()
         ) : (
-          /* Empty State - Show Examples */
+          /* Empty State - Interactive Examples */
           <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
-            <div className="p-12 text-center">
-              <div className="text-8xl mb-6">🎉</div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Find Fun Activities Near You!
+            <div className="p-8 sm:p-12 text-center">
+              <div className="text-6xl mb-4">🔍</div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+                Find Activities Your Kids Will Love
               </h2>
-              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                Enter your city or ZIP code above and we'll find local activities, events, and classes perfect for your family.
+              <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+                Search for classes, events, and places near you - or try one of these popular searches:
               </p>
 
-              {/* What We Find - Simplified Icons */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mb-8">
-                <div className="text-center">
-                  <div className="text-5xl mb-2">⚽</div>
-                  <div className="font-semibold text-gray-900">Sports & Leagues</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-5xl mb-2">🎨</div>
-                  <div className="font-semibold text-gray-900">Arts & Crafts</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-5xl mb-2">🏕️</div>
-                  <div className="font-semibold text-gray-900">Summer Camps</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-5xl mb-2">🎭</div>
-                  <div className="font-semibold text-gray-900">Classes & Lessons</div>
-                </div>
+              {/* Interactive Example Searches */}
+              <div className="space-y-3 max-w-md mx-auto mb-8">
+                <button
+                  onClick={async () => {
+                    if (!location) {
+                      showToast("Please enter your location first", "info");
+                      return;
+                    }
+                    const originalKeyword = discoveryKeyword;
+                    setDiscoveryKeyword("youth soccer");
+                    setIsDiscovering(true);
+                    setDiscoveryProgress("");
+                    setDiscoveryMessage("🔍 Discovering activities in your area...");
+
+                    try {
+                      const result = await discoverActivities({
+                        familyId: convexUser!.familyId,
+                        userLocation: location,
+                        distance: distance,
+                        startDate: startDate,
+                        endDate: endDate,
+                        searchKeyword: "youth soccer",
+                        apiBaseUrl: window.location.origin,
+                      });
+
+                      await updateFamilyLocation({
+                        familyId: convexUser!.familyId,
+                        location: location.trim(),
+                      });
+
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`);
+                      showToast(`Found ${result.activitiesDiscovered} activities in your area!`, "success");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } catch (error: any) {
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`❌ Error: ${error.message || "Unknown error occurred"}`);
+                      showToast(error.message || "Could not find activities. Please try again.", "error");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } finally {
+                      setIsDiscovering(false);
+                      setTimeout(() => {
+                        setDiscoveryMessage("");
+                        setDiscoveryProgress("");
+                      }, 8000);
+                    }
+                  }}
+                  className="w-full p-4 bg-blue-50 rounded-xl text-left hover:bg-blue-100 transition min-h-[56px] flex items-center gap-3 border-2 border-transparent hover:border-blue-300"
+                >
+                  <span className="text-3xl">⚽</span>
+                  <span className="font-semibold text-gray-900">Youth Soccer Leagues</span>
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!location) {
+                      showToast("Please enter your location first", "info");
+                      return;
+                    }
+                    const originalKeyword = discoveryKeyword;
+                    setDiscoveryKeyword("art classes");
+                    setIsDiscovering(true);
+                    setDiscoveryProgress("");
+                    setDiscoveryMessage("🔍 Discovering activities in your area...");
+
+                    try {
+                      const result = await discoverActivities({
+                        familyId: convexUser!.familyId,
+                        userLocation: location,
+                        distance: distance,
+                        startDate: startDate,
+                        endDate: endDate,
+                        searchKeyword: "art classes",
+                        apiBaseUrl: window.location.origin,
+                      });
+
+                      await updateFamilyLocation({
+                        familyId: convexUser!.familyId,
+                        location: location.trim(),
+                      });
+
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`);
+                      showToast(`Found ${result.activitiesDiscovered} activities in your area!`, "success");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } catch (error: any) {
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`❌ Error: ${error.message || "Unknown error occurred"}`);
+                      showToast(error.message || "Could not find activities. Please try again.", "error");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } finally {
+                      setIsDiscovering(false);
+                      setTimeout(() => {
+                        setDiscoveryMessage("");
+                        setDiscoveryProgress("");
+                      }, 8000);
+                    }
+                  }}
+                  className="w-full p-4 bg-purple-50 rounded-xl text-left hover:bg-purple-100 transition min-h-[56px] flex items-center gap-3 border-2 border-transparent hover:border-purple-300"
+                >
+                  <span className="text-3xl">🎨</span>
+                  <span className="font-semibold text-gray-900">Art Classes for Kids</span>
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!location) {
+                      showToast("Please enter your location first", "info");
+                      return;
+                    }
+                    const originalKeyword = discoveryKeyword;
+                    setDiscoveryKeyword("summer camps");
+                    setIsDiscovering(true);
+                    setDiscoveryProgress("");
+                    setDiscoveryMessage("🔍 Discovering activities in your area...");
+
+                    try {
+                      const result = await discoverActivities({
+                        familyId: convexUser!.familyId,
+                        userLocation: location,
+                        distance: distance,
+                        startDate: startDate,
+                        endDate: endDate,
+                        searchKeyword: "summer camps",
+                        apiBaseUrl: window.location.origin,
+                      });
+
+                      await updateFamilyLocation({
+                        familyId: convexUser!.familyId,
+                        location: location.trim(),
+                      });
+
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`);
+                      showToast(`Found ${result.activitiesDiscovered} activities in your area!`, "success");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } catch (error: any) {
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`❌ Error: ${error.message || "Unknown error occurred"}`);
+                      showToast(error.message || "Could not find activities. Please try again.", "error");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } finally {
+                      setIsDiscovering(false);
+                      setTimeout(() => {
+                        setDiscoveryMessage("");
+                        setDiscoveryProgress("");
+                      }, 8000);
+                    }
+                  }}
+                  className="w-full p-4 bg-green-50 rounded-xl text-left hover:bg-green-100 transition min-h-[56px] flex items-center gap-3 border-2 border-transparent hover:border-green-300"
+                >
+                  <span className="text-3xl">🏕️</span>
+                  <span className="font-semibold text-gray-900">Summer Camps</span>
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!location) {
+                      showToast("Please enter your location first", "info");
+                      return;
+                    }
+                    const originalKeyword = discoveryKeyword;
+                    setDiscoveryKeyword("music lessons");
+                    setIsDiscovering(true);
+                    setDiscoveryProgress("");
+                    setDiscoveryMessage("🔍 Discovering activities in your area...");
+
+                    try {
+                      const result = await discoverActivities({
+                        familyId: convexUser!.familyId,
+                        userLocation: location,
+                        distance: distance,
+                        startDate: startDate,
+                        endDate: endDate,
+                        searchKeyword: "music lessons",
+                        apiBaseUrl: window.location.origin,
+                      });
+
+                      await updateFamilyLocation({
+                        familyId: convexUser!.familyId,
+                        location: location.trim(),
+                      });
+
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`✅ Success! Found ${result.activitiesDiscovered} new recommendations from ${result.eventsScraped} events.`);
+                      showToast(`Found ${result.activitiesDiscovered} activities in your area!`, "success");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } catch (error: any) {
+                      setDiscoveryProgress("");
+                      setDiscoveryMessage(`❌ Error: ${error.message || "Unknown error occurred"}`);
+                      showToast(error.message || "Could not find activities. Please try again.", "error");
+                      setDiscoveryKeyword(originalKeyword); // Reset to original
+                    } finally {
+                      setIsDiscovering(false);
+                      setTimeout(() => {
+                        setDiscoveryMessage("");
+                        setDiscoveryProgress("");
+                      }, 8000);
+                    }
+                  }}
+                  className="w-full p-4 bg-pink-50 rounded-xl text-left hover:bg-pink-100 transition min-h-[56px] flex items-center gap-3 border-2 border-transparent hover:border-pink-300"
+                >
+                  <span className="text-3xl">🎵</span>
+                  <span className="font-semibold text-gray-900">Music Lessons</span>
+                </button>
               </div>
 
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 max-w-2xl mx-auto">
-                <p className="text-base text-gray-800 font-medium">
-                  We search local parks, libraries, museums, community centers, and event sites to find the best activities for your family!
+              <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-5 max-w-2xl mx-auto">
+                <p className="text-sm text-gray-800">
+                  💡 <strong>Tip:</strong> Enter your location above, then click any example to start searching!
                 </p>
               </div>
             </div>
@@ -1159,107 +1204,152 @@ export default function DiscoverPage() {
         )}
       </div>
 
-      {/* Edit Activity Modal */}
+      {/* Activity Details Modal */}
       {editingActivity && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => {setEditingActivity(null); setEditForm({});}}>
           <div className="bg-white rounded-2xl shadow-strong max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-t-2xl">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-t-2xl">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">Edit Event Details</h2>
+                <h2 className="text-2xl font-bold text-white">{editingActivity.title}</h2>
                 <button
                   onClick={() => {setEditingActivity(null); setEditForm({});}}
-                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition min-h-[44px] min-w-[44px]"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <p className="text-blue-50 mt-2">Review and edit the event details before adding to your calendar</p>
+              <p className="text-purple-50 mt-2">{editingActivity.category}</p>
             </div>
 
             <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={editForm.title || ''}
-                  onChange={(e) => setEditForm({...editForm, title: e.target.value})}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              {editingActivity.type === 'event' && (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Essential Info */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                {editingActivity.type === 'event' && editingActivity.date && (
+                  <div className="flex items-center gap-2 text-base">
+                    <span className="text-xl">📅</span>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                      <input
-                        type="date"
-                        value={editForm.date || ''}
-                        onChange={(e) => setEditForm({...editForm, date: e.target.value})}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
-                      <input
-                        type="time"
-                        value={editForm.time || ''}
-                        onChange={(e) => setEditForm({...editForm, time: e.target.value})}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                      <span className="font-semibold">
+                        {new Date(editingActivity.date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          month: 'long',
+                          day: 'numeric',
+                          year: new Date(editingActivity.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                        })}
+                      </span>
+                      {editingActivity.time && (
+                        <span className="ml-2">
+                          at {(() => {
+                            const [hours, minutes] = editingActivity.time.split(':');
+                            const hour = parseInt(hours);
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            const displayHour = hour % 12 || 12;
+                            return `${displayHour}:${minutes} ${ampm}`;
+                          })()}
+                        </span>
+                      )}
                     </div>
                   </div>
-                </>
+                )}
+                {editingActivity.type === 'place' && editingActivity.hoursOfOperation && (
+                  <div className="flex items-center gap-2 text-base">
+                    <span className="text-xl">🕐</span>
+                    <span><strong>Hours:</strong> {editingActivity.hoursOfOperation}</span>
+                  </div>
+                )}
+                {editingActivity.location && (
+                  <div className="flex items-start gap-2 text-base">
+                    <span className="text-xl">📍</span>
+                    <span>{editingActivity.location}</span>
+                  </div>
+                )}
+                {(editingActivity.priceRange || editingActivity.admission) && (
+                  <div className="flex items-center gap-2 text-base">
+                    <span className="text-xl">💰</span>
+                    <span>{editingActivity.admission || getPriceLabel(editingActivity.priceRange)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              {editingActivity.description && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">About</h3>
+                  <p className="text-gray-700 leading-relaxed">{editingActivity.description}</p>
+                </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                <input
-                  type="text"
-                  value={editForm.location || ''}
-                  onChange={(e) => setEditForm({...editForm, location: e.target.value})}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+              {/* AI Summary */}
+              {editingActivity.aiSummary && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">💡</span>
+                    <div>
+                      <div className="text-xs font-bold text-blue-900 mb-1 uppercase tracking-wide">
+                        Why This is Perfect for Your Family
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed">
+                        {editingActivity.aiSummary}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={editForm.description || ''}
-                  onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+              {/* Additional Details for Places */}
+              {editingActivity.type === 'place' && editingActivity.amenities && editingActivity.amenities.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Features & Amenities</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {editingActivity.amenities.map((amenity: string, idx: number) => (
+                      <span key={idx} className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium">
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <input
-                  type="text"
-                  value={editForm.category || ''}
-                  onChange={(e) => setEditForm({...editForm, category: e.target.value})}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Sports, Arts, Education"
-                />
-              </div>
+              {/* Contact Info */}
+              {(editingActivity.website || editingActivity.phoneNumber) && (
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-3">Contact Information</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {editingActivity.website && (
+                      <a
+                        href={editingActivity.website.startsWith('http') ? editingActivity.website : `https://${editingActivity.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium"
+                      >
+                        🌐 Visit Website
+                      </a>
+                    )}
+                    {editingActivity.phoneNumber && (
+                      <a
+                        href={`tel:${editingActivity.phoneNumber}`}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition font-medium"
+                      >
+                        📞 {editingActivity.phoneNumber}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-6 bg-gray-50 rounded-b-2xl flex gap-3">
               <button
                 onClick={() => {setEditingActivity(null); setEditForm({});}}
-                className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition min-h-[56px]"
               >
-                Cancel
+                Close
               </button>
               <button
                 onClick={handleSaveAndAdd}
-                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center gap-2 min-h-[56px]"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
                 Add to Calendar
               </button>
             </div>

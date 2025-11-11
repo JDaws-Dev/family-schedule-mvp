@@ -21,7 +21,7 @@ export function useGuidedTour() {
         {
           element: "#welcome-section",
           popover: {
-            title: "Welcome to Our Daily Family! 👋",
+            title: "Welcome to nufamly! 👋",
             description: "Let's take a quick tour to show you how to never miss a kid's activity again. This will only take a minute!",
             side: "bottom",
             align: "start",

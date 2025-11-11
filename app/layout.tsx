@@ -5,8 +5,8 @@ import { ToastProvider } from "./components/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Our Daily Family - Family Schedule Assistant",
-  description: "Never miss a kid's activity again with Our Daily Family",
+  title: "nufamly - Family Schedule Assistant",
+  description: "Never miss a kid's activity again with nufamly",
   viewport: {
     width: "device-width",
     initialScale: 1,
