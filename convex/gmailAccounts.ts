@@ -209,6 +209,8 @@ export const updatePushStatus = mutation({
     historyId: v.optional(v.string()),
     expiration: v.optional(v.number()),
     error: v.optional(v.string()),
+    retryCount: v.optional(v.number()),
+    nextRetry: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const updateData: any = {
@@ -233,6 +235,18 @@ export const updatePushStatus = mutation({
     } else {
       // Clear error on success
       updateData.gmailPushError = undefined;
+      // Reset retry count on success
+      updateData.gmailPushRetryCount = 0;
+      updateData.gmailPushNextRetry = undefined;
+    }
+
+    // Allow setting retry metadata explicitly
+    if (args.retryCount !== undefined) {
+      updateData.gmailPushRetryCount = args.retryCount;
+    }
+
+    if (args.nextRetry !== undefined) {
+      updateData.gmailPushNextRetry = args.nextRetry;
     }
 
     await ctx.db.patch(args.accountId, updateData);

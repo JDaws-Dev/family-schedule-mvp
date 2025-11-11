@@ -16,7 +16,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(request: NextRequest) {
   try {
-    const { accountId } = await request.json();
+    const { accountId, skipRetryCheck } = await request.json();
 
     if (!accountId) {
       return NextResponse.json(
@@ -35,6 +35,21 @@ export async function POST(request: NextRequest) {
         { error: 'Gmail account not found' },
         { status: 404 }
       );
+    }
+
+    // Check if we're in retry backoff period (unless explicitly skipping check)
+    if (!skipRetryCheck && gmailAccount.gmailPushNextRetry) {
+      const now = Date.now();
+      if (gmailAccount.gmailPushNextRetry > now) {
+        const waitMinutes = Math.ceil((gmailAccount.gmailPushNextRetry - now) / 60000);
+        console.log(`[Gmail Watch] Account in retry backoff, retry in ${waitMinutes} minutes`);
+        return NextResponse.json({
+          error: 'Too many failed attempts',
+          retryAfter: gmailAccount.gmailPushNextRetry,
+          retryInMinutes: waitMinutes,
+          message: `Please wait ${waitMinutes} minutes before retrying`
+        }, { status: 429 });
+      }
     }
 
     // Set up OAuth2 client (redirect_uri not needed for token refresh)
@@ -103,6 +118,9 @@ export async function POST(request: NextRequest) {
         channelId: 'gmail-watch-' + gmailAccount._id, // Use account ID as channel identifier
         historyId: watchResponse.data.historyId,
         expiration: expirationMs,
+        // Success! Reset retry count and clear any retry backoff
+        retryCount: 0,
+        nextRetry: undefined,
       });
       console.log('[Gmail Watch] Push status updated in database');
     } catch (dbError) {
@@ -121,12 +139,38 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('[Gmail Watch] Error:', error);
 
+    // Calculate retry backoff
+    const currentRetryCount = gmailAccount.gmailPushRetryCount || 0;
+    const nextRetryCount = currentRetryCount + 1;
+    const MAX_RETRIES = 5;
+
+    // Exponential backoff: 2^retryCount minutes (1, 2, 4, 8, 16 min), capped at 60 min
+    const backoffMinutes = Math.min(Math.pow(2, nextRetryCount), 60);
+    const nextRetryTime = Date.now() + (backoffMinutes * 60 * 1000);
+
+    // Store error and retry metadata in database
+    try {
+      await convex.mutation(api.gmailAccounts.updatePushStatus, {
+        accountId: gmailAccount._id,
+        enabled: false,
+        error: error.message,
+        retryCount: nextRetryCount,
+        nextRetry: nextRetryCount < MAX_RETRIES ? nextRetryTime : undefined,
+      });
+      console.log(`[Gmail Watch] Retry ${nextRetryCount}/${MAX_RETRIES}, next retry in ${backoffMinutes} minutes`);
+    } catch (dbError) {
+      console.error('[Gmail Watch] Failed to update retry metadata:', dbError);
+    }
+
     // Provide helpful error messages
     if (error.code === 400 && error.message?.includes('topicName')) {
       return NextResponse.json({
         error: 'Invalid Pub/Sub topic configuration',
         details: error.message,
-        instructions: 'Check GOOGLE_PUBSUB_TOPIC environment variable format (projects/PROJECT_ID/topics/TOPIC_NAME)'
+        instructions: 'Check GOOGLE_PUBSUB_TOPIC environment variable format (projects/PROJECT_ID/topics/TOPIC_NAME)',
+        retryCount: nextRetryCount,
+        maxRetries: MAX_RETRIES,
+        nextRetryIn: nextRetryCount < MAX_RETRIES ? `${backoffMinutes} minutes` : 'No more retries',
       }, { status: 500 });
     }
 
@@ -134,7 +178,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         error: 'Permission denied - Gmail API cannot publish to Pub/Sub topic',
         instructions: 'Grant gmail-api-push@system.gserviceaccount.com publish permission on your Pub/Sub topic',
-        docs: 'https://developers.google.com/gmail/api/guides/push'
+        docs: 'https://developers.google.com/gmail/api/guides/push',
+        retryCount: nextRetryCount,
+        maxRetries: MAX_RETRIES,
+        nextRetryIn: nextRetryCount < MAX_RETRIES ? `${backoffMinutes} minutes` : 'No more retries',
       }, { status: 500 });
     }
 
@@ -142,7 +189,10 @@ export async function POST(request: NextRequest) {
       {
         error: 'Failed to set up Gmail push notifications',
         details: error.message,
-        code: error.code
+        code: error.code,
+        retryCount: nextRetryCount,
+        maxRetries: MAX_RETRIES,
+        nextRetryIn: nextRetryCount < MAX_RETRIES ? `${backoffMinutes} minutes` : 'No more retries',
       },
       { status: 500 }
     );

@@ -67,6 +67,8 @@ export default defineSchema({
     gmailPushExpiration: v.optional(v.number()), // When the watch expires (timestamp)
     gmailPushError: v.optional(v.string()), // Error message from last push setup attempt
     gmailPushLastSetup: v.optional(v.number()), // Timestamp of last successful setup
+    gmailPushRetryCount: v.optional(v.number()), // Number of consecutive failed retry attempts
+    gmailPushNextRetry: v.optional(v.number()), // Timestamp when next retry should be attempted (exponential backoff)
   })
     .index("by_family", ["familyId"])
     .index("by_gmail_email", ["gmailEmail"]),

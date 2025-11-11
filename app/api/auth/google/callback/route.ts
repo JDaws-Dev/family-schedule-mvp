@@ -127,6 +127,17 @@ export async function GET(request: NextRequest) {
       hasRefreshToken: !!tokens.refresh_token,
     });
 
+    // CRITICAL: Verify we received a refresh token
+    // Without a refresh token, we can't maintain long-term access
+    if (!tokens.refresh_token) {
+      console.error("[oauth-callback] No refresh token received - user needs to re-authorize with force consent");
+      return NextResponse.redirect(
+        `${appUrl}/settings?tab=apps&error=no_refresh_token&message=${encodeURIComponent(
+          "Google didn't provide a refresh token. This usually happens if you've connected this account before. Please disconnect the account and try again, or revoke access in your Google Account settings first."
+        )}`
+      );
+    }
+
     let result;
     try {
       result = await convex.mutation(api.gmailAccounts.connectGmailAccount, {
@@ -134,7 +145,7 @@ export async function GET(request: NextRequest) {
         gmailEmail: userInfo.email,
         displayName: userInfo.name || userInfo.email,
         accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || "",
+        refreshToken: tokens.refresh_token, // Validated above - guaranteed to exist
       });
       console.log("[oauth-callback] Convex mutation result:", result);
     } catch (convexError) {
@@ -153,7 +164,10 @@ export async function GET(request: NextRequest) {
         const watchResponse = await fetch(`${appUrl}/api/gmail-watch`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accountId: result.accountId }),
+          body: JSON.stringify({
+            accountId: result.accountId,
+            skipRetryCheck: true // Skip retry backoff on initial setup
+          }),
         });
 
         const watchData = await watchResponse.json();

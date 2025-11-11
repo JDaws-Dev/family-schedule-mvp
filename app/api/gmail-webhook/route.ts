@@ -13,11 +13,56 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify the request is from Google Cloud Pub/Sub
+    // SECURITY: Verify the request is from Google Cloud Pub/Sub
     const authHeader = request.headers.get('authorization');
+
+    // Google Pub/Sub sends JWT tokens in the Authorization header
+    // Format: "Bearer {JWT_TOKEN}"
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('[Gmail Webhook] Unauthorized: Missing or invalid Authorization header');
+      return NextResponse.json(
+        { error: 'Unauthorized: Missing or invalid Authorization header' },
+        { status: 401 }
+      );
+    }
+
+    // Extract the JWT token
+    const token = authHeader.substring(7); // Remove "Bearer " prefix
+
+    // Basic JWT structure validation (JWT has 3 parts separated by dots)
+    if (!token || token.split('.').length !== 3) {
+      console.error('[Gmail Webhook] Unauthorized: Invalid JWT token format');
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid token format' },
+        { status: 401 }
+      );
+    }
 
     // Parse the Pub/Sub message
     const body = await request.json();
+
+    // Validate Pub/Sub message structure
+    if (!body.message || typeof body.message !== 'object') {
+      console.error('[Gmail Webhook] Invalid Pub/Sub message structure');
+      return NextResponse.json(
+        { error: 'Invalid Pub/Sub message structure' },
+        { status: 400 }
+      );
+    }
+
+    // Verify subscription name matches our expected subscription
+    // This prevents webhooks from other Pub/Sub topics being processed
+    if (body.subscription) {
+      const subscriptionPath = body.subscription;
+      if (!subscriptionPath.includes('gmail-webhook-subscription') &&
+          !subscriptionPath.includes('gmail-notifications')) {
+        console.error('[Gmail Webhook] Unauthorized: Unknown subscription:', subscriptionPath);
+        return NextResponse.json(
+          { error: 'Unauthorized: Unknown subscription' },
+          { status: 403 }
+        );
+      }
+    }
 
     console.log('[Gmail Webhook] Received push notification:', {
       messageId: body.message?.messageId,
