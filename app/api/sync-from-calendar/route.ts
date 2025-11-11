@@ -135,13 +135,18 @@ export async function POST(request: NextRequest) {
 
       if (gEvent.start?.dateTime) {
         // Has specific time
-        const startDate = new Date(gEvent.start.dateTime);
-        eventDate = startDate.toISOString().split('T')[0];
-        eventTime = startDate.toTimeString().slice(0, 5); // HH:MM format
+        // Parse the ISO string directly to preserve local time (avoid timezone conversion)
+        // Google Calendar returns: "2025-11-11T16:00:00-05:00"
+        // We want to extract: date="2025-11-11" time="16:00"
+        const startISO = gEvent.start.dateTime;
+        const [datePart, timePart] = startISO.split('T');
+        eventDate = datePart; // "2025-11-11"
+        eventTime = timePart.slice(0, 5); // "16:00" (first 5 chars of "16:00:00-05:00")
 
         if (gEvent.end?.dateTime) {
-          const endDate = new Date(gEvent.end.dateTime);
-          endTime = endDate.toTimeString().slice(0, 5);
+          const endISO = gEvent.end.dateTime;
+          const endTimePart = endISO.split('T')[1];
+          endTime = endTimePart.slice(0, 5);
         }
       } else if (gEvent.start?.date) {
         // All-day event
