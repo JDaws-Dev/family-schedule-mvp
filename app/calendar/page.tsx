@@ -5,8 +5,6 @@ import { useState, useMemo, useEffect, useCallback, Suspense, useRef } from "rea
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
 import MobileNav from "@/app/components/MobileNav";
 import BottomNav from "@/app/components/BottomNav";
@@ -20,20 +18,7 @@ import ConfirmDialog from "@/app/components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
 import SwipeableCard from "@/app/components/SwipeableCard";
 import PullToRefresh from "@/app/components/PullToRefresh";
-import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
-
-const locales = {
-  "en-US": require("date-fns/locale/en-US"),
-};
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-});
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -145,20 +130,10 @@ function groupEventsByDate(events: any[]) {
     }));
 }
 
-type ExtendedView = View | "list";
-
 function CalendarContent() {
   const { showToast } = useToast();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [view, setView] = useState<ExtendedView>(() => {
-    // Default to list view on mobile devices
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      return 'list';
-    }
-    return 'month';
-  });
-  const [date, setDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncingFrom, setSyncingFrom] = useState(false);
@@ -207,7 +182,6 @@ function CalendarContent() {
     variant?: 'danger' | 'warning' | 'info';
     itemCount?: number;
   } | null>(null);
-  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
   const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -1269,238 +1243,28 @@ function CalendarContent() {
           </div>
         </div>
 
-        {/* Simplified Calendar Controls */}
+        {/* Google Calendar Link - Simple and Clear */}
           {confirmedEvents && confirmedEvents.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
-              {/* Mobile Layout */}
-              <div className="lg:hidden space-y-3">
-                {/* View Toggle and Date */}
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex gap-2 flex-1">
-                    <button
-                      onClick={() => setView("month")}
-                      className={`flex-1 px-3 py-3 text-sm font-medium rounded-lg transition-colors min-h-[44px] ${
-                        view === "month"
-                          ? "bg-primary-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      Calendar
-                    </button>
-                    <button
-                      onClick={() => setView("list")}
-                      className={`flex-1 px-3 py-3 text-sm font-medium rounded-lg transition-colors min-h-[44px] ${
-                        view === "list"
-                          ? "bg-primary-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      List
-                    </button>
-                  </div>
-                </div>
-
-                {/* Calendar View Mode Toggle (Month/Week/Day) - Only show when in calendar view */}
-                {view === 'month' && (
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => setCalendarView('month')}
-                      className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all min-h-[44px] ${
-                        calendarView === 'month'
-                          ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      Month
-                    </button>
-                    <button
-                      onClick={() => setCalendarView('week')}
-                      className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all min-h-[44px] ${
-                        calendarView === 'week'
-                          ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      Week
-                    </button>
-                    <button
-                      onClick={() => setCalendarView('day')}
-                      className={`flex-1 py-3 rounded-lg font-medium text-sm transition-all min-h-[44px] ${
-                        calendarView === 'day'
-                          ? 'bg-primary-100 text-primary-700 border-2 border-primary-600'
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      Day
-                    </button>
-                  </div>
-                )}
-
-                {/* Date Navigation */}
-                {view !== 'list' && (
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => {
-                        const newDate = new Date(date);
-                        if (view === 'month') newDate.setMonth(date.getMonth() - 1);
-                        else if (view === 'week') newDate.setDate(date.getDate() - 7);
-                        else if (view === 'day') newDate.setDate(date.getDate() - 1);
-                        setDate(newDate);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-
-                    <div className="flex flex-col items-center">
-                      <span className="text-sm font-bold text-gray-900">
-                        {view === 'month' && format(date, 'MMMM yyyy')}
-                        {view === 'week' && format(date, 'MMM d, yyyy')}
-                        {view === 'day' && format(date, 'MMMM d, yyyy')}
-                      </span>
-                      <button
-                        onClick={() => setDate(new Date())}
-                        className="text-xs text-primary-600 hover:text-primary-700 font-medium mt-1"
-                      >
-                        Go to Today
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        const newDate = new Date(date);
-                        if (view === 'month') newDate.setMonth(date.getMonth() + 1);
-                        else if (view === 'week') newDate.setDate(date.getDate() + 7);
-                        else if (view === 'day') newDate.setDate(date.getDate() + 1);
-                        setDate(newDate);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop Layout - Horizontal */}
-              <div className="hidden lg:flex items-center justify-between">
-                {/* View Selector */}
-                <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
-                  <button
-                    onClick={() => setView('month')}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                      view === 'month'
-                        ? 'bg-primary-600 text-white shadow-sm'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-white'
-                    }`}
-                  >
-                    Calendar
-                  </button>
-                  <button
-                    onClick={() => setView('list')}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                      view === 'list'
-                        ? 'bg-primary-600 text-white shadow-sm'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-white'
-                    }`}
-                  >
-                    List
-                  </button>
-                </div>
-
-                {/* Calendar View Mode Toggle (Month/Week/Day) - Only show when in calendar view */}
-                {view === 'month' && (
-                  <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
-                    <button
-                      onClick={() => setCalendarView('month')}
-                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                        calendarView === 'month'
-                          ? 'bg-primary-600 text-white shadow-sm'
-                          : 'text-gray-700 hover:text-gray-900 hover:bg-white'
-                      }`}
-                    >
-                      Month
-                    </button>
-                    <button
-                      onClick={() => setCalendarView('week')}
-                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                        calendarView === 'week'
-                          ? 'bg-primary-600 text-white shadow-sm'
-                          : 'text-gray-700 hover:text-gray-900 hover:bg-white'
-                      }`}
-                    >
-                      Week
-                    </button>
-                    <button
-                      onClick={() => setCalendarView('day')}
-                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                        calendarView === 'day'
-                          ? 'bg-primary-600 text-white shadow-sm'
-                          : 'text-gray-700 hover:text-gray-900 hover:bg-white'
-                      }`}
-                    >
-                      Day
-                    </button>
-                  </div>
-                )}
-
-                {/* Date Navigation */}
-                {view !== 'list' && (
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        const newDate = new Date(date);
-                        if (view === 'month') newDate.setMonth(date.getMonth() - 1);
-                        else if (view === 'week') newDate.setDate(date.getDate() - 7);
-                        else if (view === 'day') newDate.setDate(date.getDate() - 1);
-                        setDate(newDate);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-
-                    <button
-                      onClick={() => setDate(new Date())}
-                      className="px-4 py-2 text-sm font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
-                    >
-                      Today
-                    </button>
-
-                    <span className="text-base font-bold text-gray-900 min-w-[180px] text-center">
-                      {view === 'month' && format(date, 'MMMM yyyy')}
-                      {view === 'week' && `Week of ${format(date, 'MMM d')}`}
-                      {view === 'day' && format(date, 'MMMM d, yyyy')}
-                    </span>
-
-                    <button
-                      onClick={() => {
-                        const newDate = new Date(date);
-                        if (view === 'month') newDate.setMonth(date.getMonth() + 1);
-                        else if (view === 'week') newDate.setDate(date.getDate() + 7);
-                        else if (view === 'day') newDate.setDate(date.getDate() + 1);
-                        setDate(newDate);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
+            <div className="mb-4">
+              <a
+                href="https://calendar.google.com/calendar/r"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full py-4 px-6 bg-white border-2 border-primary-600 text-primary-700 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-primary-50 transition-all shadow-sm hover:shadow-md active:scale-[0.99] min-h-[56px]"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>View Month in Google Calendar</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             </div>
           )}
 
         {/* Simplified Filter UI - Collapsible */}
-        {view === 'list' && confirmedEvents && confirmedEvents.length > 0 && (
+        {confirmedEvents && confirmedEvents.length > 0 && (
           <div className="mb-4 bg-white rounded-xl shadow-sm">
             {/* Filter Toggle Button */}
             <div className="p-3 flex items-center justify-between">
@@ -1605,10 +1369,8 @@ function CalendarContent() {
         )}
 
 
-        {/* Calendar or List View */}
-        {view === "list" ? (
-          /* List View with Sort */
-          <div className="bg-white rounded-lg shadow">
+        {/* List View */}
+        <div className="bg-white rounded-lg shadow">
             {confirmedEvents === undefined ? (
               <CalendarSkeleton />
             ) : sortedEvents.length === 0 ? (
@@ -1951,45 +1713,7 @@ function CalendarContent() {
               </>
             )}
           </div>
-        ) : (
-          /* Calendar View - Google Calendar Embed */
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            {!family?.googleCalendarId ? (
-              <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="text-6xl mb-4">📅</div>
-                <div className="text-xl font-semibold text-gray-900 mb-2">
-                  Google Calendar Not Connected
-                </div>
-                <p className="text-gray-600 mb-6 text-center max-w-md">
-                  Connect your Google Calendar in Settings to see your calendar here.
-                </p>
-                <Link
-                  href="/settings"
-                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
-                >
-                  Go to Settings
-                </Link>
-              </div>
-            ) : (
-              <div className="relative w-full" style={{ paddingBottom: '85%', minHeight: '800px' }}>
-                <iframe
-                  key={calendarView}
-                  src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(family.googleCalendarId)}&mode=${calendarView === 'day' ? 'AGENDA' : calendarView.toUpperCase()}&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0&wkst=1&bgcolor=%23ffffff&hours=6-23`}
-                  className="absolute top-0 left-0 w-full h-full border-0"
-                  frameBorder="0"
-                  scrolling="no"
-                  title="Family Calendar"
-                  loading="lazy"
-                />
-                {/* Info about potential cookie requirement */}
-                <div className="absolute bottom-4 left-4 right-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800 hidden sm:block">
-                  <p className="font-semibold mb-1">Can't see your calendar?</p>
-                  <p>Make sure third-party cookies are enabled in your browser, or try <a href={`https://calendar.google.com/calendar/u/0/r`} target="_blank" rel="noopener noreferrer" className="underline font-medium">opening Google Calendar directly</a>.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        </div>
 
       </div>
       </PullToRefresh>
