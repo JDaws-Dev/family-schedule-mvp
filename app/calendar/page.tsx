@@ -210,9 +210,20 @@ function CalendarContent() {
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
   const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [showFilters, setShowFilters] = useState(false);
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
+
+  // Count active filters
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (searchQuery) count++;
+    if (filterMember !== "all") count++;
+    if (filterCategory !== "all") count++;
+    if (dateRangeFilter !== "all") count++;
+    return count;
+  }, [searchQuery, filterMember, filterCategory, dateRangeFilter]);
 
   // Mutations
   const deleteEvent = useMutation(api.events.deleteEvent);
@@ -1488,101 +1499,32 @@ function CalendarContent() {
             </div>
           )}
 
-        {/* Compact Search and Filters - Only show in list view */}
+        {/* Simplified Filter UI - Collapsible */}
         {view === 'list' && confirmedEvents && confirmedEvents.length > 0 && (
-          <div className="mb-4 bg-white rounded-xl shadow-sm p-3">
-            {/* Mobile Layout */}
-            <div className="lg:hidden space-y-2">
-              <input
-                type="text"
-                placeholder="Search events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
-
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={filterMember}
-                  onChange={(e) => setFilterMember(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
-                >
-                  <option value="all">All Members</option>
-                  {familyMembers?.map((member) => (
-                    <option key={member._id} value={member.name}>{member.name}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-
-              {(searchQuery || filterMember !== "all" || filterCategory !== "all") && (
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setFilterMember("all");
-                    setFilterCategory("all");
-                  }}
-                  className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Clear all filters
-                </button>
-              )}
-            </div>
-
-            {/* Desktop Layout - Single Row */}
-            <div className="hidden lg:flex items-center gap-3">
-              <input
-                type="text"
-                placeholder="Search events..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
-
-              <select
-                value={dateRangeFilter}
-                onChange={(e) => setDateRangeFilter(e.target.value as any)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          <div className="mb-4 bg-white rounded-xl shadow-sm">
+            {/* Filter Toggle Button */}
+            <div className="p-3 flex items-center justify-between">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] flex-1 sm:flex-none"
               >
-                <option value="all">All Dates</option>
-                <option value="today">Today</option>
-                <option value="week">Next 7 Days</option>
-                <option value="month">Next 30 Days</option>
-              </select>
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span className="font-medium text-gray-700">
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-primary-600 text-white rounded-full">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </span>
+                <svg className={`w-4 h-4 text-gray-600 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-              <select
-                value={filterMember}
-                onChange={(e) => setFilterMember(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="all">All Members</option>
-                {familyMembers?.map((member) => (
-                  <option key={member._id} value={member.name}>{member.name}</option>
-                ))}
-              </select>
-
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="all">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-
-              {(searchQuery || filterMember !== "all" || filterCategory !== "all" || dateRangeFilter !== "all") && (
+              {activeFilterCount > 0 && (
                 <button
                   onClick={() => {
                     setSearchQuery("");
@@ -1590,12 +1532,75 @@ function CalendarContent() {
                     setFilterCategory("all");
                     setDateRangeFilter("all");
                   }}
-                  className="px-3 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap"
+                  className="px-3 py-2.5 text-sm text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap min-h-[44px]"
                 >
-                  Clear
+                  Clear All
                 </button>
               )}
             </div>
+
+            {/* Collapsible Filter Panel */}
+            {showFilters && (
+              <div className="px-3 pb-3 border-t border-gray-200 pt-3 space-y-3 animate-slideDown">
+                {/* Search */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Search</label>
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[44px]"
+                  />
+                </div>
+
+                {/* Date Range - Desktop only */}
+                <div className="hidden sm:block">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Date Range</label>
+                  <select
+                    value={dateRangeFilter}
+                    onChange={(e) => setDateRangeFilter(e.target.value as any)}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                  >
+                    <option value="all">All Dates</option>
+                    <option value="today">Today</option>
+                    <option value="week">Next 7 Days</option>
+                    <option value="month">Next 30 Days</option>
+                  </select>
+                </div>
+
+                {/* Member and Category - Grid layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Family Member</label>
+                    <select
+                      value={filterMember}
+                      onChange={(e) => setFilterMember(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    >
+                      <option value="all">All Members</option>
+                      {familyMembers?.map((member) => (
+                        <option key={member._id} value={member.name}>{member.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Category</label>
+                    <select
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-sm min-h-[44px]"
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
