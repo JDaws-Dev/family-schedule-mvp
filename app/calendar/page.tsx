@@ -1650,11 +1650,20 @@ function CalendarContent() {
                                 {/* Family Members */}
                                 {event.childName && (
                                   <div className="flex flex-wrap gap-1 mb-1">
-                                    {event.childName.split(',').map((name: string, idx: number) => (
-                                      <span key={idx} className="text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-800">
-                                        {name.trim()}
-                                      </span>
-                                    ))}
+                                    {event.childName.split(',').map((name: string, idx: number) => {
+                                      const memberName = name.trim();
+                                      const member = familyMembers?.find(m => m.name === memberName);
+                                      const color = member?.color || "#6366f1";
+                                      return (
+                                        <span
+                                          key={idx}
+                                          className="text-xs px-2 py-0.5 rounded-full text-white font-medium"
+                                          style={{ backgroundColor: color }}
+                                        >
+                                          {memberName}
+                                        </span>
+                                      );
+                                    })}
                                   </div>
                                 )}
 
