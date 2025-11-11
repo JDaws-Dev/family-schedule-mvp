@@ -17,6 +17,7 @@ import PhotoUploadModal from "@/app/components/PhotoUploadModal";
 import VoiceRecordModal from "@/app/components/VoiceRecordModal";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
+import SwipeableCard from "@/app/components/SwipeableCard";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -1249,94 +1250,16 @@ function ReviewPageContent() {
           </div>
         )}
 
-        {/* Stats Banner */}
-        <div className="bg-primary-50 rounded-lg p-4 sm:p-6 mb-6 border border-primary-200">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                  {unconfirmedEvents === undefined
-                    ? "Loading..."
-                    : selectedEvents.size > 0
-                    ? `${selectedEvents.size} of ${unconfirmedEvents.length} selected`
-                    : `${unconfirmedEvents.length} event${unconfirmedEvents.length === 1 ? '' : 's'} to review`}
-                </h2>
-                <p className="text-sm sm:text-base text-gray-700">
-                  {selectedEvents.size > 0
-                    ? "Approve to add to calendar or dismiss to remove"
-                    : "Check the details and approve to add to your calendar"}
-                </p>
-              </div>
-              {unconfirmedEvents && unconfirmedEvents.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-2">
-                  {selectedEvents.size > 0 ? (
-                    <>
-                      <button
-                        onClick={async () => {
-                          for (const eventId of selectedEvents) {
-                            await handleApprove(eventId as Id<"events">);
-                          }
-                          setSelectedEvents(new Set());
-                        }}
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
-                      >
-                        Approve Selected ({selectedEvents.size})
-                      </button>
-                      <button
-                        onClick={async () => {
-                          for (const eventId of selectedEvents) {
-                            await handleReject(eventId as Id<"events">);
-                          }
-                          setSelectedEvents(new Set());
-                        }}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
-                      >
-                        Dismiss Selected ({selectedEvents.size})
-                      </button>
-                      <button
-                        onClick={() => setSelectedEvents(new Set())}
-                        className="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
-                      >
-                        Clear Selection
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          const allIds = new Set<string>(unconfirmedEvents.map((e) => e._id));
-                          setSelectedEvents(allIds);
-                        }}
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
-                      >
-                        Select All
-                      </button>
-                      <button
-                        onClick={async () => {
-                          for (const event of unconfirmedEvents) {
-                            await handleApprove(event._id);
-                          }
-                        }}
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition"
-                      >
-                        Approve All
-                      </button>
-                      <button
-                        onClick={async () => {
-                          for (const event of unconfirmedEvents) {
-                            await handleReject(event._id);
-                          }
-                        }}
-                        className="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition"
-                      >
-                        Dismiss All
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Simple Stats Banner */}
+        <div className="bg-primary-50 rounded-xl p-5 mb-6 border border-primary-200">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">
+            {unconfirmedEvents === undefined
+              ? "Loading..."
+              : `${unconfirmedEvents.length} event${unconfirmedEvents.length === 1 ? '' : 's'} to review`}
+          </h2>
+          <p className="text-sm text-gray-600">
+            Swipe right to approve, left to dismiss, or tap to edit details
+          </p>
         </div>
 
         {/* Unconfirmed Events List */}
@@ -1346,18 +1269,23 @@ function ReviewPageContent() {
             <p className="text-gray-600">Loading events...</p>
           </div>
         ) : unconfirmedEvents.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
-              All Caught Up!
+          <div className="bg-white rounded-xl shadow-soft p-8 text-center">
+            <div className="text-6xl mb-4">✨</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              You're All Set!
             </h2>
-            <p className="text-gray-600 text-sm">
-              No events waiting for review. New events from your emails will appear here.
+            <p className="text-gray-600 mb-6">
+              We'll automatically scan your emails and show new events here for you to review.
             </p>
+            <p className="text-sm text-gray-500 mb-4">
+              Want to add an event manually?
+            </p>
+            <button
+              onClick={() => setShowAddEventModal(true)}
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition min-h-[44px]"
+            >
+              Add Event
+            </button>
           </div>
         ) : (
           <>
@@ -1371,149 +1299,104 @@ function ReviewPageContent() {
 
                 return paginatedEvents;
               })().map((event) => (
-              <div key={event._id} className="bg-white rounded-xl shadow-soft border-2 border-yellow-200 overflow-hidden">
-                {/* Why Review Banner */}
-                <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-3">
-                  <p className="text-sm text-yellow-900 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="font-medium">Please double-check:</span> We found this in your email, but want to make sure the details are correct before adding to your calendar.
-                  </p>
-                </div>
-
-                {/* Event Header */}
-                <div className="p-6">
-                  <div className="flex items-start gap-4 mb-4">
-                    {/* Checkbox */}
-                    <input
-                      type="checkbox"
-                      checked={selectedEvents.has(event._id)}
-                      onChange={(e) => {
-                        const newSelected = new Set(selectedEvents);
-                        if (e.target.checked) {
-                          newSelected.add(event._id);
-                        } else {
-                          newSelected.delete(event._id);
-                        }
-                        setSelectedEvents(newSelected);
-                      }}
-                      className="mt-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-3xl">{getCategoryIcon(event.category)}</span>
-                        <h3 className="text-2xl font-bold text-gray-900">
+              <SwipeableCard
+                key={event._id}
+                onSwipeRight={() => handleApprove(event._id)}
+                onSwipeLeft={() => handleReject(event._id)}
+                rightAction={{
+                  label: "Approve",
+                  icon: <span className="text-2xl">✓</span>,
+                  color: "#10b981"
+                }}
+                leftAction={{
+                  label: "Dismiss",
+                  icon: <span className="text-2xl">✕</span>,
+                  color: "#ef4444"
+                }}
+              >
+                <div className="bg-white rounded-xl shadow-soft border border-gray-200 overflow-hidden">
+                  {/* Event Content */}
+                  <div className="p-5">
+                    <div className="flex items-start gap-4 mb-4">
+                      <span className="text-5xl flex-shrink-0">{getCategoryIcon(event.category)}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
                           {event.title}
                         </h3>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm mb-3">
-                        <span className="font-semibold text-gray-900">{formatMomFriendlyDate(event.eventDate)}</span>
-                        {event.eventTime && (
-                          <span className="font-medium text-gray-700">
-                            {formatTime12Hour(event.eventTime)}
-                            {event.endTime && ` - ${formatTime12Hour(event.endTime)}`}
-                          </span>
-                        )}
-                        {event.location && (
-                          <span className="text-gray-600">{event.location}</span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2 items-center">
-                        {event.childName && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
-                            {event.childName}
+                        <div className="space-y-2 text-base">
+                          <div className="flex items-center gap-2 text-gray-900">
+                            <span className="text-xl">📅</span>
+                            <span className="font-semibold">{formatMomFriendlyDate(event.eventDate)}</span>
+                            {event.eventTime && (
+                              <span className="font-medium text-gray-700">
+                                {formatTime12Hour(event.eventTime)}
+                                {event.endTime && ` - ${formatTime12Hour(event.endTime)}`}
+                              </span>
+                            )}
                           </div>
-                        )}
-                        {event.category && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                            {event.category}
-                          </div>
-                        )}
-                        {event.requiresAction && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                            RSVP Required {event.actionDeadline && `by ${event.actionDeadline}`}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Event Description */}
-                  {event.description && (
-                    <div className="bg-primary-50 rounded-lg p-3 mb-4 text-sm">
-                      <div className="font-medium text-primary-900 mb-1">Details:</div>
-                      <div className="text-gray-700">{event.description}</div>
-                    </div>
-                  )}
-
-                  {/* Source Email Info */}
-                  {event.sourceEmailSubject && (
-                    <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm">
-                      <div className="flex flex-col gap-2">
-                        <div className="text-gray-600">
-                          Found in email: <span className="font-medium text-gray-900">{event.sourceEmailSubject}</span>
+                          {event.location && (
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <span className="text-xl">📍</span>
+                              <span>{event.location}</span>
+                            </div>
+                          )}
+                          {event.childName && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">👤</span>
+                              <span className="font-medium text-primary-800">{event.childName}</span>
+                            </div>
+                          )}
+                          {event.requiresAction && (
+                            <div className="flex items-center gap-2 text-red-700">
+                              <span className="text-xl">⚠️</span>
+                              <span className="font-semibold">
+                                RSVP Required {event.actionDeadline && `by ${formatMomFriendlyDate(event.actionDeadline)}`}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        {event.sourceGmailAccountId && gmailAccounts && (
-                          <div className="text-gray-500 text-xs">
-                            Gmail account: {gmailAccounts.find(a => a._id === event.sourceGmailAccountId)?.gmailEmail || 'Unknown'}
-                          </div>
-                        )}
-                        {event.sourceEmailSubject && event.sourceGmailAccountId && gmailAccounts && (
-                          <a
-                            href={`https://mail.google.com/mail/#search/${encodeURIComponent(`subject:"${event.sourceEmailSubject}" in:${gmailAccounts.find(a => a._id === event.sourceGmailAccountId)?.gmailEmail || 'anywhere'}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-200 transition font-medium whitespace-nowrap self-start"
-                            title={`Search for this email in ${gmailAccounts.find(a => a._id === event.sourceGmailAccountId)?.gmailEmail || 'Gmail'}. Make sure you're signed into ${gmailAccounts.find(a => a._id === event.sourceGmailAccountId)?.gmailEmail || 'the correct account'} in Gmail first.`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Search in Gmail
-                          </a>
-                        )}
                       </div>
                     </div>
-                  )}
 
-                  {/* Action Buttons - Visual Hierarchy */}
-                  <div className="space-y-3">
-                    {/* Primary Action: Approve - BIG and GREEN */}
-                    <button
-                      onClick={() => handleApprove(event._id)}
-                      className="w-full min-h-[56px] px-6 py-5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-medium hover:shadow-strong transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3"
-                    >
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span>Looks Good! Add to Calendar</span>
-                    </button>
+                    {/* Event Description */}
+                    {event.description && (
+                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                        <p className="text-gray-700 text-sm leading-relaxed">{event.description}</p>
+                      </div>
+                    )}
 
-                    {/* Secondary Actions - Smaller */}
-                    <div className="flex gap-3">
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                      {/* Primary Action: Approve - BIG and GREEN */}
                       <button
-                        onClick={() => handleEdit(event)}
-                        className="flex-1 min-h-[48px] px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition flex items-center justify-center gap-2"
+                        onClick={() => handleApprove(event._id)}
+                        className="w-full min-h-[56px] px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
-                        Edit Details
+                        <span>Add to Calendar</span>
                       </button>
-                      <button
-                        onClick={() => handleReject(event._id)}
-                        className="flex-1 min-h-[48px] px-4 py-3 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 rounded-lg font-medium transition flex items-center justify-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Not This One
-                      </button>
+
+                      {/* Secondary Actions */}
+                      <div className="flex justify-between text-sm">
+                        <button
+                          onClick={() => handleEdit(event)}
+                          className="text-blue-600 font-medium hover:text-blue-700 transition min-h-[44px] px-3"
+                        >
+                          Edit Details
+                        </button>
+                        <button
+                          onClick={() => handleReject(event._id)}
+                          className="text-gray-500 font-medium hover:text-red-600 transition min-h-[44px] px-3"
+                        >
+                          Not Interested
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </SwipeableCard>
             ))}
             </div>
 
