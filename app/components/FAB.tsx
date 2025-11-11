@@ -158,18 +158,13 @@ export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
         </div>
       )}
 
-      {/* FAB Button with Label */}
+      {/* FAB Button */}
       <div
-        className="fixed right-6 z-50 md:right-8 flex flex-col items-end gap-2"
+        className="fixed right-6 z-50 md:right-8"
         style={{
           bottom: 'max(2rem, calc(4.75rem + env(safe-area-inset-bottom)))',
         }}
       >
-        {!isOpen && (
-          <div className="bg-gray-900 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md animate-fadeIn">
-            Add Event
-          </div>
-        )}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`min-w-[56px] min-h-[56px] w-14 h-14 md:w-16 md:h-16 rounded-full bg-accent-600 hover:bg-accent-700 text-white shadow-[0_8px_24px_rgba(249,115,22,0.5)] hover:shadow-[0_12px_32px_rgba(249,115,22,0.6)] active:scale-95 transition-all flex items-center justify-center ring-4 ring-white ${

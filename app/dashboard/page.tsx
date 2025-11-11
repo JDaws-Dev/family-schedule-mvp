@@ -1202,7 +1202,12 @@ function DashboardContent() {
               </div>
               <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">7 days</span>
             </div>
-            <h3 className="text-white font-semibold mb-2 text-base">📅 Your Week Ahead</h3>
+            <h3 className="text-white font-semibold mb-2 text-base flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Your Week Ahead
+            </h3>
             <div className="mb-2">
               {weekEvents === undefined ? (
                 <span className="inline-block w-12 h-10 bg-white/20 rounded animate-pulse"></span>
@@ -1360,10 +1365,12 @@ function DashboardContent() {
 
                 {/* Personalized Welcome Header */}
                 <div className="mb-4 bg-gradient-to-r from-primary-600 to-primary-500 rounded-2xl p-5 text-white shadow-sm">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-2xl">👋</span>
+                  <div className="flex items-center gap-3 mb-1">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
                     <h1 className="text-xl font-bold">
-                      {clerkUser?.firstName || "Welcome"} Family Dashboard
+                      Welcome{clerkUser?.firstName ? `, ${clerkUser.firstName}` : ""}
                     </h1>
                   </div>
                   <p className="text-primary-50 text-sm">
@@ -2332,10 +2339,12 @@ function DashboardContent() {
                     )}
                     {groupEventsByDate(filteredActionEvents).map(({ date, events }) => (
                       <div key={date}>
-                        {/* Date Header - More playful */}
+                        {/* Date Header */}
                         <div className="mb-3">
                           <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <span className="text-2xl">📅</span>
+                            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                             {formatMomFriendlyDate(date)}
                           </h3>
                         </div>
@@ -2880,7 +2889,10 @@ function DashboardContent() {
                     <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
                       <div className="text-white/80 text-xs font-medium mb-1">Date</div>
                       <div className="text-white font-semibold flex items-center gap-2">
-                        📅 {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
                           day: 'numeric',

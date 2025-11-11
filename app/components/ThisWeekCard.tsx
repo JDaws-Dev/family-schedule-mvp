@@ -25,8 +25,23 @@ export default function ThisWeekCard({
   getCategoryEmoji,
   formatMomFriendlyDate,
 }: ThisWeekCardProps) {
+  // Sort events by date and time
+  const sortedEvents = [...events].sort((a, b) => {
+    // First sort by date
+    const dateCompare = a.eventDate.localeCompare(b.eventDate);
+    if (dateCompare !== 0) return dateCompare;
+
+    // If same date, sort by time (events with time come first, sorted by time)
+    if (a.eventTime && b.eventTime) {
+      return a.eventTime.localeCompare(b.eventTime);
+    }
+    if (a.eventTime) return -1; // a has time, b doesn't - a comes first
+    if (b.eventTime) return 1;  // b has time, a doesn't - b comes first
+    return 0; // neither has time
+  });
+
   // Get upcoming events (max 5 for preview)
-  const upcomingPreview = events.slice(0, 5);
+  const upcomingPreview = sortedEvents.slice(0, 5);
 
   if (!events || events.length === 0) {
     return null; // Don't show if no events this week
@@ -38,7 +53,9 @@ export default function ThisWeekCard({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📆</span>
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">This Week</h2>
