@@ -1052,10 +1052,10 @@ function ReviewPageContent() {
   const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
     switch (action) {
       case "manual":
-        router.push('/dashboard?openModal=manual');
+        setShowAddEventModal(true);
         break;
       case "paste":
-        router.push('/dashboard?openModal=paste');
+        setShowPasteTextModal(true);
         break;
       case "photo":
         setShowPhotoUploadModal(true);
