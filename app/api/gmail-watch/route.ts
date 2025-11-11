@@ -86,16 +86,29 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const expirationMs = parseInt(watchResponse.data.expiration || '0');
+    const expirationDate = new Date(expirationMs);
+
     console.log('[Gmail Watch] Watch set up successfully:', {
       email: gmailAccount.gmailEmail,
       historyId: watchResponse.data.historyId,
-      expiration: watchResponse.data.expiration,
+      expiration: expirationDate.toISOString(),
     });
 
-    // Store the watch information
-    // Note: Watch expires after 7 days, need to renew
-    const expirationMs = parseInt(watchResponse.data.expiration || '0');
-    const expirationDate = new Date(expirationMs);
+    // Store the watch information in database
+    try {
+      await convex.mutation(api.gmailAccounts.updatePushStatus, {
+        accountId: gmailAccount._id,
+        enabled: true,
+        channelId: 'gmail-watch-' + gmailAccount._id, // Use account ID as channel identifier
+        historyId: watchResponse.data.historyId,
+        expiration: expirationMs,
+      });
+      console.log('[Gmail Watch] Push status updated in database');
+    } catch (dbError) {
+      console.error('[Gmail Watch] Failed to update database:', dbError);
+      // Don't fail the whole request, watch is still active
+    }
 
     return NextResponse.json({
       success: true,

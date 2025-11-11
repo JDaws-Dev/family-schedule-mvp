@@ -158,14 +158,45 @@ export async function GET(request: NextRequest) {
 
         const watchData = await watchResponse.json();
         if (watchResponse.ok) {
-          console.log("[oauth-callback] Push notifications enabled successfully:", watchData);
+          console.log("[oauth-callback] Push notifications enabled successfully:", {
+            email: userInfo.email,
+            historyId: watchData.historyId,
+            expiresIn: watchData.expiresIn,
+          });
         } else {
-          console.warn("[oauth-callback] Failed to enable push notifications:", watchData);
-          // Don't fail the whole flow, just log the warning
+          console.error("[oauth-callback] Failed to enable push notifications:", {
+            email: userInfo.email,
+            status: watchResponse.status,
+            error: watchData.error || watchData,
+          });
+
+          // Store the error in database so user can see it
+          try {
+            await convex.mutation(api.gmailAccounts.updatePushStatus, {
+              accountId: result.accountId,
+              enabled: false,
+              error: watchData.error || JSON.stringify(watchData),
+            });
+          } catch (dbError) {
+            console.error("[oauth-callback] Failed to store push error in DB:", dbError);
+          }
         }
       } catch (watchError) {
-        console.warn("[oauth-callback] Error enabling push notifications:", watchError);
-        // Don't fail the whole flow, push notifications can be enabled manually later
+        console.error("[oauth-callback] Error enabling push notifications:", {
+          email: userInfo.email,
+          error: watchError instanceof Error ? watchError.message : String(watchError),
+        });
+
+        // Store the error in database
+        try {
+          await convex.mutation(api.gmailAccounts.updatePushStatus, {
+            accountId: result.accountId,
+            enabled: false,
+            error: watchError instanceof Error ? watchError.message : String(watchError),
+          });
+        } catch (dbError) {
+          console.error("[oauth-callback] Failed to store push error in DB:", dbError);
+        }
       }
     }
 

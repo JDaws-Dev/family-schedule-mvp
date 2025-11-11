@@ -199,3 +199,42 @@ export const getByEmail = query({
       .first();
   },
 });
+
+// Update Gmail push notification status
+export const updatePushStatus = mutation({
+  args: {
+    accountId: v.id("gmailAccounts"),
+    enabled: v.boolean(),
+    channelId: v.optional(v.string()),
+    historyId: v.optional(v.string()),
+    expiration: v.optional(v.number()),
+    error: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const updateData: any = {
+      gmailPushEnabled: args.enabled,
+      gmailPushLastSetup: Date.now(),
+    };
+
+    if (args.channelId) {
+      updateData.gmailPushChannelId = args.channelId;
+    }
+
+    if (args.historyId) {
+      updateData.gmailHistoryId = args.historyId;
+    }
+
+    if (args.expiration) {
+      updateData.gmailPushExpiration = args.expiration;
+    }
+
+    if (args.error) {
+      updateData.gmailPushError = args.error;
+    } else {
+      // Clear error on success
+      updateData.gmailPushError = undefined;
+    }
+
+    await ctx.db.patch(args.accountId, updateData);
+  },
+});

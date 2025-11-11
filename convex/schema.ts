@@ -61,6 +61,12 @@ export default defineSchema({
     isActive: v.boolean(), // Can be disabled without deleting
     gmailPushTopicName: v.optional(v.string()), // For Gmail push notifications
     gmailHistoryId: v.optional(v.string()), // For incremental sync
+    // Gmail Push Notification Status
+    gmailPushEnabled: v.optional(v.boolean()), // Whether push notifications are active
+    gmailPushChannelId: v.optional(v.string()), // Channel ID from Gmail watch
+    gmailPushExpiration: v.optional(v.number()), // When the watch expires (timestamp)
+    gmailPushError: v.optional(v.string()), // Error message from last push setup attempt
+    gmailPushLastSetup: v.optional(v.number()), // Timestamp of last successful setup
   })
     .index("by_family", ["familyId"])
     .index("by_gmail_email", ["gmailEmail"]),
