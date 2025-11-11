@@ -146,6 +146,29 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to save Gmail account to database: ${convexError instanceof Error ? convexError.message : String(convexError)}`);
     }
 
+    // Automatically enable push notifications for this account
+    if (result && result.accountId) {
+      try {
+        console.log("[oauth-callback] Auto-enabling push notifications for:", userInfo.email);
+        const watchResponse = await fetch(`${appUrl}/api/gmail-watch`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accountId: result.accountId }),
+        });
+
+        const watchData = await watchResponse.json();
+        if (watchResponse.ok) {
+          console.log("[oauth-callback] Push notifications enabled successfully:", watchData);
+        } else {
+          console.warn("[oauth-callback] Failed to enable push notifications:", watchData);
+          // Don't fail the whole flow, just log the warning
+        }
+      } catch (watchError) {
+        console.warn("[oauth-callback] Error enabling push notifications:", watchError);
+        // Don't fail the whole flow, push notifications can be enabled manually later
+      }
+    }
+
     // Redirect to the appropriate page with success flag and tab parameter
     const redirectUrl = new URL(returnUrl, appUrl);
     redirectUrl.searchParams.set("success", "gmail_connected");
