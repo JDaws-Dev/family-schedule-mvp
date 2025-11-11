@@ -247,6 +247,8 @@ If no clear events with dates, return {"events": []}.`;
     // Process each event and filter out invalid ones
     const extractedEvents: any[] = [];
     for (const event of parsed.events) {
+      console.log("[extractEventsFromEmail] Event from AI:", JSON.stringify(event));
+
       if (!event.title || !event.date) {
         console.log("Skipping invalid event - missing title or date:", event);
         continue;
@@ -254,8 +256,8 @@ If no clear events with dates, return {"events": []}.`;
 
       // If family members are tracked, prefer familyMemberName but allow events without it if confidence is reasonable
       if (familyMembers.length > 0 && !event.familyMemberName) {
-        // Allow events without explicit family member if confidence is >= 0.6 (contextually relevant)
-        if (!event.confidence || event.confidence < 0.6) {
+        // Accept ALL events with confidence >= 0.5 (was 0.6, too strict for social events)
+        if (!event.confidence || event.confidence < 0.5) {
           console.log("Skipping event - no tracked family member mentioned and low confidence:", event.title, "confidence:", event.confidence);
           continue;
         }
