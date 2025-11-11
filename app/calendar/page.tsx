@@ -1795,18 +1795,55 @@ function CalendarContent() {
                 </div>
               )}
 
-              {/* Location */}
-              {selectedEvent.location && (
-                <div className="mb-6 bg-gray-50 rounded-lg p-4">
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                    Location
+              {/* Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {selectedEvent.location && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Location
+                    </div>
+                    <div className="text-gray-900 font-medium flex items-start gap-2">
+                      <span>📍</span>
+                      <span>{selectedEvent.location}</span>
+                    </div>
                   </div>
-                  <div className="text-gray-900 font-medium flex items-start gap-2">
-                    <span>📍</span>
-                    <span>{selectedEvent.location}</span>
+                )}
+
+                {selectedEvent.category && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Category
+                    </div>
+                    <div className="text-gray-900 font-medium">
+                      {selectedEvent.category}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {selectedEvent.childName && (
+                  <div className="bg-gray-50 rounded-lg p-4 sm:col-span-2">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Family Members
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEvent.childName.split(',').map((name: string, idx: number) => {
+                        const trimmedName = name.trim();
+                        const member = familyMembers?.find(m => m.name === trimmedName);
+                        const color = member?.color || "#6366f1";
+                        return (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                            style={{ backgroundColor: color }}
+                          >
+                            {trimmedName}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Action Required Badge */}
               {selectedEvent.requiresAction && (
