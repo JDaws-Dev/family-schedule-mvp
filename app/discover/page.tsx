@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { useToast } from "../components/Toast";
 import MobileNav from "../components/MobileNav";
 import BottomNav from "../components/BottomNav";
+import FAB from "../components/FAB";
 import ConfirmDialog from "../components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "../components/LoadingSpinner";
 
@@ -183,6 +184,12 @@ export default function DiscoverPage() {
       console.error("Error dismissing activity:", error);
       showToast("Failed to dismiss activity. Please try again.", "error");
     }
+  };
+
+  const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
+    // For Discover page, redirect to dashboard to add event
+    // since the primary action here is location search
+    window.location.href = `/dashboard?openModal=${action}`;
   };
 
   // Use database activities or empty array
@@ -737,14 +744,14 @@ export default function DiscoverPage() {
                       <div className="flex gap-3">
                         <button
                           onClick={() => handleAddToCalendar(activity._id)}
-                          className="flex-1 px-6 py-4 bg-green-600 text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                          className="flex-1 min-h-[48px] px-6 py-4 bg-green-600 text-white rounded-xl text-lg font-bold hover:bg-green-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                         >
                           <span className="text-2xl">📅</span>
                           Add to Calendar
                         </button>
                         <button
                           onClick={() => handleEditActivity(activity)}
-                          className="px-5 py-4 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition-all flex items-center gap-2"
+                          className="min-h-[48px] px-5 py-4 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition-all flex items-center gap-2"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -754,7 +761,7 @@ export default function DiscoverPage() {
                       </div>
                       <button
                         onClick={() => handleDismiss(activity._id)}
-                        className="w-full px-5 py-3 bg-gray-200 text-gray-700 rounded-xl text-base font-semibold hover:bg-gray-300 transition-all"
+                        className="w-full min-h-[44px] px-5 py-3 bg-gray-200 text-gray-700 rounded-xl text-base font-semibold hover:bg-gray-300 transition-all"
                       >
                         Not Interested
                       </button>
@@ -914,6 +921,9 @@ export default function DiscoverPage() {
           </div>
         </div>
       )}
+
+      {/* FAB - Floating Action Button */}
+      <FAB onAction={handleFABAction} hasGmailAccount={false} />
 
       {/* Bottom Navigation (Mobile) */}
       <BottomNav />

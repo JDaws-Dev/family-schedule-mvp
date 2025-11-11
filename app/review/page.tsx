@@ -1482,7 +1482,7 @@ function ReviewPageContent() {
                     {/* Primary Action: Approve - BIG and GREEN */}
                     <button
                       onClick={() => handleApprove(event._id)}
-                      className="w-full px-6 py-5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-bold text-lg shadow-medium hover:shadow-strong transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3"
+                      className="w-full min-h-[56px] px-6 py-5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-lg shadow-medium hover:shadow-strong transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-3"
                     >
                       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -1494,7 +1494,7 @@ function ReviewPageContent() {
                     <div className="flex gap-3">
                       <button
                         onClick={() => handleEdit(event)}
-                        className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition flex items-center justify-center gap-2"
+                        className="flex-1 min-h-[48px] px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition flex items-center justify-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1503,7 +1503,7 @@ function ReviewPageContent() {
                       </button>
                       <button
                         onClick={() => handleReject(event._id)}
-                        className="flex-1 px-4 py-3 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 rounded-lg font-medium transition flex items-center justify-center gap-2"
+                        className="flex-1 min-h-[48px] px-4 py-3 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 rounded-lg font-medium transition flex items-center justify-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

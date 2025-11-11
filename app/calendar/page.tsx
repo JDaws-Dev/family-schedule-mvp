@@ -151,7 +151,13 @@ function CalendarContent() {
   const { showToast } = useToast();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [view, setView] = useState<ExtendedView>("month");
+  const [view, setView] = useState<ExtendedView>(() => {
+    // Default to list view on mobile devices
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'list';
+    }
+    return 'month';
+  });
   const [date, setDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
@@ -1922,7 +1928,7 @@ function CalendarContent() {
                                   e.stopPropagation();
                                   handleSwipeDelete(event);
                                 }}
-                                className="flex-shrink-0 p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                className="flex-shrink-0 min-w-[44px] min-h-[44px] p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                 aria-label="Delete event"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

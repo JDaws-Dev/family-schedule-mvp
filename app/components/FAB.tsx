@@ -116,7 +116,7 @@ export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
           {actions.map((action, index) => {
             const content = (
               <>
-                <div className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform flex-shrink-0`}>
+                <div className={`min-w-[44px] min-h-[44px] w-12 h-12 rounded-xl ${action.color} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform flex-shrink-0`}>
                   {action.icon}
                 </div>
                 <div className="text-left flex-1">
@@ -132,7 +132,7 @@ export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
                   key={action.id}
                   href={action.href}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px]"
+                  className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px] min-h-[56px]"
                   style={{
                     animationDelay: `${index * 50}ms`,
                   }}
@@ -146,7 +146,7 @@ export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
               <button
                 key={action.id}
                 onClick={() => handleActionClick(action.id)}
-                className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px]"
+                className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px] min-h-[56px]"
                 style={{
                   animationDelay: `${index * 50}ms`,
                 }}
@@ -172,7 +172,7 @@ export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
         )}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-14 h-14 md:w-16 md:h-16 rounded-full bg-accent-600 hover:bg-accent-700 text-white shadow-[0_8px_24px_rgba(249,115,22,0.5)] hover:shadow-[0_12px_32px_rgba(249,115,22,0.6)] active:scale-95 transition-all flex items-center justify-center ring-4 ring-white ${
+          className={`min-w-[56px] min-h-[56px] w-14 h-14 md:w-16 md:h-16 rounded-full bg-accent-600 hover:bg-accent-700 text-white shadow-[0_8px_24px_rgba(249,115,22,0.5)] hover:shadow-[0_12px_32px_rgba(249,115,22,0.6)] active:scale-95 transition-all flex items-center justify-center ring-4 ring-white ${
             isOpen ? "rotate-45" : ""
           }`}
           aria-label="Add event"
