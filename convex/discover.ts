@@ -134,6 +134,7 @@ export const discoverActivitiesForFamily = action({
     distance: v.optional(v.number()), // Search radius in miles
     startDate: v.optional(v.string()), // Date range filter (YYYY-MM-DD)
     endDate: v.optional(v.string()), // Date range filter (YYYY-MM-DD)
+    searchKeyword: v.optional(v.string()), // Optional keyword filter
     apiBaseUrl: v.optional(v.string()), // Pass from client (window.location.origin)
   },
   handler: async (ctx, args) => {
@@ -209,7 +210,7 @@ export const discoverActivitiesForFamilyInternal = internalAction({
 });
 
 // Shared handler logic
-async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: any; userLocation?: string; distance?: number; startDate?: string; endDate?: string; apiBaseUrl?: string }) {
+async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: any; userLocation?: string; distance?: number; startDate?: string; endDate?: string; searchKeyword?: string; apiBaseUrl?: string }) {
   // Determine API base URL (use passed value or construct from env for cron)
   const baseUrl = args.apiBaseUrl || process.env.SITE_URL || "http://localhost:3000";
 
@@ -241,13 +242,13 @@ async function discoverActivitiesForFamilyHandler(ctx: any, args: { familyId: an
     familyId: args.familyId,
   });
 
-  // Step 3: Call the scraping API with location, distance, and date range
+  // Step 3: Call the scraping API with location, distance, date range, and optional keyword
   let scrapeResponse;
   try {
     scrapeResponse = await fetch(`${baseUrl}/api/discover/scrape-events`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ location, distance, startDate, endDate }),
+      body: JSON.stringify({ location, distance, startDate, endDate, searchKeyword: args.searchKeyword }),
     });
 
     if (!scrapeResponse.ok) {
