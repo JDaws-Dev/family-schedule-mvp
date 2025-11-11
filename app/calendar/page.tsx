@@ -1601,16 +1601,18 @@ function CalendarContent() {
                       <span>Add Event</span>
                     </button>
                   </div>
-                </div>
+            </div>
+          )}
+          </div>
         )}
 
-                {/* Conditional View Rendering */}
-                {viewMode === "list" && (
-                  <>
-                    {/* Events List - Grouped by date */}
-                    <div className="space-y-6 p-4">
-                      {groupEventsByDate(sortedEvents).map(({ date, events }) => (
-                    <div key={date}>
+        {/* Conditional View Rendering */}
+        {viewMode === "list" && (
+          <>
+            {/* Events List - Grouped by date */}
+            <div className="space-y-6 p-4">
+              {groupEventsByDate(sortedEvents).map(({ date, events }) => (
+                <div key={date}>
                       {/* Date Header - More playful */}
                       <div className="mb-3">
                         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -1801,66 +1803,66 @@ function CalendarContent() {
                     </div>
                       ))}
                     </div>
-                  </>
-                )}
+          </>
+        )}
 
-                {/* Week View */}
-                {viewMode === "week" && (
-                  <div className="bg-white rounded-lg shadow p-4">
-                    <div className="mb-4">
-                      <h2 className="text-xl font-bold text-gray-900">This Week</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-                      {Object.entries(groupEventsByWeek(sortedEvents)).map(([dayName, dayData]: [string, any]) => (
-                        <div key={dayName} className="bg-gray-50 rounded-lg p-3">
-                          <div className="font-bold text-sm text-gray-900 mb-1">{dayName}</div>
-                          <div className="text-xs text-gray-600 mb-2">{dayData.displayDate}</div>
-                          <div className="space-y-2">
-                            {dayData.events.length === 0 ? (
-                              <div className="text-xs text-gray-400 italic">No events</div>
-                            ) : (
-                              dayData.events.map((event: any) => (
-                                <div
-                                  key={event._id}
-                                  onClick={() => setSelectedEvent(event)}
-                                  className="bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                >
-                                  <div className="font-medium text-sm text-gray-900 mb-1">
-                                    {event.category && <span className="mr-1">{getCategoryEmoji(event.category)}</span>}
-                                    {event.title}
-                                  </div>
-                                  {event.eventTime && (
-                                    <div className="text-xs text-gray-600">
-                                      {formatTime12Hour(event.eventTime)}
-                                    </div>
-                                  )}
-                                  {event.childName && (
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                      {event.childName.split(',').map((name: string, idx: number) => {
-                                        const memberName = name.trim();
-                                        const member = familyMembers?.find(m => m.name === memberName);
-                                        const color = member?.color || "#6366f1";
-                                        return (
-                                          <span
-                                            key={idx}
-                                            className="text-xs px-1.5 py-0.5 rounded-full text-white font-medium"
-                                            style={{ backgroundColor: color }}
-                                          >
-                                            {memberName}
-                                          </span>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              ))
-                            )}
+        {/* Week View */}
+        {viewMode === "week" && (
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-900">This Week</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+              {Object.entries(groupEventsByWeek(sortedEvents)).map(([dayName, dayData]: [string, any]) => (
+                <div key={dayName} className="bg-gray-50 rounded-lg p-3">
+                  <div className="font-bold text-sm text-gray-900 mb-1">{dayName}</div>
+                  <div className="text-xs text-gray-600 mb-2">{dayData.displayDate}</div>
+                  <div className="space-y-2">
+                    {dayData.events.length === 0 ? (
+                      <div className="text-xs text-gray-400 italic">No events</div>
+                    ) : (
+                      dayData.events.map((event: any) => (
+                        <div
+                          key={event._id}
+                          onClick={() => setSelectedEvent(event)}
+                          className="bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        >
+                          <div className="font-medium text-sm text-gray-900 mb-1">
+                            {event.category && <span className="mr-1">{getCategoryEmoji(event.category)}</span>}
+                            {event.title}
                           </div>
+                          {event.eventTime && (
+                            <div className="text-xs text-gray-600">
+                              {formatTime12Hour(event.eventTime)}
+                            </div>
+                          )}
+                          {event.childName && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {event.childName.split(',').map((name: string, idx: number) => {
+                                const memberName = name.trim();
+                                const member = familyMembers?.find(m => m.name === memberName);
+                                const color = member?.color || "#6366f1";
+                                return (
+                                  <span
+                                    key={idx}
+                                    className="text-xs px-1.5 py-0.5 rounded-full text-white font-medium"
+                                    style={{ backgroundColor: color }}
+                                  >
+                                    {memberName}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
+                      ))
+                    )}
                   </div>
-                )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
       </PullToRefresh>
