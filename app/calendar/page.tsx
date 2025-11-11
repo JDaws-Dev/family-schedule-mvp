@@ -310,6 +310,7 @@ function CalendarContent() {
     "Play Date",
     "Field Trip",
     "Club Meeting",
+    "Movie Night",
     "Other"
   ];
 
@@ -1287,7 +1288,12 @@ function CalendarContent() {
         <div className="mb-8">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl">🗓️</span>
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
@@ -1624,7 +1630,12 @@ function CalendarContent() {
                       {/* Date Header - More playful */}
                       <div className="mb-3">
                         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                          <span className="text-2xl">🗓️</span>
+                          <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                            <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                            <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
                           {formatMomFriendlyDate(date)}
                         </h3>
                       </div>
@@ -1953,7 +1964,13 @@ function CalendarContent() {
                 <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
                   <div className="text-white/80 text-xs font-medium mb-1">Date</div>
                   <div className="text-white font-semibold flex items-center gap-2">
-                    🗓️ {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                      <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" strokeLinecap="round"/>
+                      <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
