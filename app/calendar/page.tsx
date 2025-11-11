@@ -18,6 +18,8 @@ import PhotoUploadModal from "@/app/components/PhotoUploadModal";
 import VoiceRecordModal from "@/app/components/VoiceRecordModal";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
+import SwipeableCard from "@/app/components/SwipeableCard";
+import PullToRefresh from "@/app/components/PullToRefresh";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./calendar.css";
 
@@ -163,9 +165,34 @@ function CalendarContent() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showUpcomingOnly, setShowUpcomingOnly] = useState(true);
   const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [addEventTab, setAddEventTab] = useState<"manual" | "paste" | "photo" | "voice">("manual");
+  const [pastedText, setPastedText] = useState("");
+  const [isExtractingEvent, setIsExtractingEvent] = useState(false);
+  const [conversationalInput, setConversationalInput] = useState("");
+  const [isParsingConversational, setIsParsingConversational] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
   const [isEnhancingEvent, setIsEnhancingEvent] = useState(false);
+  const [newEventForm, setNewEventForm] = useState({
+    title: "",
+    eventDate: "",
+    eventTime: "",
+    endTime: "",
+    location: "",
+    category: "Sports",
+    childName: "",
+    description: "",
+    requiresAction: false,
+    actionDescription: "",
+    actionDeadline: "",
+    isRecurring: false,
+    recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+    recurrenceDaysOfWeek: [] as string[],
+    recurrenceEndType: "never" as "date" | "count" | "never",
+    recurrenceEndDate: "",
+    recurrenceEndCount: 10,
+  });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
     title: string;
@@ -890,14 +917,257 @@ function CalendarContent() {
     setShowConfirmDialog(true);
   };
 
+  const handleExtractFromPaste = async () => {
+    if (!pastedText.trim()) {
+      showToast("Please paste some text first", "warning");
+      return;
+    }
+
+    setIsExtractingEvent(true);
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          smsText: pastedText,
+          familyMembers: familyMembers || [],
+          currentUserName: convexUser?.fullName || "Unknown"
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to extract event");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event information found in the pasted text. " + (data.explanation || ""), "info", undefined, 7000);
+        return;
+      }
+
+      // Map category from API format to our format
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      // If multiple events found, create them all as unconfirmed events for review
+      if (data.events.length > 1 && convexUser?.familyId) {
+        let createdCount = 0;
+        for (const event of data.events) {
+          try {
+            await createUnconfirmedEvent({
+              familyId: convexUser.familyId,
+              createdByUserId: convexUser._id,
+              title: event.title || "Untitled Event",
+              eventDate: event.date || "",
+              eventTime: event.time || undefined,
+              endTime: event.endTime || undefined,
+              location: event.location || undefined,
+              category: categoryMap[event.category] || "Other",
+              childName: "",
+              description: event.description || "",
+            });
+            createdCount++;
+          } catch (err) {
+            console.error("Error creating event:", err);
+          }
+        }
+        setShowAddEventModal(false);
+        setPastedText("");
+        showToast(`✓ Found ${data.events.length} events! Go to Review page to approve them.`, "success", undefined, 7000);
+      } else {
+        // Single event - populate the form for manual review/editing
+        const event = data.events[0];
+        setNewEventForm({
+          title: event.title || "",
+          eventDate: event.date || "",
+          eventTime: event.time || "",
+          endTime: event.endTime || "",
+          location: event.location || "",
+          category: categoryMap[event.category] || "Other",
+          childName: "",
+          description: event.description || pastedText,
+          requiresAction: false,
+          actionDescription: "",
+          actionDeadline: "",
+          isRecurring: false,
+          recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+          recurrenceDaysOfWeek: [] as string[],
+          recurrenceEndType: "never" as "date" | "count" | "never",
+          recurrenceEndDate: "",
+          recurrenceEndCount: 10,
+        });
+
+        // Switch to manual tab so user can review/edit
+        setAddEventTab("manual");
+        showToast(`✓ Event extracted! Review and save below.`, "success", undefined, 5000);
+        setPastedText(""); // Clear the paste field
+      }
+    } catch (error: any) {
+      console.error("Error extracting event:", error);
+      showToast("Failed to extract event. Please try again or enter manually.", "error");
+    } finally {
+      setIsExtractingEvent(false);
+    }
+  };
+
+  const handleParseConversational = async () => {
+    if (!conversationalInput.trim()) {
+      showToast("Please describe your event first", "info");
+      return;
+    }
+
+    setIsParsingConversational(true);
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          smsText: conversationalInput,
+          familyMembers: familyMembers || [],
+          currentUserName: convexUser?.fullName || "Unknown"
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to parse event");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("Couldn't find event details in that description. Try being more specific!", "info");
+        return;
+      }
+
+      // Use the first event to fill the form
+      const event = data.events[0];
+
+      setNewEventForm({
+        ...newEventForm,
+        title: event.title || "",
+        eventDate: event.date || "",
+        eventTime: event.time || "",
+        endTime: event.endTime || "",
+        location: event.location || "",
+        category: event.category || "Other",
+        childName: event.childName || (event.attendees && event.attendees.length > 0 ? event.attendees.join(", ") : ""),
+        description: event.description || "",
+        requiresAction: event.requiresAction || false,
+        actionDescription: event.actionDescription || "",
+        actionDeadline: event.actionDeadline || "",
+      });
+
+      showToast("✨ Event extracted! Review and save.", "success");
+      setConversationalInput(""); // Clear the input
+      setAddEventTab("manual"); // Make sure we're on the manual tab
+      setShowAddEventModal(true); // Open the modal with pre-filled data
+    } catch (error: any) {
+      console.error("Error parsing conversational input:", error);
+      showToast("Failed to parse your description. Please try again or fill manually.", "error");
+    } finally {
+      setIsParsingConversational(false);
+    }
+  };
+
+  const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!convexUser?._id) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      return;
+    }
+
+    if (!newEventForm.title.trim()) {
+      showToast("Please enter an event title", "error");
+      return;
+    }
+
+    if (!newEventForm.eventDate) {
+      showToast("Please select a date for this event", "error");
+      return;
+    }
+
+    try {
+      const eventId = await createEvent({
+        createdByUserId: convexUser._id,
+        title: newEventForm.title.trim(),
+        eventDate: newEventForm.eventDate,
+        eventTime: newEventForm.eventTime || undefined,
+        endTime: newEventForm.endTime || undefined,
+        location: newEventForm.location.trim() || undefined,
+        category: newEventForm.category || undefined,
+        childName: newEventForm.childName.trim() || undefined,
+        description: newEventForm.description.trim() || undefined,
+        requiresAction: newEventForm.requiresAction || undefined,
+        actionDescription: newEventForm.requiresAction ? newEventForm.actionDescription.trim() || undefined : undefined,
+        actionDeadline: newEventForm.requiresAction ? newEventForm.actionDeadline || undefined : undefined,
+        isConfirmed: true,
+        // Recurring event fields
+        isRecurring: newEventForm.isRecurring || undefined,
+        recurrencePattern: newEventForm.isRecurring ? newEventForm.recurrencePattern : undefined,
+        recurrenceDaysOfWeek: (newEventForm.isRecurring && newEventForm.recurrencePattern === "weekly" && newEventForm.recurrenceDaysOfWeek.length > 0) ? newEventForm.recurrenceDaysOfWeek : undefined,
+        recurrenceEndType: newEventForm.isRecurring ? newEventForm.recurrenceEndType : undefined,
+        recurrenceEndDate: (newEventForm.isRecurring && newEventForm.recurrenceEndType === "date") ? newEventForm.recurrenceEndDate || undefined : undefined,
+        recurrenceEndCount: (newEventForm.isRecurring && newEventForm.recurrenceEndType === "count") ? newEventForm.recurrenceEndCount : undefined,
+      });
+
+      setNewEventForm({
+        title: "",
+        eventDate: "",
+        eventTime: "",
+        endTime: "",
+        location: "",
+        category: "Sports",
+        childName: "",
+        description: "",
+        requiresAction: false,
+        actionDescription: "",
+        actionDeadline: "",
+        isRecurring: false,
+        recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+        recurrenceDaysOfWeek: [] as string[],
+        recurrenceEndType: "never" as "date" | "count" | "never",
+        recurrenceEndDate: "",
+        recurrenceEndCount: 10,
+      });
+
+      setShowAddEventModal(false);
+      setAddEventTab("manual");
+      showToast(`✓ Event "${newEventForm.title}" added successfully!`, "success", undefined, 7000);
+
+      // Automatically push to Google Calendar
+      if (eventId) {
+        try {
+          await fetch("/api/push-to-calendar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventId }),
+          });
+        } catch (error) {
+          console.error("Failed to auto-sync to Google Calendar:", error);
+          // Don't show error to user - the event was still created successfully
+        }
+      }
+    } catch (error) {
+      console.error("Error creating event:", error);
+      showToast("Failed to add event. Please try again.", "error");
+    }
+  };
 
   const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
     switch (action) {
       case "manual":
-        router.push('/dashboard?openModal=manual');
+        setShowAddEventModal(true);
         break;
       case "paste":
-        router.push('/dashboard?openModal=paste');
+        setAddEventTab("paste");
+        setShowAddEventModal(true);
         break;
       case "photo":
         setShowPhotoUploadModal(true);
@@ -960,6 +1230,11 @@ function CalendarContent() {
         currentPage="calendar"
       />
 
+      <PullToRefresh onRefresh={async () => {
+        // Trigger a refetch of events
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        window.location.reload(); // Simple reload for now
+      }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-3">
@@ -1494,8 +1769,70 @@ function CalendarContent() {
                       {/* Events for this day - Simplified card style */}
                       <div className="space-y-2">
                         {events.map((event: any) => (
-                          <div
+                          <SwipeableCard
                             key={event._id}
+                            onSwipeLeft={async () => {
+                              // Delete on swipe left - show confirmation dialog
+                              setConfirmDialogConfig({
+                                title: 'Delete Event?',
+                                message: `Are you sure you want to delete "${event.title}"?`,
+                                variant: 'danger',
+                                onConfirm: async () => {
+                                  try {
+                                    const eventBackup = { ...event };
+                                    await deleteEvent({ eventId: event._id });
+                                    setShowConfirmDialog(false);
+
+                                    // Show undo toast
+                                    showToast(
+                                      'Event deleted',
+                                      'success',
+                                      async () => {
+                                        await createEvent({
+                                          createdByUserId: eventBackup.createdByUserId,
+                                          title: eventBackup.title,
+                                          eventDate: eventBackup.eventDate,
+                                          eventTime: eventBackup.eventTime || undefined,
+                                          endTime: eventBackup.endTime || undefined,
+                                          location: eventBackup.location || undefined,
+                                          category: eventBackup.category || undefined,
+                                          childName: eventBackup.childName || undefined,
+                                          description: eventBackup.description || undefined,
+                                          requiresAction: eventBackup.requiresAction || false,
+                                          actionDescription: eventBackup.actionDescription || undefined,
+                                          actionDeadline: eventBackup.actionDeadline || undefined,
+                                          isConfirmed: eventBackup.isConfirmed,
+                                        });
+                                        showToast('Event restored', 'success');
+                                      },
+                                      10000
+                                    );
+                                  } catch (error) {
+                                    console.error('Error deleting event:', error);
+                                    showToast('Unable to delete event. Please try again.', 'error');
+                                    setShowConfirmDialog(false);
+                                  }
+                                },
+                              });
+                              setShowConfirmDialog(true);
+                            }}
+                            onSwipeRight={async () => {
+                              // Mark as complete on swipe right (if action required)
+                              if (event.requiresAction && !event.actionCompleted) {
+                                try {
+                                  await updateEvent({
+                                    eventId: event._id,
+                                    actionCompleted: true,
+                                  });
+                                  showToast('Action marked as complete!', 'success');
+                                } catch (error) {
+                                  console.error('Error updating event:', error);
+                                  showToast('Unable to update event. Please try again.', 'error');
+                                }
+                              }
+                            }}
+                          >
+                          <div
                             className={`bg-white rounded-xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all border ${
                               selectedEventIds.has(event._id)
                                 ? 'border-primary-400 bg-primary-50'
@@ -1594,6 +1931,7 @@ function CalendarContent() {
                               </button>
                             </div>
                           </div>
+                          </SwipeableCard>
                         ))}
                       </div>
                     </div>
@@ -1643,6 +1981,7 @@ function CalendarContent() {
         )}
 
       </div>
+      </PullToRefresh>
 
       {/* Enhanced Event Detail Modal */}
       {selectedEvent && (
@@ -2385,8 +2724,15 @@ function CalendarContent() {
         <AddEventChoiceModal
           onClose={() => setShowAddEventChoiceModal(false)}
           onCheckEmails={() => router.push('/dashboard#search-emails')}
-          onTypeManually={() => router.push('/dashboard#type-manually')}
-          onPasteText={() => router.push('/dashboard?openModal=paste')}
+          onTypeManually={() => {
+            setShowAddEventChoiceModal(false);
+            setShowAddEventModal(true);
+          }}
+          onPasteText={() => {
+            setShowAddEventChoiceModal(false);
+            setAddEventTab("paste");
+            setShowAddEventModal(true);
+          }}
           onUploadPhoto={() => {
             setShowAddEventChoiceModal(false);
             setShowPhotoUploadModal(true);
@@ -2398,6 +2744,549 @@ function CalendarContent() {
           onSearchSpecific={() => router.push('/dashboard#search-specific')}
           isGmailConnected={!!gmailAccounts && gmailAccounts.length > 0}
         />
+      )}
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto pb-24 md:pb-4"
+          onClick={() => {
+            setShowAddEventModal(false);
+            setAddEventTab("manual");
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[70vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Gradient */}
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  {addEventTab === "paste" ? (
+                    <>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Paste Text to Extract Event
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Manually Add Event
+                    </>
+                  )}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowAddEventModal(false);
+                    setAddEventTab("manual");
+                  }}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close add event modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Paste Text Content */}
+            {addEventTab === "paste" && (
+              <div className="p-6 space-y-4">
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-5 h-5 text-primary-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-primary-800 mb-1">How it works</h4>
+                      <p className="text-sm text-primary-700">
+                        Paste an email, text message, or any text containing event information. Our AI will automatically extract the event details for you!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Paste Email or Text Message
+                  </label>
+                  <textarea
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Paste your email or text message here...
+
+Example:
+'Soccer practice this Saturday at 9am at Memorial Park. Please bring water and shin guards!'"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleExtractFromPaste}
+                    disabled={isExtractingEvent || !pastedText.trim()}
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center justify-center gap-2"
+                  >
+                    {isExtractingEvent ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Extracting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Extract Event
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddEventModal(false);
+                      setAddEventTab("manual");
+                      setPastedText("");
+                    }}
+                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Entry Tab */}
+            {addEventTab === "manual" && (
+              <form onSubmit={handleAddEvent}>
+              <div className="p-6 space-y-6">
+                {/* Conversational Input - Quick AI Fill */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
+                  <div className="flex items-start gap-2 mb-3">
+                    <span className="text-2xl">💬</span>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">Quick Add with AI</h3>
+                      <p className="text-sm text-gray-600">
+                        Describe your event naturally and let AI fill out the form for you!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={conversationalInput}
+                      onChange={(e) => setConversationalInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleParseConversational())}
+                      className="w-full px-4 py-3 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder='e.g., "Emma has soccer every Tuesday at 5pm" or "dentist tomorrow at 3"'
+                    />
+                    <button
+                      type="button"
+                      onClick={handleParseConversational}
+                      disabled={isParsingConversational || !conversationalInput.trim()}
+                      className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isParsingConversational ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Parsing...
+                        </>
+                      ) : (
+                        <>
+                          ✨ Auto-Fill Form
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-gray-500">or fill out manually</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newEventForm.title}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Soccer Practice"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={newEventForm.eventDate}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, eventDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={newEventForm.eventTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, eventTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={newEventForm.endTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, endTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={newEventForm.location}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, location: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Local Soccer Field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                    {familyMembers && familyMembers.length > 0 ? (
+                      [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
+                        const selectedMembers = newEventForm.childName ? newEventForm.childName.split(", ") : [];
+                        const isChecked = selectedMembers.includes(member.name);
+
+                        return (
+                          <button
+                            key={member._id}
+                            type="button"
+                            onClick={() => {
+                              let updatedMembers = [...selectedMembers];
+                              if (isChecked) {
+                                updatedMembers = updatedMembers.filter(m => m !== member.name);
+                              } else {
+                                updatedMembers.push(member.name);
+                              }
+                              setNewEventForm({
+                                ...newEventForm,
+                                childName: updatedMembers.join(", ")
+                              });
+                            }}
+                            className={`px-3 py-2 rounded-lg border-2 transition-all font-medium ${
+                              isChecked
+                                ? 'border-primary-600 shadow-md'
+                                : 'bg-white border-gray-300 hover:border-gray-400'
+                            }`}
+                            style={{
+                              backgroundColor: isChecked ? member.color || "#6366f1" : undefined,
+                              color: isChecked ? "white" : "#374151"
+                            }}
+                          >
+                            {isChecked && <span className="mr-1">✓</span>}
+                            {member.name}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">No family members added yet. Add them in Settings.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={newEventForm.category}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "custom") {
+                        const customCategory = prompt("Enter custom category:");
+                        if (customCategory && customCategory.trim()) {
+                          setNewEventForm({ ...newEventForm, category: customCategory.trim() });
+                        }
+                      } else {
+                        setNewEventForm({ ...newEventForm, category: value });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">Select a category...</option>
+                    {/* Standard Categories */}
+                    <optgroup label="Standard Categories">
+                      {standardCategories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </optgroup>
+                    {/* Previously Used Categories (if any new ones) */}
+                    {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                      <optgroup label="Your Categories">
+                        {existingCategories
+                          .filter(cat => !standardCategories.includes(cat))
+                          .map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))
+                        }
+                      </optgroup>
+                    )}
+                    <option value="custom">+ Add Custom Category</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={newEventForm.description}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Add any additional details..."
+                  />
+                </div>
+
+                {/* Action Items Section */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-start gap-3 mb-4">
+                    <input
+                      type="checkbox"
+                      id="requiresAction"
+                      checked={newEventForm.requiresAction}
+                      onChange={(e) => setNewEventForm({
+                        ...newEventForm,
+                        requiresAction: e.target.checked,
+                        actionDescription: e.target.checked ? newEventForm.actionDescription : "",
+                        actionDeadline: e.target.checked ? newEventForm.actionDeadline : ""
+                      })}
+                      className="w-5 h-5 text-secondary-500 rounded focus:ring-2 focus:ring-secondary-400 mt-0.5"
+                    />
+                    <label htmlFor="requiresAction" className="flex-1 cursor-pointer">
+                      <span className="block text-sm font-semibold text-gray-900">
+                        This event requires action
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">
+                        RSVP, payment, form submission, or other follow-up needed
+                      </span>
+                    </label>
+                  </div>
+
+                  {newEventForm.requiresAction && (
+                    <div className="space-y-3 pl-8">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          What action is needed?
+                        </label>
+                        <input
+                          type="text"
+                          value={newEventForm.actionDescription}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, actionDescription: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
+                          placeholder="e.g., RSVP by email, Pay $50, Sign permission slip"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Action deadline
+                        </label>
+                        <input
+                          type="date"
+                          value={newEventForm.actionDeadline}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, actionDeadline: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-400 focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Recurring Event Section */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-start gap-3 mb-4">
+                    <input
+                      type="checkbox"
+                      id="isRecurring"
+                      checked={newEventForm.isRecurring}
+                      onChange={(e) => setNewEventForm({
+                        ...newEventForm,
+                        isRecurring: e.target.checked,
+                        recurrenceDaysOfWeek: e.target.checked ? newEventForm.recurrenceDaysOfWeek : []
+                      })}
+                      className="w-5 h-5 text-primary-500 rounded focus:ring-2 focus:ring-primary-400 mt-0.5"
+                    />
+                    <label htmlFor="isRecurring" className="flex-1 cursor-pointer">
+                      <span className="block text-sm font-semibold text-gray-900">
+                        This is a recurring event
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">
+                        Event repeats on a regular schedule
+                      </span>
+                    </label>
+                  </div>
+
+                  {newEventForm.isRecurring && (
+                    <div className="space-y-3 pl-8">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Repeats
+                        </label>
+                        <select
+                          value={newEventForm.recurrencePattern}
+                          onChange={(e) => setNewEventForm({
+                            ...newEventForm,
+                            recurrencePattern: e.target.value as "daily" | "weekly" | "monthly" | "yearly"
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="yearly">Yearly</option>
+                        </select>
+                      </div>
+
+                      {newEventForm.recurrencePattern === "weekly" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Repeat on
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => {
+                              const isSelected = newEventForm.recurrenceDaysOfWeek.includes(day);
+                              return (
+                                <button
+                                  key={day}
+                                  type="button"
+                                  onClick={() => {
+                                    const days = isSelected
+                                      ? newEventForm.recurrenceDaysOfWeek.filter(d => d !== day)
+                                      : [...newEventForm.recurrenceDaysOfWeek, day];
+                                    setNewEventForm({
+                                      ...newEventForm,
+                                      recurrenceDaysOfWeek: days
+                                    });
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                    isSelected
+                                      ? "bg-primary-500 text-white"
+                                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  }`}
+                                >
+                                  {day.substring(0, 3)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ends
+                        </label>
+                        <select
+                          value={newEventForm.recurrenceEndType}
+                          onChange={(e) => setNewEventForm({
+                            ...newEventForm,
+                            recurrenceEndType: e.target.value as "date" | "count" | "never"
+                          })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                        >
+                          <option value="never">Never</option>
+                          <option value="date">On a specific date</option>
+                          <option value="count">After a number of occurrences</option>
+                        </select>
+                      </div>
+
+                      {newEventForm.recurrenceEndType === "date" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            End date
+                          </label>
+                          <input
+                            type="date"
+                            value={newEventForm.recurrenceEndDate}
+                            onChange={(e) => setNewEventForm({ ...newEventForm, recurrenceEndDate: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                          />
+                        </div>
+                      )}
+
+                      {newEventForm.recurrenceEndType === "count" && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Number of occurrences
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="365"
+                            value={newEventForm.recurrenceEndCount}
+                            onChange={(e) => setNewEventForm({ ...newEventForm, recurrenceEndCount: parseInt(e.target.value) || 10 })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-primary-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Add Event
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddEventModal(false)}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+              </div>
+              </form>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Photo Upload Modal */}
