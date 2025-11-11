@@ -150,18 +150,20 @@ function groupEventsByDate(events: any[]) {
 }
 
 // Helper function to group events by week (for week view)
-function groupEventsByWeek(events: any[]) {
+function groupEventsByWeek(events: any[], weekOffset: number = 0) {
   // Get start of current week (Sunday)
   const now = new Date();
   const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setDate(now.getDate() - now.getDay() + (weekOffset * 7));
   startOfWeek.setHours(0, 0, 0, 0);
+
+  // Calculate end of week
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 7);
 
   // Filter events for this week only
   const weekEvents = events.filter(event => {
     const eventDate = new Date(event.eventDate + 'T00:00:00');
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 7);
     return eventDate >= startOfWeek && eventDate < endOfWeek;
   });
 
@@ -180,7 +182,12 @@ function groupEventsByWeek(events: any[]) {
     };
   });
 
-  return grouped;
+  // Return grouped data with metadata
+  return {
+    grouped,
+    startDate: startOfWeek,
+    endDate: new Date(endOfWeek.getTime() - 1), // End is exclusive, so subtract 1ms for display
+  };
 }
 
 function CalendarContent() {
@@ -237,6 +244,7 @@ function CalendarContent() {
   } | null>(null);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
   const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = prev week, 1 = next week
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "week">("list");
   const { user: clerkUser} = useUser();
@@ -1809,11 +1817,55 @@ function CalendarContent() {
         {/* Week View */}
         {viewMode === "week" && (
           <div className="bg-white rounded-lg shadow p-4">
+            {/* Week Navigation Header */}
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-gray-900">This Week</h2>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                {/* Previous Week Button */}
+                <button
+                  onClick={() => setWeekOffset(weekOffset - 1)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label="Previous week"
+                >
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                {/* Date Range Display */}
+                <div className="flex-1 text-center">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {(() => {
+                      const weekData = groupEventsByWeek(sortedEvents, weekOffset);
+                      const startStr = weekData.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      const endStr = weekData.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                      return `${startStr} - ${endStr}`;
+                    })()}
+                  </h2>
+                  {weekOffset !== 0 && (
+                    <button
+                      onClick={() => setWeekOffset(0)}
+                      className="text-sm text-primary-600 hover:text-primary-700 font-medium mt-1"
+                    >
+                      Back to Today
+                    </button>
+                  )}
+                </div>
+
+                {/* Next Week Button */}
+                <button
+                  onClick={() => setWeekOffset(weekOffset + 1)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label="Next week"
+                >
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-              {Object.entries(groupEventsByWeek(sortedEvents)).map(([dayName, dayData]: [string, any]) => (
+              {Object.entries(groupEventsByWeek(sortedEvents, weekOffset).grouped).map(([dayName, dayData]: [string, any]) => (
                 <div key={dayName} className="bg-gray-50 rounded-lg p-3">
                   <div className="font-bold text-sm text-gray-900 mb-1">{dayName}</div>
                   <div className="text-xs text-gray-600 mb-2">{dayData.displayDate}</div>
