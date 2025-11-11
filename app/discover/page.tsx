@@ -53,6 +53,12 @@ export default function DiscoverPage() {
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
+  // Get Gmail accounts to show search email option in FAB
+  const gmailAccounts = useQuery(
+    api.gmailAccounts.getFamilyGmailAccounts,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
   // Get suggested activities from database
   const dbActivities = useQuery(
     api.suggestedActivities.getSuggestedActivitiesByFamily,
@@ -923,7 +929,10 @@ export default function DiscoverPage() {
       )}
 
       {/* FAB - Floating Action Button */}
-      <FAB onAction={handleFABAction} hasGmailAccount={false} />
+      <FAB
+        onAction={handleFABAction}
+        hasGmailAccount={!!gmailAccounts && gmailAccounts.length > 0}
+      />
 
       {/* Bottom Navigation (Mobile) */}
       <BottomNav />

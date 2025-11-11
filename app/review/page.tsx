@@ -2999,7 +2999,10 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
       )}
 
       {/* FAB - Floating Action Button */}
-      <FAB onAction={handleFABAction} />
+      <FAB
+        onAction={handleFABAction}
+        hasGmailAccount={!!gmailAccounts && gmailAccounts.length > 0}
+      />
 
       {/* Bottom Navigation (Mobile) */}
       <BottomNav />

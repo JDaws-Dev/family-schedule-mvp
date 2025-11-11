@@ -3295,7 +3295,10 @@ Example:
       )}
 
       {/* FAB for Mobile */}
-      <FAB onAction={handleFABAction} />
+      <FAB
+        onAction={handleFABAction}
+        hasGmailAccount={!!gmailAccounts && gmailAccounts.length > 0}
+      />
 
       {/* Bottom Navigation (Mobile) */}
       <BottomNav />
