@@ -1602,6 +1602,7 @@ function CalendarContent() {
                     </button>
                   </div>
                 </div>
+            )}
 
                 {/* Conditional View Rendering */}
                 {viewMode === "list" && (
@@ -1860,7 +1861,6 @@ function CalendarContent() {
                     </div>
                   </div>
                 )}
-            )}
 
       </div>
       </PullToRefresh>
