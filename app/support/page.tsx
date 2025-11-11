@@ -56,7 +56,7 @@ export default function SupportPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/dashboard" className="text-xl font-bold text-slate-900 hover:text-primary-600 transition">
-              Our Daily Family
+              nufamly
             </Link>
 
             {/* Desktop Navigation */}
@@ -140,10 +140,10 @@ export default function SupportPage() {
               Send us a message and we'll get back to you within 24 hours
             </p>
             <a
-              href="mailto:support@ourdailyfamily.com"
+              href="mailto:support@nufamly.com"
               className="text-primary-600 font-medium text-sm hover:text-primary-700"
             >
-              support@ourdailyfamily.com →
+              support@nufamly.com →
             </a>
           </div>
 
@@ -260,10 +260,10 @@ export default function SupportPage() {
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-8 md:p-10 text-white text-center mt-12">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Still need help?</h2>
           <p className="text-lg text-white/90 mb-6 max-w-2xl mx-auto">
-            Our support team is here to help you get the most out of Our Daily Family
+            Our support team is here to help you get the most out of nufamly
           </p>
           <a
-            href="mailto:support@ourdailyfamily.com"
+            href="mailto:support@nufamly.com"
             className="inline-flex items-center justify-center px-8 py-4 bg-white text-primary-600 rounded-lg font-semibold hover:bg-slate-50 transition-all shadow-medium"
           >
             Email Support Team
