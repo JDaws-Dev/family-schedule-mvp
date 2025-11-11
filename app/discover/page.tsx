@@ -13,7 +13,6 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "../components/LoadingSpinner";
 import PhotoUploadModal from "../components/PhotoUploadModal";
 import VoiceRecordModal from "../components/VoiceRecordModal";
-import AddEventChoiceModal from "../components/AddEventChoiceModal";
 
 export default function DiscoverPage() {
   const { signOut } = useClerk();
@@ -43,10 +42,8 @@ export default function DiscoverPage() {
   });
   const [editingActivity, setEditingActivity] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
-  const [showAddEventChoiceModal, setShowAddEventChoiceModal] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
-  const [addEventTab, setAddEventTab] = useState<"manual" | "paste">("manual");
 
   // Get current user from Convex
   const convexUser = useQuery(
@@ -200,15 +197,14 @@ export default function DiscoverPage() {
   };
 
   const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
-    // Open modals on Discover page to keep users in context
+    // Photo and Voice can be done on Discover page
+    // Manual and Paste need the full event form, so redirect to Dashboard
     switch (action) {
       case "manual":
-        setAddEventTab("manual");
-        setShowAddEventChoiceModal(true);
+        window.location.href = '/dashboard?openModal=manual';
         break;
       case "paste":
-        setAddEventTab("paste");
-        setShowAddEventChoiceModal(true);
+        window.location.href = '/dashboard?openModal=paste';
         break;
       case "photo":
         setShowPhotoUploadModal(true);
@@ -954,15 +950,6 @@ export default function DiscoverPage() {
         onAction={handleFABAction}
         hasGmailAccount={!!gmailAccounts && gmailAccounts.length > 0}
       />
-
-      {/* Add Event Choice Modal */}
-      {showAddEventChoiceModal && (
-        <AddEventChoiceModal
-          onClose={() => setShowAddEventChoiceModal(false)}
-          initialTab={addEventTab}
-          familyId={convexUser?.familyId}
-        />
-      )}
 
       {/* Photo Upload Modal */}
       {showPhotoUploadModal && (
