@@ -1713,7 +1713,6 @@ function CalendarContent() {
               </>
             )}
           </div>
-        </div>
 
       </div>
       </PullToRefresh>
