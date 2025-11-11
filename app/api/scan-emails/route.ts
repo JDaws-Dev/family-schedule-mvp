@@ -336,8 +336,11 @@ export async function POST(request: NextRequest) {
     console.log("[scan-emails] Simple query returned:", testResponse.data.messages?.length || 0, "messages");
 
     // Get recent emails (last 30 days) with broad keyword filtering
-    const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
-    const query = `after:${thirtyDaysAgo} (class OR practice OR game OR tournament OR recital OR performance OR meeting OR conference OR party OR birthday OR celebration OR dinner OR lunch OR appointment OR reservation OR event OR activity OR lesson OR session OR camp OR trip OR visit OR playdate OR gathering OR invitation OR invite OR rsvp OR reminder OR schedule OR calendar OR wedding OR rehearsal OR ceremony OR reception OR concert OR show OR festival OR fair OR banquet OR potluck OR barbecue OR picnic OR sleepover OR field trip)`;
+    // Gmail's after: operator requires YYYY/MM/DD format, not Unix timestamp
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const dateStr = `${thirtyDaysAgo.getFullYear()}/${String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')}/${String(thirtyDaysAgo.getDate()).padStart(2, '0')}`;
+    const query = `after:${dateStr} (class OR practice OR game OR tournament OR recital OR performance OR meeting OR conference OR party OR birthday OR celebration OR dinner OR lunch OR appointment OR reservation OR event OR activity OR lesson OR session OR camp OR trip OR visit OR playdate OR gathering OR invitation OR invite OR rsvp OR reminder OR schedule OR calendar OR wedding OR rehearsal OR ceremony OR reception OR concert OR show OR festival OR fair OR banquet OR potluck OR barbecue OR picnic OR sleepover OR field trip)`;
 
     console.log("[scan-emails] Gmail query:", query);
 
