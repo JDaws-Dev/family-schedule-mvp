@@ -49,44 +49,204 @@ function getCategoryColor(category: string): string {
     "Play Date": "#14b8a6", // teal
     "Field Trip": "#eab308", // yellow
     "Club Meeting": "#6366f1", // indigo
+    "Movie Night": "#a855f7", // bright purple
     "Other": "#6b7280" // gray
   };
   return colors[category] || "#6b7280";
 }
 
-// Helper function to get category emoji
-function getCategoryEmoji(category: string): string {
-  const emojis: Record<string, string> = {
-    "Sports": "⚽",
-    "Soccer": "⚽",
-    "Basketball": "🏀",
-    "Football": "🏈",
-    "Baseball": "⚾",
-    "School": "🎒",
-    "Music": "🎵",
-    "Music Lessons": "🎹",
-    "Dance": "💃",
-    "Arts & Crafts": "🎨",
-    "Art": "🎨",
-    "Tutoring": "📚",
-    "Medical": "🏥",
-    "Doctor Appointment": "👨‍⚕️",
-    "Birthday Party": "🎂",
-    "Play Date": "🤸",
-    "Playdate": "🤸",
-    "Field Trip": "🚌",
-    "Club Meeting": "👥",
-    "Religious": "⛪",
-    "Swimming": "🏊",
-    "Gymnastics": "🤸",
-    "Martial Arts": "🥋",
-    "Theater": "🎭",
-    "Social": "🍽️",
-    "Family Event": "👨‍👩‍👧‍👦",
-    "Movie Night": "🎬",
-    "Other": "🎈"
+// Helper function to get category icon as SVG
+function getCategoryIcon(category: string, className: string = "w-4 h-4") {
+  const iconMap: Record<string, JSX.Element> = {
+    "Sports": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="12" r="9" strokeWidth="2" />
+        <path d="M12 3c0 0-3 4-3 9s3 9 3 9" strokeWidth="2" />
+        <path d="M21 12c0 0-4-3-9-3s-9 3-9 3" strokeWidth="2" />
+      </svg>
+    ),
+    "Soccer": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="12" r="9" strokeWidth="2" />
+        <path d="M12 3c0 0-3 4-3 9s3 9 3 9" strokeWidth="2" />
+        <path d="M21 12c0 0-4-3-9-3s-9 3-9 3" strokeWidth="2" />
+      </svg>
+    ),
+    "Basketball": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="12" r="9" strokeWidth="2" />
+        <path d="M12 3v18M3 12h18" strokeWidth="2" />
+      </svg>
+    ),
+    "Football": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <ellipse cx="12" cy="12" rx="9" ry="7" strokeWidth="2" />
+        <path d="M12 5v14M7 12h10" strokeWidth="2" />
+      </svg>
+    ),
+    "Baseball": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="12" r="9" strokeWidth="2" />
+        <path d="M7 8c2 0 3 1 3 1M7 16c2 0 3-1 3-1M17 8c-2 0-3 1-3 1M17 16c-2 0-3-1-3-1" strokeWidth="2" />
+      </svg>
+    ),
+    "School": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M12 3L2 8l10 5 10-5-10-5z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M2 13l10 5 10-5M7 10v7c0 1 2 3 5 3s5-2 5-3v-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Music": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M9 18V5l12-2v13" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="6" cy="18" r="3" strokeWidth="2" />
+        <circle cx="18" cy="16" r="3" strokeWidth="2" />
+      </svg>
+    ),
+    "Music Lessons": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M9 18V5l12-2v13" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="6" cy="18" r="3" strokeWidth="2" />
+        <circle cx="18" cy="16" r="3" strokeWidth="2" />
+      </svg>
+    ),
+    "Dance": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="4" r="2" strokeWidth="2" />
+        <path d="M10 8v2c0 2-1 4-3 4M14 8v2c0 2 1 4 3 4M12 10v5l-3 5M12 15l3 5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Arts & Crafts": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M12 2v7M6 6l4.2 4.2M18 6l-4.2 4.2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="12" r="3" strokeWidth="2" />
+        <path d="M12 15c-4 3-7 7-7 7h14s-3-4-7-7z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Art": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M12 2v7M6 6l4.2 4.2M18 6l-4.2 4.2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="12" r="3" strokeWidth="2" />
+        <path d="M12 15c-4 3-7 7-7 7h14s-3-4-7-7z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Tutoring": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Medical": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M12 2v20M2 12h20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="9" y="9" width="6" height="6" rx="1" strokeWidth="2" />
+      </svg>
+    ),
+    "Doctor Appointment": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M12 2v20M2 12h20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="9" y="9" width="6" height="6" rx="1" strokeWidth="2" />
+      </svg>
+    ),
+    "Birthday Party": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M20 21H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2z" strokeWidth="2" />
+        <path d="M7 6V3M12 6V3M17 6V3M2 10h20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Play Date": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="9" cy="7" r="4" strokeWidth="2" />
+        <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="19" cy="11" r="2" strokeWidth="2" />
+        <path d="M23 21v-1a3 3 0 0 0-3-3h-1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Playdate": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="9" cy="7" r="4" strokeWidth="2" />
+        <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="19" cy="11" r="2" strokeWidth="2" />
+        <path d="M23 21v-1a3 3 0 0 0-3-3h-1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Field Trip": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <rect x="3" y="8" width="18" height="10" rx="2" strokeWidth="2" />
+        <path d="M3 10h18M8 18v3M16 18v3M8 21h8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="7" cy="13" r="1.5" fill="currentColor" />
+        <circle cx="17" cy="13" r="1.5" fill="currentColor" />
+      </svg>
+    ),
+    "Club Meeting": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="9" cy="7" r="4" strokeWidth="2" />
+        <circle cx="16" cy="7" r="3" strokeWidth="2" />
+        <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2M15 14a3 3 0 0 1 3-3h2a3 3 0 0 1 3 3v7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Religious": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3V2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Swimming": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="5" r="2" strokeWidth="2" />
+        <path d="M2 16c2 0 3 1 5 1s3-1 5-1 3 1 5 1 3-1 5-1M2 20c2 0 3 1 5 1s3-1 5-1 3 1 5 1 3-1 5-1M8 10l4-3 4 3v5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Gymnastics": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="16" cy="4" r="2" strokeWidth="2" />
+        <path d="M12 8v5l-4 6M12 13l4 6M8 8c0-2 2-4 4-4s4 2 4 4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Martial Arts": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="4" r="2" strokeWidth="2" />
+        <path d="M9 8v3l-3 6M15 8v3l3 6M12 11v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M6 8h12" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+    "Theater": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="8" cy="12" r="3" strokeWidth="2" />
+        <circle cx="16" cy="12" r="3" strokeWidth="2" />
+        <path d="M8 15c0 1.5-1 3-1 3M16 15c0 1.5 1 3 1 3M8 9V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Social": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M12.5 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM20 8v6M23 11h-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    "Family Event": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="9" cy="7" r="3" strokeWidth="2" />
+        <circle cx="15" cy="7" r="3" strokeWidth="2" />
+        <path d="M3 21v-2a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v2M15 14a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="19" cy="16" r="1" fill="currentColor" />
+        <circle cx="7" cy="16" r="1" fill="currentColor" />
+      </svg>
+    ),
+    "Movie Night": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <rect x="2" y="7" width="20" height="14" rx="2" strokeWidth="2" />
+        <path d="M16 3l-4 4-4-4M2 12h20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="8" cy="3" r="1" fill="currentColor" />
+        <circle cx="12" cy="7" r="1" fill="currentColor" />
+        <circle cx="16" cy="3" r="1" fill="currentColor" />
+      </svg>
+    ),
+    "Other": (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle cx="12" cy="12" r="10" strokeWidth="2" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" />
+      </svg>
+    ),
   };
-  return emojis[category] || "🎈";
+
+  return iconMap[category] || iconMap["Other"];
 }
 
 // Helper function to clean description text by removing redundant metadata lines
@@ -1284,89 +1444,90 @@ function CalendarContent() {
         window.location.reload(); // Simple reload for now
       }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl">🗓️</span>
+        {/* Header with refined hierarchy */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                  {family?.calendarName || "Family Calendar"}
+                </h1>
+                <p className="text-gray-600 text-base mt-0.5">
+                  Keeping your family in sync
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-                {family?.calendarName || "Family Calendar"}
-              </h1>
-              <p className="text-gray-600 text-lg mt-1">
-                Your master schedule - everything confirmed and ready to go
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* Google Calendar Link - Simple and Clear */}
-          {confirmedEvents && confirmedEvents.length > 0 && (
-            <div className="mb-4">
+            {/* Google Calendar - Subtle utility link */}
+            {confirmedEvents && confirmedEvents.length > 0 && (
               <a
                 href="https://calendar.google.com/calendar/r"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full py-4 px-6 bg-white border-2 border-primary-600 text-primary-700 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-primary-50 transition-all shadow-sm hover:shadow-md active:scale-[0.99] min-h-[56px]"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors"
+                title="Open in Google Calendar"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>View Month in Google Calendar</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
+                <span className="font-medium">Google Calendar</span>
               </a>
-            </div>
-          )}
-
-        {/* View Toggle Buttons */}
-        {confirmedEvents && confirmedEvents.length > 0 && (
-          <div className="flex items-center gap-2 mb-4 bg-white rounded-lg p-2 shadow-sm">
-            <button
-              onClick={() => setViewMode("list")}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] ${
-                viewMode === "list"
-                  ? "bg-primary-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              📋 List
-            </button>
-            <button
-              onClick={() => setViewMode("week")}
-              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] ${
-                viewMode === "week"
-                  ? "bg-primary-600 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              📆 Week
-            </button>
+            )}
           </div>
-        )}
 
-        {/* Simplified Filter UI - Collapsible */}
-        {confirmedEvents && confirmedEvents.length > 0 && (
-          <div className="mb-4 bg-white rounded-xl shadow-sm">
-            {/* Filter Toggle Button */}
-            <div className="p-3 flex items-center justify-between">
+          {/* Unified Toolbar - View Toggle + Filters */}
+          {confirmedEvents && confirmedEvents.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-2 flex flex-col sm:flex-row gap-2">
+              {/* View Toggle */}
+              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-all min-h-[44px] flex-1 sm:flex-initial ${
+                    viewMode === "list"
+                      ? "bg-white text-primary-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <span>List</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("week")}
+                  className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-all min-h-[44px] flex-1 sm:flex-initial ${
+                    viewMode === "week"
+                      ? "bg-white text-primary-600 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Week</span>
+                </button>
+              </div>
+
+              {/* Filters Button */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] flex-1 sm:flex-none"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px] text-gray-700 font-medium"
               >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
-                <span className="font-medium text-gray-700">
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <span className="ml-2 px-2 py-0.5 text-xs bg-primary-600 text-white rounded-full">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </span>
-                <svg className={`w-4 h-4 text-gray-600 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span>Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="px-2 py-0.5 text-xs bg-primary-600 text-white rounded-full font-semibold">
+                    {activeFilterCount}
+                  </span>
+                )}
+                <svg className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -1379,16 +1540,19 @@ function CalendarContent() {
                     setFilterCategory("all");
                     setDateRangeFilter("all");
                   }}
-                  className="px-3 py-2.5 text-sm text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap min-h-[44px]"
+                  className="px-4 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap rounded-lg hover:bg-primary-50 transition-colors"
                 >
                   Clear All
                 </button>
               )}
             </div>
+          )}
+        </div>
 
-            {/* Collapsible Filter Panel */}
-            {showFilters && (
-              <div className="px-3 pb-3 border-t border-gray-200 pt-3 space-y-3 animate-slideDown">
+        {/* Collapsible Filter Panel */}
+        {confirmedEvents && confirmedEvents.length > 0 && showFilters && (
+          <div className="mb-4 bg-white rounded-xl shadow-sm">
+            <div className="px-4 py-4 space-y-3 animate-slideDown">
                 {/* Search */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">Search</label>
@@ -1446,8 +1610,7 @@ function CalendarContent() {
                     </select>
                   </div>
                 </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -1728,8 +1891,8 @@ function CalendarContent() {
                                 className="flex-1 min-w-0 cursor-pointer"
                               >
                                 <div className="flex items-start justify-between gap-2 mb-1">
-                                  <h3 className="font-semibold text-gray-900 text-base">
-                                    {event.category && <span className="mr-1">{getCategoryEmoji(event.category)}</span>}
+                                  <h3 className="font-semibold text-gray-900 text-base flex items-center gap-1.5">
+                                    {event.category && getCategoryIcon(event.category, "w-4 h-4")}
                                     {event.title}
                                   </h3>
                                   {event.category && (
@@ -1879,8 +2042,8 @@ function CalendarContent() {
                           onClick={() => setSelectedEvent(event)}
                           className="bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                         >
-                          <div className="font-medium text-sm text-gray-900 mb-1">
-                            {event.category && <span className="mr-1">{getCategoryEmoji(event.category)}</span>}
+                          <div className="font-medium text-sm text-gray-900 mb-1 flex items-center gap-1.5">
+                            {event.category && getCategoryIcon(event.category, "w-4 h-4")}
                             {event.title}
                           </div>
                           {event.eventTime && (
