@@ -83,9 +83,28 @@ function getCategoryEmoji(category: string): string {
     "Theater": "🎭",
     "Social": "🍽️",
     "Family Event": "👨‍👩‍👧‍👦",
+    "Movie Night": "🎬",
     "Other": "🎈"
   };
   return emojis[category] || "🎈";
+}
+
+// Helper function to clean description text by removing redundant metadata lines
+function cleanDescription(description: string): string {
+  if (!description) return "";
+
+  // Remove lines that start with redundant metadata
+  const lines = description.split('\n');
+  const cleanedLines = lines.filter(line => {
+    const trimmedLine = line.trim();
+    // Skip lines that are just metadata (Source:, Family Member:, Category:)
+    if (trimmedLine.match(/^(Source|Family Member|Category):/i)) {
+      return false;
+    }
+    return true;
+  });
+
+  return cleanedLines.join('\n').trim();
 }
 
 // Helper function to format date in mom-friendly format
@@ -128,6 +147,40 @@ function groupEventsByDate(events: any[]) {
       date,
       events: grouped[date]
     }));
+}
+
+// Helper function to group events by week (for week view)
+function groupEventsByWeek(events: any[]) {
+  // Get start of current week (Sunday)
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  // Filter events for this week only
+  const weekEvents = events.filter(event => {
+    const eventDate = new Date(event.eventDate + 'T00:00:00');
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    return eventDate >= startOfWeek && eventDate < endOfWeek;
+  });
+
+  // Group by day of week
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const grouped: any = {};
+
+  dayNames.forEach((dayName, index) => {
+    const dayDate = new Date(startOfWeek);
+    dayDate.setDate(startOfWeek.getDate() + index);
+    const dateStr = dayDate.toISOString().split('T')[0];
+    grouped[dayName] = {
+      date: dateStr,
+      displayDate: dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      events: weekEvents.filter(e => e.eventDate === dateStr)
+    };
+  });
+
+  return grouped;
 }
 
 function CalendarContent() {
@@ -185,6 +238,7 @@ function CalendarContent() {
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
   const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "week">("list");
   const { user: clerkUser} = useUser();
   const { signOut } = useClerk();
   const searchParams = useSearchParams();
@@ -1230,7 +1284,7 @@ function CalendarContent() {
         <div className="mb-8">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-3xl">📅</span>
+              <span className="text-3xl">🗓️</span>
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
@@ -1262,6 +1316,32 @@ function CalendarContent() {
               </a>
             </div>
           )}
+
+        {/* View Toggle Buttons */}
+        {confirmedEvents && confirmedEvents.length > 0 && (
+          <div className="flex items-center gap-2 mb-4 bg-white rounded-lg p-2 shadow-sm">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] ${
+                viewMode === "list"
+                  ? "bg-primary-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              📋 List
+            </button>
+            <button
+              onClick={() => setViewMode("week")}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors min-h-[44px] ${
+                viewMode === "week"
+                  ? "bg-primary-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              📆 Week
+            </button>
+          </div>
+        )}
 
         {/* Simplified Filter UI - Collapsible */}
         {confirmedEvents && confirmedEvents.length > 0 && (
@@ -1528,14 +1608,17 @@ function CalendarContent() {
                   </div>
                 </div>
 
-                {/* Events List - Grouped by date */}
-                <div className="space-y-6 p-4">
-                  {groupEventsByDate(sortedEvents).map(({ date, events }) => (
+                {/* Conditional View Rendering */}
+                {viewMode === "list" && (
+                  <>
+                    {/* Events List - Grouped by date */}
+                    <div className="space-y-6 p-4">
+                      {groupEventsByDate(sortedEvents).map(({ date, events }) => (
                     <div key={date}>
                       {/* Date Header - More playful */}
                       <div className="mb-3">
                         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                          <span className="text-2xl">📅</span>
+                          <span className="text-2xl">🗓️</span>
                           {formatMomFriendlyDate(date)}
                         </h3>
                       </div>
@@ -1639,7 +1722,10 @@ function CalendarContent() {
                                 className="flex-1 min-w-0 cursor-pointer"
                               >
                                 <div className="flex items-start justify-between gap-2 mb-1">
-                                  <h3 className="font-semibold text-gray-900 text-base">{event.title}</h3>
+                                  <h3 className="font-semibold text-gray-900 text-base">
+                                    {event.category && <span className="mr-1">{getCategoryEmoji(event.category)}</span>}
+                                    {event.title}
+                                  </h3>
                                   {event.category && (
                                     <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 whitespace-nowrap">
                                       {event.category}
@@ -1717,11 +1803,70 @@ function CalendarContent() {
                         ))}
                       </div>
                     </div>
-                  ))}
-                </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Week View */}
+                {viewMode === "week" && (
+                  <div className="bg-white rounded-lg shadow p-4">
+                    <div className="mb-4">
+                      <h2 className="text-xl font-bold text-gray-900">This Week</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+                      {Object.entries(groupEventsByWeek(sortedEvents)).map(([dayName, dayData]: [string, any]) => (
+                        <div key={dayName} className="bg-gray-50 rounded-lg p-3">
+                          <div className="font-bold text-sm text-gray-900 mb-1">{dayName}</div>
+                          <div className="text-xs text-gray-600 mb-2">{dayData.displayDate}</div>
+                          <div className="space-y-2">
+                            {dayData.events.length === 0 ? (
+                              <div className="text-xs text-gray-400 italic">No events</div>
+                            ) : (
+                              dayData.events.map((event: any) => (
+                                <div
+                                  key={event._id}
+                                  onClick={() => setSelectedEvent(event)}
+                                  className="bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                >
+                                  <div className="font-medium text-sm text-gray-900 mb-1">
+                                    {event.category && <span className="mr-1">{getCategoryEmoji(event.category)}</span>}
+                                    {event.title}
+                                  </div>
+                                  {event.eventTime && (
+                                    <div className="text-xs text-gray-600">
+                                      {formatTime12Hour(event.eventTime)}
+                                    </div>
+                                  )}
+                                  {event.childName && (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {event.childName.split(',').map((name: string, idx: number) => {
+                                        const memberName = name.trim();
+                                        const member = familyMembers?.find(m => m.name === memberName);
+                                        const color = member?.color || "#6366f1";
+                                        return (
+                                          <span
+                                            key={idx}
+                                            className="text-xs px-1.5 py-0.5 rounded-full text-white font-medium"
+                                            style={{ backgroundColor: color }}
+                                          >
+                                            {memberName}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
-          </div>
 
       </div>
       </PullToRefresh>
@@ -1760,7 +1905,7 @@ function CalendarContent() {
                 <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
                   <div className="text-white/80 text-xs font-medium mb-1">Date</div>
                   <div className="text-white font-semibold flex items-center gap-2">
-                    📅 {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
+                    🗓️ {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
@@ -1790,7 +1935,7 @@ function CalendarContent() {
                     Description
                   </h3>
                   <p className="text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">
-                    {selectedEvent.description}
+                    {cleanDescription(selectedEvent.description)}
                   </p>
                 </div>
               )}
