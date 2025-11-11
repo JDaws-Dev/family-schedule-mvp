@@ -1601,10 +1601,10 @@ function CalendarContent() {
                       <span>Add Event</span>
                     </button>
                   </div>
-            </div>
-          )}
-          </div>
-        )}
+                </div>
+              </>
+            )}
+        </div>
 
         {/* Conditional View Rendering */}
         {viewMode === "list" && (
