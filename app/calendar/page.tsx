@@ -604,12 +604,7 @@ function CalendarContent() {
         return;
       }
 
-      // Press 'T' to go to today
-      if (event.key.toLowerCase() === 't' && !event.ctrlKey && !event.metaKey && !event.altKey) {
-        event.preventDefault();
-        setDate(new Date());
-        showToast("Keyboard shortcut: 'T' - Go to today", "info", undefined, 2000);
-      }
+      // Note: 'T' keyboard shortcut removed - calendar now shows all events in chronological order
 
       // Press 'Escape' to close modals
       if (event.key === 'Escape') {
