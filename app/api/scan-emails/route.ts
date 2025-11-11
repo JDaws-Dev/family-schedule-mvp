@@ -327,18 +327,22 @@ export async function POST(request: NextRequest) {
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
-    // Get recent emails (last 30 days) with broad keyword filtering
+    // Get recent emails (last 7 days) - NO keyword filtering, let AI do the work
     // Gmail's after: operator requires YYYY/MM/DD format, not Unix timestamp
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const dateStr = `${thirtyDaysAgo.getFullYear()}/${String(thirtyDaysAgo.getMonth() + 1).padStart(2, '0')}/${String(thirtyDaysAgo.getDate()).padStart(2, '0')}`;
-    const query = `after:${dateStr} (class OR practice OR game OR tournament OR recital OR performance OR meeting OR conference OR party OR birthday OR celebration OR dinner OR lunch OR appointment OR reservation OR event OR activity OR lesson OR session OR camp OR trip OR visit OR playdate OR gathering OR invitation OR invite OR rsvp OR reminder OR schedule OR calendar OR wedding OR rehearsal OR ceremony OR reception OR concert OR show OR festival OR fair OR banquet OR potluck OR barbecue OR picnic OR sleepover OR field trip)`;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const dateStr = `${sevenDaysAgo.getFullYear()}/${String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')}/${String(sevenDaysAgo.getDate()).padStart(2, '0')}`;
+    const query = `after:${dateStr}`;
+
+    console.log("[scan-emails] Scanning emails after:", dateStr);
 
     const messagesResponse = await gmail.users.messages.list({
       userId: "me",
       q: query,
-      maxResults: 50, // Scan up to 50 recent emails for events
+      maxResults: 50, // Scan up to 50 recent emails
     });
+
+    console.log("[scan-emails] Found", messagesResponse.data.messages?.length || 0, "emails to process");
 
     const messages = messagesResponse.data.messages || [];
     const extractedEvents: any[] = [];
