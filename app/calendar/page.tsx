@@ -1602,7 +1602,7 @@ function CalendarContent() {
                     </button>
                   </div>
                 </div>
-            )}
+        )}
 
                 {/* Conditional View Rendering */}
                 {viewMode === "list" && (
