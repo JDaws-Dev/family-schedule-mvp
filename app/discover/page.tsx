@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -44,6 +44,32 @@ export default function DiscoverPage() {
   const [editForm, setEditForm] = useState<any>({});
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [showPasteTextModal, setShowPasteTextModal] = useState(false);
+  const [pastedText, setPastedText] = useState("");
+  const [isExtractingEvent, setIsExtractingEvent] = useState(false);
+  const [conversationalInput, setConversationalInput] = useState("");
+  const [isParsingConversational, setIsParsingConversational] = useState(false);
+  const [newEventForm, setNewEventForm] = useState({
+    title: "",
+    eventDate: "",
+    eventTime: "",
+    endTime: "",
+    location: "",
+    category: "Sports",
+    childName: "",
+    description: "",
+    requiresAction: false,
+    actionDescription: "",
+    actionDeadline: "",
+    isRecurring: false,
+    recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+    recurrenceInterval: 1,
+    recurrenceDaysOfWeek: [] as string[],
+    recurrenceEndType: "never" as "never" | "date" | "count",
+    recurrenceEndDate: "",
+    recurrenceEndCount: 10,
+  });
 
   // Get current user from Convex
   const convexUser = useQuery(
@@ -69,10 +95,59 @@ export default function DiscoverPage() {
     convexUser?.familyId ? { familyId: convexUser.familyId, status: "suggested" } : "skip"
   );
 
+  // Get family members for the event form
+  const familyMembers = useQuery(
+    api.familyMembers.getFamilyMembers,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Get all categories (default + custom)
+  const allCategories = useQuery(
+    api.families.getAllCategories,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Get all events for category extraction
+  const allEvents = useQuery(
+    api.events.getAllEvents,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Extract unique categories from existing events
+  const existingCategories = React.useMemo(() => {
+    if (!allEvents) return [];
+    const categories = new Set<string>();
+    allEvents.forEach((event: any) => {
+      if (event.category) categories.add(event.category);
+    });
+    return Array.from(categories).sort();
+  }, [allEvents]);
+
+  // Standard preset categories
+  const standardCategories = [
+    "Sports",
+    "School",
+    "Music",
+    "Dance",
+    "Arts & Crafts",
+    "Tutoring",
+    "Medical",
+    "Birthday Party",
+    "Play Date",
+    "Field Trip",
+    "Club Meeting",
+    "Other"
+  ];
+
   // Mutations for activity actions
   const quickAddToCalendar = useMutation(api.suggestedActivities.quickAddToCalendar);
   const dismissActivity = useMutation(api.suggestedActivities.dismissActivity);
   const updateFamilyLocation = useMutation(api.families.updateFamilyLocation);
+
+  // Mutations for events
+  const createEvent = useMutation(api.events.createEvent);
+  const createUnconfirmedEvent = useMutation(api.events.createUnconfirmedEvent);
+  const addCustomCategory = useMutation(api.families.addCustomCategory);
 
   // Action to trigger discovery
   const discoverActivities = useAction(api.discover.discoverActivitiesForFamily);
@@ -197,14 +272,12 @@ export default function DiscoverPage() {
   };
 
   const handleFABAction = (action: "manual" | "paste" | "photo" | "voice") => {
-    // Photo and Voice can be done on Discover page
-    // Manual and Paste need the full event form, so redirect to Dashboard
     switch (action) {
       case "manual":
-        window.location.href = '/dashboard?openModal=manual';
+        setShowAddEventModal(true);
         break;
       case "paste":
-        window.location.href = '/dashboard?openModal=paste';
+        setShowPasteTextModal(true);
         break;
       case "photo":
         setShowPhotoUploadModal(true);
@@ -212,6 +285,255 @@ export default function DiscoverPage() {
       case "voice":
         setShowVoiceRecordModal(true);
         break;
+    }
+  };
+
+  const handleExtractFromPaste = async () => {
+    if (!pastedText.trim()) {
+      showToast("Please paste some text first", "error");
+      return;
+    }
+
+    setIsExtractingEvent(true);
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          smsText: pastedText,
+          familyMembers: familyMembers || [],
+          currentUserName: convexUser?.fullName || "Unknown"
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        showToast(data.error, "error");
+        return;
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("No event details found in the text. Please try again.", "error");
+        return;
+      }
+
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      if (data.events.length > 1 && convexUser?.familyId) {
+        let createdCount = 0;
+        for (const event of data.events) {
+          try {
+            await createUnconfirmedEvent({
+              familyId: convexUser.familyId,
+              createdByUserId: convexUser._id,
+              title: event.title || "Untitled Event",
+              eventDate: event.date || "",
+              eventTime: event.time || undefined,
+              endTime: event.endTime || undefined,
+              location: event.location || undefined,
+              category: categoryMap[event.category] || "Other",
+              childName: "",
+              description: event.description || "",
+            });
+            createdCount++;
+          } catch (err) {
+            console.error("Error creating event:", err);
+          }
+        }
+        setShowPasteTextModal(false);
+        setPastedText("");
+        showToast(`✓ Found ${data.events.length} events! Review them in your inbox.`, "success");
+      } else {
+        const event = data.events[0];
+        setNewEventForm({
+          title: event.title || "",
+          eventDate: event.date || "",
+          eventTime: event.time || "",
+          endTime: event.endTime || "",
+          location: event.location || "",
+          category: categoryMap[event.category] || "Sports",
+          childName: "",
+          description: event.description || "",
+          requiresAction: false,
+          actionDescription: "",
+          actionDeadline: "",
+          isRecurring: false,
+          recurrencePattern: "weekly" as "daily" | "weekly" | "monthly" | "yearly",
+          recurrenceInterval: 1,
+          recurrenceDaysOfWeek: [] as string[],
+          recurrenceEndType: "never" as "never" | "date" | "count",
+          recurrenceEndDate: "",
+          recurrenceEndCount: 10,
+        });
+        setShowPasteTextModal(false);
+        setShowAddEventModal(true);
+        showToast("Event details extracted! Review and save below.", "success");
+      }
+    } catch (error) {
+      console.error("Error extracting event:", error);
+      showToast("Failed to extract event details. Please try again.", "error");
+    } finally {
+      setIsExtractingEvent(false);
+    }
+  };
+
+  const handleParseConversational = async () => {
+    if (!conversationalInput.trim()) {
+      showToast("Please describe your event first", "info");
+      return;
+    }
+
+    setIsParsingConversational(true);
+    try {
+      const response = await fetch("/api/sms/extract-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          smsText: conversationalInput,
+          familyMembers: familyMembers || [],
+          currentUserName: convexUser?.fullName || "Unknown"
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to parse event");
+      }
+
+      if (!data.hasEvents || !data.events || data.events.length === 0) {
+        showToast("Couldn't find event details in that description. Try being more specific!", "info");
+        return;
+      }
+
+      const event = data.events[0];
+
+      const categoryMap: {[key: string]: string} = {
+        "sports": "Sports",
+        "arts": "Lessons",
+        "education": "School",
+        "entertainment": "Other",
+        "family": "Other",
+        "other": "Other"
+      };
+
+      setNewEventForm({
+        ...newEventForm,
+        title: event.title || "",
+        eventDate: event.date || "",
+        eventTime: event.time || "",
+        endTime: event.endTime || "",
+        location: event.location || "",
+        category: categoryMap[event.category] || event.category || "Other",
+        childName: event.childName || (event.attendees && event.attendees.length > 0 ? event.attendees.join(", ") : ""),
+        description: event.description || "",
+        requiresAction: event.requiresAction || false,
+        actionDescription: event.actionDescription || "",
+        actionDeadline: event.actionDeadline || "",
+        isRecurring: event.isRecurring || false,
+        recurrencePattern: event.recurrencePattern || "weekly",
+        recurrenceInterval: 1,
+        recurrenceDaysOfWeek: event.recurrenceDaysOfWeek || [],
+        recurrenceEndType: "never",
+        recurrenceEndDate: "",
+        recurrenceEndCount: 10,
+      });
+
+      showToast("✨ AI filled the form! Review and click Save when ready.", "success");
+      setConversationalInput("");
+    } catch (error: any) {
+      console.error("Error parsing conversational input:", error);
+      showToast("Failed to parse your description. Please try again or fill manually.", "error");
+    } finally {
+      setIsParsingConversational(false);
+    }
+  };
+
+  const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!convexUser?._id || !convexUser?.familyId) {
+      showToast("Session expired. Please refresh the page and try again.", "error");
+      return;
+    }
+
+    if (!newEventForm.title.trim()) {
+      showToast("Please enter an event title", "error");
+      return;
+    }
+
+    if (!newEventForm.eventDate) {
+      showToast("Please select a date for this event", "error");
+      return;
+    }
+
+    try {
+      if (newEventForm.category && allCategories) {
+        const isDefaultCategory = allCategories.defaultCategories.includes(newEventForm.category);
+        const isExistingCustom = allCategories.customCategories.includes(newEventForm.category);
+
+        if (!isDefaultCategory && !isExistingCustom) {
+          await addCustomCategory({
+            familyId: convexUser.familyId,
+            category: newEventForm.category,
+          });
+        }
+      }
+
+      await createEvent({
+        createdByUserId: convexUser._id,
+        title: newEventForm.title.trim(),
+        eventDate: newEventForm.eventDate,
+        eventTime: newEventForm.eventTime || undefined,
+        endTime: newEventForm.endTime || undefined,
+        location: newEventForm.location.trim() || undefined,
+        category: newEventForm.category || undefined,
+        childName: newEventForm.childName.trim() || undefined,
+        description: newEventForm.description.trim() || undefined,
+        isConfirmed: true,
+        isRecurring: newEventForm.isRecurring || false,
+        recurrencePattern: newEventForm.isRecurring ? newEventForm.recurrencePattern : undefined,
+        recurrenceInterval: newEventForm.isRecurring ? newEventForm.recurrenceInterval : undefined,
+        recurrenceDaysOfWeek: newEventForm.isRecurring && newEventForm.recurrenceDaysOfWeek.length > 0 ? newEventForm.recurrenceDaysOfWeek : undefined,
+        recurrenceEndType: newEventForm.isRecurring ? newEventForm.recurrenceEndType : undefined,
+        recurrenceEndDate: newEventForm.isRecurring && newEventForm.recurrenceEndType === "date" ? newEventForm.recurrenceEndDate : undefined,
+        recurrenceEndCount: newEventForm.isRecurring && newEventForm.recurrenceEndType === "count" ? newEventForm.recurrenceEndCount : undefined,
+      });
+
+      setNewEventForm({
+        title: "",
+        eventDate: "",
+        eventTime: "",
+        endTime: "",
+        location: "",
+        category: "Sports",
+        childName: "",
+        description: "",
+        requiresAction: false,
+        actionDescription: "",
+        actionDeadline: "",
+        isRecurring: false,
+        recurrencePattern: "weekly",
+        recurrenceInterval: 1,
+        recurrenceDaysOfWeek: [],
+        recurrenceEndType: "never",
+        recurrenceEndDate: "",
+        recurrenceEndCount: 10,
+      });
+
+      setShowAddEventModal(false);
+      showToast("Event added to calendar!", "success");
+    } catch (error: any) {
+      console.error("Error creating event:", error);
+      showToast("Failed to create event. Please try again.", "error");
     }
   };
 
@@ -955,7 +1277,11 @@ export default function DiscoverPage() {
       {showPhotoUploadModal && (
         <PhotoUploadModal
           onClose={() => setShowPhotoUploadModal(false)}
-          familyId={convexUser?.familyId}
+          onExtract={async (file: File) => {
+            // TODO: Implement photo extraction for discover page
+            showToast("Photo upload coming soon!", "info");
+            setShowPhotoUploadModal(false);
+          }}
         />
       )}
 
@@ -963,8 +1289,380 @@ export default function DiscoverPage() {
       {showVoiceRecordModal && (
         <VoiceRecordModal
           onClose={() => setShowVoiceRecordModal(false)}
-          familyId={convexUser?.familyId}
+          onTranscribe={async (audioBlob: Blob) => {
+            // TODO: Implement voice transcription for discover page
+            showToast("Voice recording coming soon!", "info");
+            setShowVoiceRecordModal(false);
+          }}
         />
+      )}
+
+      {/* Paste Text Modal */}
+      {showPasteTextModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50"
+          onClick={() => {
+            setShowPasteTextModal(false);
+            setPastedText("");
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Paste Text</h2>
+                  <p className="text-white/90 text-sm">Paste an email, text message, or any text with event details</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowPasteTextModal(false);
+                    setPastedText("");
+                  }}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close paste text modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-primary-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-primary-800 mb-1">How it works</h4>
+                    <p className="text-sm text-primary-700">
+                      Our AI will automatically extract event details including dates, times, locations, and even which family members are attending!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Paste your text here
+                </label>
+                <textarea
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  rows={12}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Example:
+Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara. Please bring water and shin guards!"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExtractFromPaste();
+                  }}
+                  disabled={isExtractingEvent || !pastedText.trim()}
+                  className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-soft flex items-center justify-center gap-2"
+                >
+                  {isExtractingEvent ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Extracting...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Extract Event
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasteTextModal(false);
+                    setPastedText("");
+                  }}
+                  className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-start md:items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={() => {
+            setShowAddEventModal(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Gradient */}
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
+              <div className="flex justify-between items-start">
+                <h2 className="text-2xl font-bold text-white">Add New Event</h2>
+                <button
+                  onClick={() => {
+                    setShowAddEventModal(false);
+                  }}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition"
+                  aria-label="Close add event modal"
+                  title="Close"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Manual Entry Form */}
+            <form onSubmit={handleAddEvent}>
+              <div className="p-6 space-y-6">
+                {/* Conversational Input - Quick AI Fill */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
+                  <div className="flex items-start gap-2 mb-3">
+                    <span className="text-2xl">💬</span>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">Quick Add with AI</h3>
+                      <p className="text-sm text-gray-600">
+                        Describe your event naturally and let AI fill out the form for you!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={conversationalInput}
+                      onChange={(e) => setConversationalInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleParseConversational())}
+                      className="flex-1 px-4 py-3 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      placeholder='e.g., "Emma has soccer every Tuesday at 5pm" or "dentist tomorrow at 3"'
+                    />
+                    <button
+                      type="button"
+                      onClick={handleParseConversational}
+                      disabled={isParsingConversational || !conversationalInput.trim()}
+                      className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                      {isParsingConversational ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Parsing...
+                        </>
+                      ) : (
+                        <>
+                          ✨ Auto-Fill
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-gray-500">or fill out manually</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Event Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newEventForm.title}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Soccer Practice"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={newEventForm.eventDate}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, eventDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input
+                      type="time"
+                      value={newEventForm.eventTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, eventTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input
+                      type="time"
+                      value={newEventForm.endTime}
+                      onChange={(e) => setNewEventForm({ ...newEventForm, endTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={newEventForm.location}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, location: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="e.g., Local Soccer Field"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Family Members</label>
+                  <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
+                    {familyMembers && familyMembers.length > 0 ? (
+                      [...familyMembers].sort((a, b) => a.name.localeCompare(b.name)).map((member) => {
+                        const selectedMembers = newEventForm.childName ? newEventForm.childName.split(", ") : [];
+                        const isChecked = selectedMembers.includes(member.name);
+
+                        return (
+                          <button
+                            key={member._id}
+                            type="button"
+                            onClick={() => {
+                              let updatedMembers = [...selectedMembers];
+                              if (isChecked) {
+                                updatedMembers = updatedMembers.filter(m => m !== member.name);
+                              } else {
+                                updatedMembers.push(member.name);
+                              }
+                              setNewEventForm({
+                                ...newEventForm,
+                                childName: updatedMembers.join(", ")
+                              });
+                            }}
+                            className={`px-3 py-2 rounded-lg border-2 transition-all font-medium ${
+                              isChecked
+                                ? 'border-primary-600 shadow-md'
+                                : 'bg-white border-gray-300 hover:border-gray-400'
+                            }`}
+                            style={{
+                              backgroundColor: isChecked ? member.color || "#6366f1" : undefined,
+                              color: isChecked ? "white" : "#374151"
+                            }}
+                          >
+                            {isChecked && <span className="mr-1">✓</span>}
+                            {member.name}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">No family members added yet. Add them in Settings.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <select
+                    value={newEventForm.category}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "custom") {
+                        const customCategory = prompt("Enter custom category:");
+                        if (customCategory && customCategory.trim()) {
+                          setNewEventForm({ ...newEventForm, category: customCategory.trim() });
+                        }
+                      } else {
+                        setNewEventForm({ ...newEventForm, category: value });
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="">Select a category...</option>
+                    {/* Standard Categories */}
+                    <optgroup label="Standard Categories">
+                      {standardCategories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </optgroup>
+                    {/* Previously Used Categories (if any new ones) */}
+                    {existingCategories.filter(cat => !standardCategories.includes(cat)).length > 0 && (
+                      <optgroup label="Your Categories">
+                        {existingCategories
+                          .filter(cat => !standardCategories.includes(cat))
+                          .map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))
+                        }
+                      </optgroup>
+                    )}
+                    <option value="custom">+ Create custom category</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={newEventForm.description}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Additional details..."
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft"
+                  >
+                    Save Event
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddEventModal(false)}
+                    className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Bottom Navigation (Mobile) */}
