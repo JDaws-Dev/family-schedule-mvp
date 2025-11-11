@@ -1733,10 +1733,12 @@ function CalendarContent() {
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 overflow-y-auto"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-strong my-4 md:my-8 flex flex-col"
             style={{ maxHeight: 'calc(85vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))' }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
             {/* Header with Gradient */}
             <div className="bg-gradient-to-r from-primary-400 to-primary-500 rounded-t-2xl p-6">
               <div className="flex justify-between items-start mb-3">
@@ -1793,55 +1795,18 @@ function CalendarContent() {
                 </div>
               )}
 
-              {/* Details Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {selectedEvent.location && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Location
-                    </div>
-                    <div className="text-gray-900 font-medium flex items-start gap-2">
-                      <span>📍</span>
-                      <span>{selectedEvent.location}</span>
-                    </div>
+              {/* Location */}
+              {selectedEvent.location && (
+                <div className="mb-6 bg-gray-50 rounded-lg p-4">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    Location
                   </div>
-                )}
-
-                {selectedEvent.category && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Category
-                    </div>
-                    <div className="text-gray-900 font-medium">
-                      {selectedEvent.category}
-                    </div>
+                  <div className="text-gray-900 font-medium flex items-start gap-2">
+                    <span>📍</span>
+                    <span>{selectedEvent.location}</span>
                   </div>
-                )}
-
-                {selectedEvent.childName && (
-                  <div className="bg-gray-50 rounded-lg p-4 sm:col-span-2">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Family Members
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedEvent.childName.split(',').map((name: string, idx: number) => {
-                        const trimmedName = name.trim();
-                        const member = familyMembers?.find(m => m.name === trimmedName);
-                        const color = member?.color || "#6366f1";
-                        return (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
-                            style={{ backgroundColor: color }}
-                          >
-                            {trimmedName}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Action Required Badge */}
               {selectedEvent.requiresAction && (
@@ -1900,9 +1865,52 @@ function CalendarContent() {
                 </div>
               )}
             </div>
+            </div>
 
-            {/* Action Buttons */}
-            <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+            {/* Fixed Action Buttons Footer */}
+            <div className="flex-shrink-0 border-t border-gray-200 bg-white px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row gap-3">
+              {/* Edit Button */}
+              <button
+                onClick={() => {
+                  setEditFormData({
+                    title: selectedEvent.title,
+                    eventDate: selectedEvent.eventDate,
+                    eventTime: selectedEvent.eventTime || "",
+                    endTime: selectedEvent.endTime || "",
+                    location: selectedEvent.location || "",
+                    childName: selectedEvent.childName || "",
+                    category: selectedEvent.category || "",
+                    description: selectedEvent.description || "",
+                    requiresAction: selectedEvent.requiresAction || false,
+                    actionDescription: selectedEvent.actionDescription || "",
+                    actionDeadline: selectedEvent.actionDeadline || "",
+                    actionCompleted: selectedEvent.actionCompleted || false,
+                    isRecurring: selectedEvent.isRecurring || false,
+                    recurrencePattern: selectedEvent.recurrencePattern || "weekly",
+                    recurrenceDaysOfWeek: selectedEvent.recurrenceDaysOfWeek || [],
+                    recurrenceEndType: selectedEvent.recurrenceEndType || "never",
+                    recurrenceEndDate: selectedEvent.recurrenceEndDate || "",
+                    recurrenceEndCount: selectedEvent.recurrenceEndCount || 10,
+                  });
+                  setEditingEvent(true);
+                }}
+                className="min-h-[48px] px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 active:scale-[0.98] transition shadow-soft flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </button>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedEvent(null)}
+                className="min-h-[48px] px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 active:scale-[0.98] transition flex items-center justify-center gap-2"
+              >
+                Close
+              </button>
+
+              {/* Delete Button - Destructive action last */}
               <button
                 onClick={async () => {
                   if (confirm(`Delete "${selectedEvent.title}"?`)) {
@@ -1938,50 +1946,12 @@ function CalendarContent() {
                     }
                   }
                 }}
-                className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow-soft flex items-center justify-center gap-2"
+                className="min-h-[48px] px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 active:scale-[0.98] transition shadow-soft flex items-center justify-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
                 Delete
-              </button>
-              <div className="flex-1" />
-              <button
-                onClick={() => {
-                  setEditFormData({
-                    title: selectedEvent.title,
-                    eventDate: selectedEvent.eventDate,
-                    eventTime: selectedEvent.eventTime || "",
-                    endTime: selectedEvent.endTime || "",
-                    location: selectedEvent.location || "",
-                    childName: selectedEvent.childName || "",
-                    category: selectedEvent.category || "",
-                    description: selectedEvent.description || "",
-                    requiresAction: selectedEvent.requiresAction || false,
-                    actionDescription: selectedEvent.actionDescription || "",
-                    actionDeadline: selectedEvent.actionDeadline || "",
-                    actionCompleted: selectedEvent.actionCompleted || false,
-                    isRecurring: selectedEvent.isRecurring || false,
-                    recurrencePattern: selectedEvent.recurrencePattern || "weekly",
-                    recurrenceDaysOfWeek: selectedEvent.recurrenceDaysOfWeek || [],
-                    recurrenceEndType: selectedEvent.recurrenceEndType || "never",
-                    recurrenceEndDate: selectedEvent.recurrenceEndDate || "",
-                    recurrenceEndCount: selectedEvent.recurrenceEndCount || 10,
-                  });
-                  setEditingEvent(true);
-                }}
-                className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition shadow-soft flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit
-              </button>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-2"
-              >
-                Close
               </button>
             </div>
           </div>
