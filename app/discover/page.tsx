@@ -1210,7 +1210,10 @@ export default function DiscoverPage() {
           <div className="bg-white rounded-2xl shadow-strong max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-t-2xl">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">{editingActivity.title}</h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Review & Edit</h2>
+                  <p className="text-purple-50 mt-1 text-sm">Make any changes before adding to your calendar</p>
+                </div>
                 <button
                   onClick={() => {setEditingActivity(null); setEditForm({});}}
                   className="text-white hover:bg-white/20 rounded-lg p-2 transition min-h-[44px] min-w-[44px]"
@@ -1220,65 +1223,73 @@ export default function DiscoverPage() {
                   </svg>
                 </button>
               </div>
-              <p className="text-purple-50 mt-2">{editingActivity.category}</p>
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Essential Info */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                {editingActivity.type === 'event' && editingActivity.date && (
-                  <div className="flex items-center gap-2 text-base">
-                    <span className="text-xl">📅</span>
-                    <div>
-                      <span className="font-semibold">
-                        {new Date(editingActivity.date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric',
-                          year: new Date(editingActivity.date).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-                        })}
-                      </span>
-                      {editingActivity.time && (
-                        <span className="ml-2">
-                          at {(() => {
-                            const [hours, minutes] = editingActivity.time.split(':');
-                            const hour = parseInt(hours);
-                            const ampm = hour >= 12 ? 'PM' : 'AM';
-                            const displayHour = hour % 12 || 12;
-                            return `${displayHour}:${minutes} ${ampm}`;
-                          })()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {editingActivity.type === 'place' && editingActivity.hoursOfOperation && (
-                  <div className="flex items-center gap-2 text-base">
-                    <span className="text-xl">🕐</span>
-                    <span><strong>Hours:</strong> {editingActivity.hoursOfOperation}</span>
-                  </div>
-                )}
-                {editingActivity.location && (
-                  <div className="flex items-start gap-2 text-base">
-                    <span className="text-xl">📍</span>
-                    <span>{editingActivity.location}</span>
-                  </div>
-                )}
-                {(editingActivity.priceRange || editingActivity.admission) && (
-                  <div className="flex items-center gap-2 text-base">
-                    <span className="text-xl">💰</span>
-                    <span>{editingActivity.admission || getPriceLabel(editingActivity.priceRange)}</span>
-                  </div>
-                )}
+              {/* Editable Fields */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={editForm.title || ''}
+                  onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
               </div>
 
-              {/* Description */}
-              {editingActivity.description && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">About</h3>
-                  <p className="text-gray-700 leading-relaxed">{editingActivity.description}</p>
+              {editingActivity.type === 'event' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                    <input
+                      type="date"
+                      value={editForm.date || ''}
+                      onChange={(e) => setEditForm({...editForm, date: e.target.value})}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                    <input
+                      type="time"
+                      value={editForm.time || ''}
+                      onChange={(e) => setEditForm({...editForm, time: e.target.value})}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <input
+                  type="text"
+                  value={editForm.location || ''}
+                  onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={editForm.description || ''}
+                  onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <input
+                  type="text"
+                  value={editForm.category || ''}
+                  onChange={(e) => setEditForm({...editForm, category: e.target.value})}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., Sports, Arts, Education"
+                />
+              </div>
 
               {/* AI Summary */}
               {editingActivity.aiSummary && (
