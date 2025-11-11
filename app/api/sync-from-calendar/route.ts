@@ -207,13 +207,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete events that exist in our DB but not in Google Calendar
+    console.log(`[sync-from-calendar] Checking for deleted events. DB events: ${existingEvents.length}, Google events: ${googleEventIds.size}`);
     for (const existingEvent of existingEvents) {
-      if (existingEvent.googleCalendarEventId && !googleEventIds.has(existingEvent.googleCalendarEventId)) {
-        console.log(`[sync-from-calendar] Deleting event removed from Google Calendar: ${existingEvent.title}`);
-        await convex.mutation(api.events.deleteEvent, {
-          eventId: existingEvent._id,
-        });
-        deletedCount++;
+      if (existingEvent.googleCalendarEventId) {
+        const existsInGoogle = googleEventIds.has(existingEvent.googleCalendarEventId);
+        if (!existsInGoogle) {
+          console.log(`[sync-from-calendar] Deleting event removed from Google Calendar: ${existingEvent.title} (ID: ${existingEvent.googleCalendarEventId})`);
+          await convex.mutation(api.events.deleteEvent, {
+            eventId: existingEvent._id,
+          });
+          deletedCount++;
+        }
+      } else {
+        console.log(`[sync-from-calendar] Skipping event without Google Calendar ID: ${existingEvent.title}`);
       }
     }
 
