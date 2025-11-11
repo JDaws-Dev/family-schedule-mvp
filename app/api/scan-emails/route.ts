@@ -327,14 +327,29 @@ export async function POST(request: NextRequest) {
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
+    // DEBUG: First check if we can get ANY emails at all
+    console.log("[scan-emails] Testing Gmail API with simple query...");
+    const testResponse = await gmail.users.messages.list({
+      userId: "me",
+      maxResults: 5,
+    });
+    console.log("[scan-emails] Simple query returned:", testResponse.data.messages?.length || 0, "messages");
+
     // Get recent emails (last 30 days) with broad keyword filtering
     const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
     const query = `after:${thirtyDaysAgo} (class OR practice OR game OR tournament OR recital OR performance OR meeting OR conference OR party OR birthday OR celebration OR dinner OR lunch OR appointment OR reservation OR event OR activity OR lesson OR session OR camp OR trip OR visit OR playdate OR gathering OR invitation OR invite OR rsvp OR reminder OR schedule OR calendar OR wedding OR rehearsal OR ceremony OR reception OR concert OR show OR festival OR fair OR banquet OR potluck OR barbecue OR picnic OR sleepover OR field trip)`;
+
+    console.log("[scan-emails] Gmail query:", query);
 
     const messagesResponse = await gmail.users.messages.list({
       userId: "me",
       q: query,
       maxResults: 50, // Scan up to 50 recent emails for events
+    });
+
+    console.log("[scan-emails] Gmail API response:", {
+      resultSizeEstimate: messagesResponse.data.resultSizeEstimate,
+      messagesCount: messagesResponse.data.messages?.length || 0,
     });
 
     const messages = messagesResponse.data.messages || [];
