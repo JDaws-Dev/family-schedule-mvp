@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import * as React from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -405,19 +405,47 @@ function DashboardContent() {
       : "skip"
   );
 
-  const todayEvents = useQuery(
+  const todayEventsRaw = useQuery(
     api.events.getEventsByDateRange,
     convexUser?.familyId
       ? { familyId: convexUser.familyId, startDate: today, endDate: today }
       : "skip"
   );
 
-  const tomorrowEvents = useQuery(
+  const tomorrowEventsRaw = useQuery(
     api.events.getEventsByDateRange,
     convexUser?.familyId
       ? { familyId: convexUser.familyId, startDate: tomorrow, endDate: tomorrow }
       : "skip"
   );
+
+  // Sort events by time (earliest first), events without time go to end
+  const todayEvents = useMemo(() => {
+    if (!todayEventsRaw) return todayEventsRaw;
+    return [...todayEventsRaw].sort((a, b) => {
+      // Events with times come before events without times
+      if (a.eventTime && !b.eventTime) return -1;
+      if (!a.eventTime && b.eventTime) return 1;
+      // If both have times, sort by time
+      if (a.eventTime && b.eventTime) {
+        return a.eventTime.localeCompare(b.eventTime);
+      }
+      // If neither has time, sort by title
+      return a.title.localeCompare(b.title);
+    });
+  }, [todayEventsRaw]);
+
+  const tomorrowEvents = useMemo(() => {
+    if (!tomorrowEventsRaw) return tomorrowEventsRaw;
+    return [...tomorrowEventsRaw].sort((a, b) => {
+      if (a.eventTime && !b.eventTime) return -1;
+      if (!a.eventTime && b.eventTime) return 1;
+      if (a.eventTime && b.eventTime) {
+        return a.eventTime.localeCompare(b.eventTime);
+      }
+      return a.title.localeCompare(b.title);
+    });
+  }, [tomorrowEventsRaw]);
 
   const isGmailConnected = (gmailAccounts?.length ?? 0) > 0;
 
