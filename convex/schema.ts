@@ -285,4 +285,30 @@ export default defineSchema({
     .index("by_family", ["familyId"])
     .index("by_status", ["status"])
     .index("by_family_and_status", ["familyId", "status"]),
+
+  // Linked Calendars - External calendars users can browse (schools, sports teams, churches, etc.)
+  linkedCalendars: defineTable({
+    familyId: v.id("families"),
+    addedByUserId: v.id("users"),
+
+    // User-facing info
+    displayName: v.string(), // "Jefferson Elementary" - user-given name
+    actualCalendarName: v.optional(v.string()), // The actual calendar name from iCal (X-WR-CALNAME)
+    category: v.union(
+      v.literal("school"),
+      v.literal("sports"),
+      v.literal("church"),
+      v.literal("activities"),
+      v.literal("other")
+    ),
+
+    // Technical details
+    url: v.string(), // The iCal/webcal URL
+
+    // Metadata
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_family", ["familyId"])
+    .index("by_family_and_category", ["familyId", "category"]),
 });

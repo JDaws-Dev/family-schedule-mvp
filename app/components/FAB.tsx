@@ -6,9 +6,11 @@ import Link from "next/link";
 interface FABProps {
   onAction: (action: "manual" | "paste" | "photo" | "voice") => void;
   hasGmailAccount?: boolean;
+  hasLinkedCalendars?: boolean;
+  onBrowseCalendars?: () => void;
 }
 
-export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
+export default function FAB({ onAction, hasGmailAccount = false, hasLinkedCalendars = false, onBrowseCalendars }: FABProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const actions = [
@@ -61,19 +63,6 @@ export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
       description: "Manual entry",
       type: "action" as const,
     },
-    ...(hasGmailAccount ? [{
-      id: "search-email" as const,
-      label: "Search Email",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      ),
-      color: "bg-amber-500",
-      description: "Find in inbox",
-      type: "link" as const,
-      href: "/search-emails",
-    }] : []),
   ];
 
   const handleActionClick = (actionId: string) => {
@@ -99,48 +88,24 @@ export default function FAB({ onAction, hasGmailAccount = false }: FABProps) {
           className="fixed right-6 z-50 md:hidden space-y-3 animate-slideInUp"
           style={{ bottom: 'calc(9rem + env(safe-area-inset-bottom))' }}
         >
-          {actions.map((action, index) => {
-            const content = (
-              <>
-                <div className={`min-w-[44px] min-h-[44px] w-12 h-12 rounded-xl ${action.color} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform flex-shrink-0`}>
-                  {action.icon}
-                </div>
-                <div className="text-left flex-1">
-                  <div className="font-bold text-gray-900">{action.label}</div>
-                  <div className="text-xs text-gray-600 mt-0.5">{action.description}</div>
-                </div>
-              </>
-            );
-
-            if (action.type === "link" && "href" in action) {
-              return (
-                <Link
-                  key={action.id}
-                  href={action.href}
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px] min-h-[56px]"
-                  style={{
-                    animationDelay: `${index * 50}ms`,
-                  }}
-                >
-                  {content}
-                </Link>
-              );
-            }
-
-            return (
-              <button
-                key={action.id}
-                onClick={() => handleActionClick(action.id)}
-                className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px] min-h-[56px]"
-                style={{
-                  animationDelay: `${index * 50}ms`,
-                }}
-              >
-                {content}
-              </button>
-            );
-          })}
+          {actions.map((action, index) => (
+            <button
+              key={action.id}
+              onClick={() => handleActionClick(action.id)}
+              className="flex items-center gap-3 bg-white rounded-2xl shadow-lifted hover:shadow-strong transition-all p-3 group min-w-[200px] min-h-[56px]"
+              style={{
+                animationDelay: `${index * 50}ms`,
+              }}
+            >
+              <div className={`min-w-[44px] min-h-[44px] w-12 h-12 rounded-xl ${action.color} flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform flex-shrink-0`}>
+                {action.icon}
+              </div>
+              <div className="text-left flex-1">
+                <div className="font-bold text-gray-900">{action.label}</div>
+                <div className="text-xs text-gray-600 mt-0.5">{action.description}</div>
+              </div>
+            </button>
+          ))}
         </div>
       )}
 

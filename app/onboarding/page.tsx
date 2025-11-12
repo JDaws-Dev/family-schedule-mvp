@@ -6,6 +6,8 @@ import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
+import AddLinkedCalendarModal from "../components/AddLinkedCalendarModal";
+import { useToast } from "../components/Toast";
 
 export default function Onboarding() {
   // Initialize currentStep - will be updated from localStorage in useEffect
@@ -33,8 +35,10 @@ export default function Onboarding() {
   const [dailySmsDigestEnabled, setDailySmsDigestEnabled] = useState(false);
   const [dailySmsDigestTime, setDailySmsDigestTime] = useState("07:00");
   const [emailDigestFrequency, setEmailDigestFrequency] = useState<"none" | "daily" | "weekly">("daily");
+  const [showAddLinkedCalendarModal, setShowAddLinkedCalendarModal] = useState(false);
   const { user: clerkUser } = useUser();
   const router = useRouter();
+  const { showToast } = useToast();
 
   // Auto-populate email from Clerk user when available
   useEffect(() => {
@@ -54,6 +58,12 @@ export default function Onboarding() {
     currentUser?.familyId ? { familyId: currentUser.familyId } : "skip"
   );
 
+  // Get linked calendars
+  const linkedCalendars = useQuery(
+    api.linkedCalendars.getLinkedCalendars,
+    currentUser?.familyId ? { familyId: currentUser.familyId } : "skip"
+  );
+
   // Mutations
   const updateFamilyName = useMutation(api.families.createFamily);
   const updateFamilyDetails = useMutation(api.families.updateFamilyDetails);
@@ -61,7 +71,7 @@ export default function Onboarding() {
   const setFamilyCalendar = useMutation(api.families.updateSelectedCalendar);
   const updateNotificationPreferences = useMutation(api.notifications.updateNotificationPreferences);
 
-  const totalSteps = 7; // Added payment step
+  const totalSteps = 8; // Added linked calendars and payment steps
 
   // Load saved step from localStorage on mount
   useEffect(() => {
@@ -78,6 +88,11 @@ export default function Onboarding() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('onboarding_step', currentStep.toString());
     }
+  }, [currentStep]);
+
+  // Scroll to top whenever step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStep]);
 
   // Load saved form data from localStorage on mount
@@ -172,7 +187,7 @@ export default function Onboarding() {
           await fetchCalendars();
         }, 1500);
       }
-      // Move to step 6 (notifications)
+      // Move to step 6 (linked calendars)
       else if (currentStep === 5) {
         if (calendarAction === "select" && !selectedCalendarId) {
           alert("Please select a calendar to continue.");
@@ -182,7 +197,16 @@ export default function Onboarding() {
           alert("Please enter a calendar name to continue.");
           return;
         }
-        setCelebrationMessage("Perfect! Calendar set up! One last step... 📅");
+        setCelebrationMessage("Perfect! Calendar set up! Let's add some external calendars! 📅");
+        setShowCelebration(true);
+        setTimeout(() => {
+          setShowCelebration(false);
+          setCurrentStep(currentStep + 1);
+        }, 1500);
+      }
+      // Move to step 7 (notifications) - skip allowed
+      else if (currentStep === 6) {
+        setCelebrationMessage("Great! Now let's set up your notifications! 🔔");
         setShowCelebration(true);
         setTimeout(() => {
           setShowCelebration(false);
@@ -428,8 +452,9 @@ export default function Onboarding() {
               { num: 3, label: "Interests" },
               { num: 4, label: "Email" },
               { num: 5, label: "Calendar" },
-              { num: 6, label: "Alerts" },
-              { num: 7, label: "Payment" }
+              { num: 6, label: "Link" },
+              { num: 7, label: "Alerts" },
+              { num: 8, label: "Payment" }
             ].map((step, index) => (
               <div key={step.num} className="flex flex-col items-center flex-1">
                 <div className="flex items-center w-full">
@@ -451,7 +476,7 @@ export default function Onboarding() {
                     )}
                   </div>
                 </div>
-                {index < 6 && (
+                {index < 7 && (
                   <div
                     className={`h-1 absolute left-1/2 top-5 -translate-y-1/2 transition-all duration-200 ${
                       step.num < currentStep ? "bg-green-500" : "bg-gray-200"
@@ -767,6 +792,17 @@ export default function Onboarding() {
                     </svg>
                     Connected Accounts
                   </h3>
+
+                  {/* Real-Time Active Notice - Only show if push enabled */}
+                  {gmailAccounts.some(acc => acc.gmailPushEnabled) && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                      <p className="text-sm text-green-900 font-medium flex items-center gap-2">
+                        <span className="inline-block w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        Real-time monitoring active - new events appear automatically
+                      </p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     {gmailAccounts.map((account) => (
                       <div key={account._id} className="flex items-center justify-between py-2 px-3 bg-green-50 rounded-lg">
@@ -774,7 +810,15 @@ export default function Onboarding() {
                           <span className="text-xl">✓</span>
                           <span className="font-medium text-gray-900">{account.gmailEmail}</span>
                         </div>
-                        <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded">Connected</span>
+                        <div className="flex items-center gap-2">
+                          {account.gmailPushEnabled && (
+                            <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded flex items-center gap-1">
+                              <span className="inline-block w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                              Live
+                            </span>
+                          )}
+                          <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded">Connected</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1010,8 +1054,118 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 6: Notification Preferences */}
+          {/* Step 6: Link External Calendars */}
           {currentStep === 6 && (
+            <div className="space-y-6">
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-4xl">📚</span>
+                </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-3">Link external calendars (optional)</h1>
+                <p className="text-lg text-gray-600 max-w-xl mx-auto">
+                  Does your kid's school, sports team, church, or other organizations have a Google Calendar or iCal feed?
+                  Link them here to easily browse and cherry-pick events to add to your family calendar!
+                </p>
+                <p className="text-sm text-purple-600 font-medium mt-2">This step is optional - you can skip it and add calendars later! 💜</p>
+              </div>
+
+              {/* Linked Calendars List */}
+              {linkedCalendars && linkedCalendars.length > 0 && (
+                <div className="bg-white rounded-xl border-2 border-green-200 p-5">
+                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Linked Calendars
+                  </h3>
+                  <div className="space-y-2">
+                    {linkedCalendars.map((calendar) => (
+                      <div key={calendar._id} className="flex items-center gap-2 py-2 px-3 bg-green-50 rounded-lg">
+                        <span className="text-xl">
+                          {calendar.category === 'school' && '🎒'}
+                          {calendar.category === 'sports' && '⚽'}
+                          {calendar.category === 'church' && '⛪'}
+                          {calendar.category === 'activities' && '🎵'}
+                          {calendar.category === 'other' && '📅'}
+                        </span>
+                        <div className="flex-1">
+                          <span className="font-medium text-gray-900">{calendar.displayName}</span>
+                          {calendar.actualCalendarName && (
+                            <span className="text-xs text-gray-600 ml-2">({calendar.actualCalendarName})</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded">Linked</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add Calendar Button */}
+              <button
+                onClick={() => setShowAddLinkedCalendarModal(true)}
+                className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {linkedCalendars && linkedCalendars.length > 0 ? "Link Another Calendar" : "Link Your First Calendar"}
+              </button>
+
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white">
+                  <h3 className="font-bold text-lg mb-2">Examples of calendars you can link:</h3>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-3">
+                      <span className="text-xl">🎒</span>
+                      <span>School district calendars (holidays, early dismissals, events)</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-xl">⚽</span>
+                      <span>Sports team schedules (practices, games, tournaments)</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-xl">⛪</span>
+                      <span>Church or community group calendars</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="text-xl">🎵</span>
+                      <span>Activity centers, studios, or clubs</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
+                  <div className="flex gap-3">
+                    <span className="text-2xl">💡</span>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-2">How it works:</h4>
+                      <ul className="text-sm text-gray-700 space-y-1.5">
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600">•</span>
+                          <span>Link any public Google Calendar or iCal feed URL (most schools and organizations provide these!)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600">•</span>
+                          <span>Browse events from all your linked calendars in one place</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600">•</span>
+                          <span>Pick and choose which events to add to your family calendar</span>
+                        </li>
+                      </ul>
+                      <p className="text-blue-900 font-medium mt-3">
+                        Don't have the URLs yet? No problem! You can add calendars anytime from Settings. ✨
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 7: Notification Preferences */}
+          {currentStep === 7 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -1215,8 +1369,8 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 7: Payment (Placeholder) */}
-          {currentStep === 7 && (
+          {/* Step 8: Payment (Placeholder) */}
+          {currentStep === 8 && (
             <div className="space-y-6">
               <div className="text-center mb-8">
                 <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -1298,7 +1452,7 @@ export default function Onboarding() {
                   onClick={handleNext}
                   className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-soft hover:shadow-medium transform hover:scale-105"
                 >
-                  {currentStep === 1 ? "Let's Go! →" : currentStep === 2 ? "Share Your Interests! →" : currentStep === 3 ? "Connect My Emails! →" : currentStep === 4 ? "Choose My Calendar! →" : currentStep === 5 ? "Set Up Notifications! →" : currentStep === 6 ? "Add Payment! →" : "Continue →"}
+                  {currentStep === 1 ? "Let's Go! →" : currentStep === 2 ? "Share Your Interests! →" : currentStep === 3 ? "Connect My Emails! →" : currentStep === 4 ? "Choose My Calendar! →" : currentStep === 5 ? "Link External Calendars! →" : currentStep === 6 ? "Set Up Notifications! →" : currentStep === 7 ? "Add Payment! →" : "Continue →"}
                 </button>
               ) : (
                 <button
@@ -1337,6 +1491,18 @@ export default function Onboarding() {
               <p className="text-gray-600">Loading next step...</p>
             </div>
           </div>
+        )}
+
+        {/* Add Linked Calendar Modal */}
+        {showAddLinkedCalendarModal && currentUser && (
+          <AddLinkedCalendarModal
+            familyId={currentUser.familyId}
+            userId={currentUser._id}
+            onClose={() => setShowAddLinkedCalendarModal(false)}
+            onSuccess={() => {
+              // The query will automatically refresh
+            }}
+          />
         )}
       </div>
 

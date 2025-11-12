@@ -70,7 +70,7 @@ export default function SupportPage() {
               <Link href="/review" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
                 Events
               </Link>
-              <Link href="/discover" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+              <Link href="/search" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
                 Discover
               </Link>
               <Link href="/settings" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">

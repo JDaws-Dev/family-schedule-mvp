@@ -18,6 +18,7 @@ import VoiceRecordModal from "@/app/components/VoiceRecordModal";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import LoadingSpinner, { ButtonSpinner } from "@/app/components/LoadingSpinner";
 import SwipeableCard from "@/app/components/SwipeableCard";
+import BrowseCalendarsModal from "@/app/components/BrowseCalendarsModal";
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 function formatTime12Hour(time24: string): string {
@@ -65,6 +66,7 @@ function ReviewPageContent() {
   const [showSearchEmailsModal, setShowSearchEmailsModal] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
+  const [showBrowseCalendarsModal, setShowBrowseCalendarsModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
@@ -120,6 +122,12 @@ function ReviewPageContent() {
   // Get Gmail accounts to check if any are connected
   const gmailAccounts = useQuery(
     api.gmailAccounts.getFamilyGmailAccounts,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Get linked calendars to show browse calendars option in FAB
+  const linkedCalendars = useQuery(
+    api.linkedCalendars.getLinkedCalendars,
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
@@ -1095,8 +1103,8 @@ function ReviewPageContent() {
               <Link href="/review" className="text-sm font-medium text-primary-600 transition">
                 Events
               </Link>
-              <Link href="/discover" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
-                Discover
+              <Link href="/search" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                Search
               </Link>
               <Link href="/settings" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
                 Settings
@@ -1144,45 +1152,67 @@ function ReviewPageContent() {
               </p>
             </div>
           </div>
-          <p className="text-gray-600 max-w-3xl">
-            We automatically scan your connected Gmail accounts for event information. Review the details below and approve the ones you want added to your family calendar.
-          </p>
 
-          {/* Manual Email Check Button */}
-          <div className="mt-6">
-            <button
-              onClick={handleScanEmail}
-              disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md hover:shadow-lg"
-            >
-              {isScanning ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Checking Emails...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  Check for New Emails
-                </>
+          {/* Description with Real-Time Status */}
+          {gmailAccounts && gmailAccounts.length > 0 && gmailAccounts.some(acc => acc.gmailPushEnabled) ? (
+            <div className="mb-6">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                <p className="text-sm text-green-900 font-medium flex items-center gap-2">
+                  <span className="inline-block w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                  Real-time monitoring active - new events appear automatically
+                </p>
+              </div>
+              <p className="text-gray-600 text-sm">
+                Review events we found and approve the ones you want added to your family calendar.
+              </p>
+            </div>
+          ) : (
+            <p className="text-gray-600 max-w-3xl mb-6">
+              We automatically scan your connected Gmail accounts for event information. Review the details below and approve the ones you want added to your family calendar.
+            </p>
+          )}
+
+          {/* Manual Email Check Button - Only show if push is NOT enabled */}
+          {gmailAccounts && gmailAccounts.length > 0 && !gmailAccounts.some(acc => acc.gmailPushEnabled) && (
+            <div className="mt-6 mb-6">
+              <button
+                onClick={handleScanEmail}
+                disabled={isScanning || !gmailAccounts || gmailAccounts.length === 0}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md hover:shadow-lg"
+              >
+                {isScanning ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Checking Emails...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Check for New Emails
+                  </>
+                )}
+              </button>
+              {scanMessage && (
+                <p className={`mt-3 text-sm font-medium ${scanMessage.includes('✓') ? 'text-green-600' : scanMessage.includes('Oops') ? 'text-red-600' : 'text-blue-600'}`}>
+                  {scanMessage}
+                </p>
               )}
-            </button>
-            {scanMessage && (
-              <p className={`mt-3 text-sm font-medium ${scanMessage.includes('✓') ? 'text-green-600' : scanMessage.includes('Oops') ? 'text-red-600' : 'text-blue-600'}`}>
-                {scanMessage}
+            </div>
+          )}
+
+          {/* No Gmail Connected */}
+          {(!gmailAccounts || gmailAccounts.length === 0) && (
+            <div className="mt-6 mb-6">
+              <p className="text-sm text-gray-600 mb-4">
+                Please <Link href="/settings?tab=apps" className="text-primary-600 hover:text-primary-700 underline font-semibold">connect a Gmail account</Link> first to enable email scanning.
               </p>
-            )}
-            {!gmailAccounts || gmailAccounts.length === 0 && (
-              <p className="mt-3 text-sm text-gray-500">
-                Please <Link href="/settings?tab=apps" className="text-primary-600 hover:text-primary-700 underline">connect a Gmail account</Link> first to enable email scanning.
-              </p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Undo Dismiss Banner */}
@@ -2885,7 +2915,18 @@ Soccer practice this Saturday at 9am at Memorial Park. I'm taking Emma and Sara.
       <FAB
         onAction={handleFABAction}
         hasGmailAccount={!!gmailAccounts && gmailAccounts.length > 0}
+        hasLinkedCalendars={!!linkedCalendars && linkedCalendars.length > 0}
+        onBrowseCalendars={() => setShowBrowseCalendarsModal(true)}
       />
+
+      {/* Browse Calendars Modal */}
+      {showBrowseCalendarsModal && convexUser && (
+        <BrowseCalendarsModal
+          familyId={convexUser.familyId}
+          userId={convexUser._id}
+          onClose={() => setShowBrowseCalendarsModal(false)}
+        />
+      )}
 
       {/* Bottom Navigation (Mobile) */}
       <BottomNav />

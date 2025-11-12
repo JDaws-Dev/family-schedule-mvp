@@ -18,6 +18,7 @@ import type * as families from "../families.js";
 import type * as familyMembers from "../familyMembers.js";
 import type * as gmailAccounts from "../gmailAccounts.js";
 import type * as googleCalendar from "../googleCalendar.js";
+import type * as linkedCalendars from "../linkedCalendars.js";
 import type * as notifications from "../notifications.js";
 import type * as recurringEvents from "../recurringEvents.js";
 import type * as suggestedActivities from "../suggestedActivities.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   familyMembers: typeof familyMembers;
   gmailAccounts: typeof gmailAccounts;
   googleCalendar: typeof googleCalendar;
+  linkedCalendars: typeof linkedCalendars;
   notifications: typeof notifications;
   recurringEvents: typeof recurringEvents;
   suggestedActivities: typeof suggestedActivities;

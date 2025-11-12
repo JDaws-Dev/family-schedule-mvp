@@ -25,6 +25,7 @@ import FAB from "../components/FAB";
 import TodayEventsCard from "../components/TodayEventsCard";
 import ActionItemsCard from "../components/ActionItemsCard";
 import ThisWeekCard from "../components/ThisWeekCard";
+import BrowseCalendarsModal from "../components/BrowseCalendarsModal";
 
 // Bible verses - Family and Peace themed (ESV)
 const BIBLE_VERSES = [
@@ -190,6 +191,7 @@ function DashboardContent() {
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [showVoiceRecordModal, setShowVoiceRecordModal] = useState(false);
   const [showActionsModal, setShowActionsModal] = useState(false);
+  const [showBrowseCalendarsModal, setShowBrowseCalendarsModal] = useState(false);
   const [newEventForm, setNewEventForm] = useState({
     title: "",
     eventDate: "",
@@ -273,6 +275,12 @@ function DashboardContent() {
   // Get family members for the edit modal
   const familyMembers = useQuery(
     api.familyMembers.getFamilyMembers,
+    convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
+  );
+
+  // Get linked calendars
+  const linkedCalendars = useQuery(
+    api.linkedCalendars.getLinkedCalendars,
     convexUser?.familyId ? { familyId: convexUser.familyId } : "skip"
   );
 
@@ -377,12 +385,18 @@ function DashboardContent() {
     "Other"
   ];
 
-  // Get all events for this week and today
-  const today = new Date().toISOString().split("T")[0];
-  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-  const weekFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
+  // Get all events for this week and today (using local timezone, not UTC)
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const now = new Date();
+  const today = getLocalDateString(now);
+  const tomorrow = getLocalDateString(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+  const weekFromNow = getLocalDateString(new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000));
 
   const weekEvents = useQuery(
     api.events.getEventsByDateRange,
@@ -1089,7 +1103,7 @@ function DashboardContent() {
               Events
             </Link>
             <Link
-              href="/discover"
+              href="/search"
               className="text-gray-600 hover:text-gray-900"
             >
               Find Activities
@@ -1551,6 +1565,8 @@ function DashboardContent() {
               }
             }}
             hasGmailAccount={!!gmailAccounts && gmailAccounts.length > 0}
+            hasLinkedCalendars={!!linkedCalendars && linkedCalendars.length > 0}
+            onBrowseCalendars={() => setShowBrowseCalendarsModal(true)}
           />
         </div>
 
@@ -4407,6 +4423,15 @@ Example:
           onCancel={() => setShowConfirmDialog(false)}
           variant={confirmDialogConfig.variant}
           itemCount={confirmDialogConfig.itemCount}
+        />
+      )}
+
+      {/* Browse Calendars Modal */}
+      {showBrowseCalendarsModal && convexUser && (
+        <BrowseCalendarsModal
+          familyId={convexUser.familyId}
+          userId={convexUser._id}
+          onClose={() => setShowBrowseCalendarsModal(false)}
         />
       )}
     </div>
