@@ -118,7 +118,7 @@ export default function FAB({ onAction, hasGmailAccount = false, hasLinkedCalend
       >
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`min-w-[56px] min-h-[56px] w-14 h-14 md:w-16 md:h-16 rounded-full bg-accent-600 hover:bg-accent-700 text-white shadow-[0_8px_24px_rgba(249,115,22,0.5)] hover:shadow-[0_12px_32px_rgba(249,115,22,0.6)] active:scale-95 transition-all flex items-center justify-center ring-4 ring-white ${
+          className={`min-w-[56px] min-h-[56px] w-14 h-14 md:w-16 md:h-16 rounded-full bg-accent-600 hover:bg-accent-700 text-white shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center ring-4 ring-white ${
             isOpen ? "rotate-45" : ""
           }`}
           aria-label="Add event"
